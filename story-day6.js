@@ -1,0 +1,34 @@
+/* Türchen 6: Der kleine Tannenbaum (Manfred Kyber). Gemeinfreier Text. Absätze werden durch eine Leerzeile getrennt.
+   Der Einstimmungssatz ist eine Eigenformulierung. */
+window.STORY = {
+  titel: "Der kleine Tannenbaum",
+  einstimmung: "Heute ist Nikolaustag. Im tiefen Tannenwald wartet ein kleiner Baum darauf, endlich ein Weihnachtsbaum sein zu dürfen.",
+  text: `Es war einmal ein kleiner Tannenbaum im tiefen Tannenwalde, der wollte so gerne ein Weihnachtsbaum sein. Aber das ist gar nicht so leicht, als man das meistens in der Tannengesellschaft annimmt, denn der Heilige Nikolaus ist in der Beziehung sehr streng und erlaubt nur den Tannen als Weihnachtsbaum in Dorf und Stadt zu spazieren, die dafür ganz ordnungsmäßig in seinem Buch aufgeschrieben sind. Das Buch ist ganz erschrecklich groß und dick, so wie sich das für einen guten alten Heiligen geziemt. Und damit geht er im Walde herum in den klaren kalten Winternächten und sagt es allen den Tannen, die zum Weihnachtsfeste bestimmt sind. Dann erschauern die Tannen, die zur Weihnacht erwählt sind, vor Freude und neigen sich dankend. Dazu leuchtet des Heiligen Heiligenschein und das ist sehr schön und sehr feierlich.
+
+Und der kleine Tannenbaum im tiefen Tannenwalde, der wollte so gerne ein Weihnachtsbaum sein. Aber manches Jahr schon ist der Heilige Nikolaus in den klaren kalten Winternächten an dem kleinen Tannenbaum vorbeigegangen und hat wohl ernst und geschäftig in sein erschrecklich großes Buch geguckt, aber auch nichts und gar nichts dazu gesagt. Der arme kleine Tannenbaum war eben nicht ordnungsmäßig vermerkt – und da ist er sehr, sehr traurig geworden und hat ganz schrecklich geweint, so dass es ordentlich tropfte von allen Zweigen.
+
+Wenn jemand so weint, dass es tropft, so hört man das natürlich, und diesmal hörte das ein kleiner Wicht, der ein grünes Moosröcklein trug, einen grauen Bart und eine feuerrote Nase hatte und in einem dunklen Erdloch wohnte. Das Männchen aß Haselnüsse, am liebsten hohle, und las Bücher, am liebsten dicke, und war ein ganz boshaftes kleines Geschöpf.
+
+Aber den Tannenbaum mochte es gerne leiden, weil es oft von ihm ein paar grüne Nadeln geschenkt bekam für sein gläsernes Pfeifchen, aus dem es immer blaue ringelnde Rauchwolken in die goldene Sonne blies – und darum ist der Wicht auch gleich herausgekommen, als er den Tannenbaum so jämmerlich weinen hörte und hat gefragt: »Warum weinst du denn so erschrecklich, dass es tropft?«
+
+Da hörte der kleine Tannenbaum etwas auf zu tropfen und erzählte dem Männchen sein Herzeleid. Der Wicht wurde ganz ernst und seine glühende Nase glühte so sehr, dass man befürchten konnte, das Moosröcklein finge Feuer, aber es war ja nur die Begeisterung und das ist nicht gefährlich. Der Wichtelmann war also begeistert davon, dass der kleine Tannenbaum im tiefen Tannenwalde so gerne ein Weihnachtsbaum sein wollte, und sagte bedächtig, indem er sich aufrichtete und ein paarmal bedeutsam schluckte:
+
+»Mein lieber kleiner Tannenbaum, es ist zwar unmöglich, dir zu helfen, aber ich bin eben ich und mir ist es vielleicht doch nicht unmöglich, dir zu helfen. Ich bin nämlich mit einigen Wachslichtern, darunter mit einem ganz bunten, befreundet, und die will ich bitten zu dir zu kommen. Auch kenne ich ein großes Pfefferkuchenherz, das allerdings nur flüchtig – aber jedenfalls will ich sehen, was sich machen lässt. Vor allen aber – weine nicht mehr so erschrecklich, dass es tropft.« Damit nahm der kleine Wicht einen Eiszapfen in die Hand als Spazierstock und wanderte los durch den tief verschneiten Wald, der fernen Stadt zu.
+
+Es dauerte sehr, sehr lange, und am Himmel schauten schon die ersten Sterne der heiligen Nacht durchs winterliche Dämmergrau auf die Erde hinab und der kleine Tannenbaum war schon wieder ganz traurig geworden und dachte, dass er nun doch wieder kein Weihnachtsbaum würde.
+
+Aber da kam's auch schon ganz eilig und aufgeregt durch den Schnee gestapft, eine ganze kleine Gesellschaft: der Wicht mit dem Eiszapfen in der Hand und hinter ihm sieben Lichtlein – und auch eine Zündholzschachtel war dabei, auf der sogar was draufgedruckt war und die so kurze Beinchen hatte, dass sie nur mühsam durch den Schnee wackeln konnte. Wie sie nun alle vor dem kleinen Tannenbaum standen, da räusperte sich der kleine Wicht im Moosröcklein vernehmlich, schluckte ein paarmal ganz bedeutsam und sagte:
+
+»Ich bin eben ich – und darum sind auch alle meine Bekannten mitgekommen. Es sind sieben Lichtlein aus allervornehmsten Wachs, darunter sogar ein buntes, und auch die Zündholzschachtel ist aus einer ganz besonders guten Familie, denn sie zündet nur an der braunen Reibfläche. Und jetzt wirst du also ein Weihnachtsbaum werden. Aber was das große Pfefferkuchenherz betrifft, das ich nur flüchtig kenne, so hat es auch versprochen zu kommen, es wollte sich nur noch ein Paar warme Filzschuhe kaufen, weil es gar so kalt ist draußen im Walde.
+
+Eine Bedingung hat es freilich gemacht: Es muss gegessen werden, denn das müssen alle Pfefferkuchenherzen, das ist nun mal so. Ich habe schon einen Dachs benachrichtigt, den ich sehr gut kenne und dem ich einmal in einer Familienangelegenheit einen guten Rat gegeben habe. Er liegt jetzt im Winterschlaf, doch versprach er, als ich ihn weckte, das Pfefferkuchenherz zu verspeisen. Hoffentlich verschläft er's nicht!«
+
+Als das Männchen das alles gesagt hatte, räusperte es sich wieder vernehmlich und schluckte ein paarmal gar bedeutsam und dann verschwand es im Erdloch. Die Lichtlein aber sprangen auf den kleinen Tannenbaum hinauf und die Zündholzschachtel, die aus so guter Familie war, zog sich ein Zündholz nach dem anderen aus dem Magen, strich es an der braunen Reibfläche und steckte alle die Lichtlein der Reihe nach an. Und wie die Lichtlein brannten und leuchteten im tief verschneiten Walde, da ist auch noch keuchend und atemlos vom eiligen Laufen das Pfefferkuchenherz angekommen und hängte sich sehr freundlich und verbindlich mitten in den grünen Tannenbaum, trotzdem es nun doch die warmen Filzschuhe unterwegs verloren hatte und arg erkältet war.
+
+Der kleine Tannenbaum aber, der so gerne ein Weihnachtsbaum sein wollte, de wusste gar nicht, wie ihm geschah, dass er nun doch ein Weihnachtsbaum war.
+
+Am anderen Morgen aber ist der Dachs aus seiner Höhle gekrochen, um sich das Pfefferkuchenherz zu holen. Und wie er ankam, da hatten es die kleinen Englein schon gegessen, die ja in der heiligen Nacht auf die Erde dürfen und die so gerne die Pfefferkuchenherzen speisen. Da ist der Dachs sehr böse geworden und hat sich bitter beklagt und ganz furchtbar auf den kleinen Tannenbaum geschimpft.
+
+Dem aber war das ganz einerlei, denn wer einmal in seinem Leben seine heilige Weihnacht gefeiert hat, den stört auch der frechste Frechdachs nicht mehr.`,
+  quelle: "Manfred Kyber, aus „Märchen“; sprachlich behutsam modernisiert"
+};
