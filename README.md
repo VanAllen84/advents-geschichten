@@ -14,7 +14,7 @@ Absender ist Thilo.
 | GitHub-Repository | `vanallen84/advents-geschichten` |
 | Alte GitHub-Adresse (leitet weiter) | https://vanallen84.github.io/advents-geschichten/ |
 
-Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v11`.
+Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v12`.
 
 ---
 
@@ -82,6 +82,8 @@ Für den Inhalt der Startseite, das Finale und die Begrüßungssätze muss man i
 ├── icon-192.png          App-Symbol
 ├── icon-512.png          App-Symbol (groß)
 ├── apple-touch-icon.png  App-Symbol für iPhone/iPad
+├── icon-test-192.png, icon-test-512.png, apple-touch-icon-test.png
+│                         dieselben Symbole mit rotem Band „TEST“ (TEST-Fassung)
 ├── story-day1.js … story-day24.js   Die 24 Geschichten
 ├── bilder/
 │   ├── landing.jpg       Bild der Startseite (1200×600)
@@ -97,6 +99,7 @@ Für den Inhalt der Startseite, das Finale und die Begrüßungssätze muss man i
     ├── bilder-vorbereiten.py   Rohbilder zuschneiden und verkleinern
     ├── pixel.py                Verpixelte Kachel-Bilder erzeugen
     ├── erinnerung.py           .ics-Dateien erzeugen
+    ├── test-symbole.py         Erzeugt die TEST-Symbole mit rotem Band
     ├── bild-prompts.md         Die 26 Gemini-Prompts für die Bilder
     └── platzhalter.py          VERALTET: erzeugte Platzhalterbilder, nicht mehr ausführen
 ```
@@ -150,6 +153,7 @@ Beide Fassungen sind **dieselben Dateien**. Unterschieden wird nur über den Adr
 | Speicher | `weihnacht2026_…` | `weihnacht2026_test_…` (völlig getrennt) |
 | Kennzeichen | – | kleines Schild „TEST“ oben links |
 | App-Manifest | `manifest.json` („Advent“) | `manifest-test.json` („Advent (Test)“) |
+| App-Symbol | goldener Stern | goldener Stern mit rotem Band „TEST“ |
 
 - **`test/index.html`** ist nur eine Weiterleitung.
   - Ein angehängtes `?reset=1` wird mitgenommen: `/test/?reset=1` → `/index.html?test=1&reset=1`.
@@ -555,13 +559,14 @@ Es gibt **keine Übertragung an einen Server**. Jedes Gerät und jeder Browser h
 ## 14. Als App auf dem Startbildschirm
 
 - `manifest.json` (LIVE): Name „Advent“, `start_url` `./index.html`, Vollbild (`standalone`), dunkelgrüne Farben.
-- `manifest-test.json` (TEST): Name „Advent (Test)“, Kurzname „Advent Test“, `start_url` `./index.html?test=1`.
+- `manifest-test.json` (TEST): Name „Advent (Test)“, Kurzname „Advent Test“, `start_url` `./index.html?test=1`, eigene Symbole `icon-test-192.png` und `icon-test-512.png` mit rotem Band „TEST“.
 - **Welches Manifest gilt, entscheidet ein kleines Skript im `<head>` von index.html.**
-  - Bei `?test=1` wird `manifest-test.json` eingebunden und der iPhone-App-Titel auf „Advent Test“ gesetzt.
+  - Bei `?test=1` wird `manifest-test.json` eingebunden, der iPhone-App-Titel auf „Advent Test“ gesetzt und das iPhone-Symbol auf `apple-touch-icon-test.png` umgestellt.
   - Sonst gilt `manifest.json`.
 - **Warum so kompliziert?** Mit nur einem Manifest startete ein TEST-Symbol auf dem Startbildschirm die **LIVE**-Fassung, weil dort die `start_url` fest eingetragen war.
 - Die beiden Manifeste haben verschiedene `id`-Werte. So können beide Fassungen gleichzeitig installiert sein.
-- **Tipp:** Wenn ein TEST-Symbol von früher noch LIVE öffnet, Symbol löschen und neu anlegen, während die TEST-Fassung geöffnet ist.
+- **Tipp:** Wenn ein TEST-Symbol von früher noch LIVE öffnet oder noch kein „TEST“-Band hat, Symbol löschen und neu anlegen, während die TEST-Fassung geöffnet ist. Das Symbol wird nur beim Anlegen übernommen.
+- Die TEST-Symbole erzeugt `tools/test-symbole.py` aus den normalen Symbolen. Nach einer Änderung der normalen Symbole erneut ausführen.
 - Auf iPhone gelten zusätzlich `apple-touch-icon.png` und die `apple-mobile-web-app-…`-Angaben.
 
 ---
@@ -613,6 +618,7 @@ Die Seite trägt `noindex, nofollow`. Sie soll nicht in Suchmaschinen auftauchen
 |---|---|---|
 | `bilder-vorbereiten.py` | Rohbilder aus `bilder-roh/`: Papierrand weg, auf 2:1 zuschneiden, 1200×600, Qualität 82 → `bilder/` | `python3 tools/bilder-vorbereiten.py [quellordner]` |
 | `pixel.py` | `pix-mid-NN.png` (32×16) und `pix-lock-NN.png` (10×5) aus `tag-NN.jpg` | `python3 tools/pixel.py [bilderordner]` |
+| `test-symbole.py` | `icon-test-192.png`, `icon-test-512.png`, `apple-touch-icon-test.png`: normale Symbole mit rotem Band „TEST“ | `python3 tools/test-symbole.py` |
 | `erinnerung.py` | `erinnerung/1700.ics` … `2100.ics`, liest `JAHR` und `SEITEN_URL` aus `config.js` | `python3 tools/erinnerung.py` |
 | `bild-prompts.md` | 26 Gemini-Prompts mit gemeinsamem Stil-Block | – |
 | `platzhalter.py` | **Veraltet.** Erzeugte Platzhalterbilder vor den echten Bildern. **Nicht mehr ausführen**, es überschreibt die echten Bilder! | – |
@@ -750,6 +756,7 @@ Grob in der Reihenfolge der Entstehung (Herbst 2026):
     - Tür mit leicht verpixeltem Bild geht auf, dann ca. 2 s Entpixeln, dann Zoom.
     - Bei schon geöffneten Türchen sofort Zoom.
     - Ungeöffnete Kacheln heller, geöffnete Kacheln scharf und mit Titel der Geschichte.
+16. **Eigenes App-Symbol für TEST** (v12): goldener Stern mit rotem Band „TEST“.
 
 ---
 

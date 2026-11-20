@@ -8,21 +8,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Advent</title>
     <link rel="icon" id="favicon" href="icon-192.png">
-    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="apple-touch-icon" id="appleIcon" href="apple-touch-icon.png">
     <meta name="theme-color" id="themeColorMeta" content="#07120e">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" id="appTitelMeta" content="Advent">
     <script>
         // TEST-Fassung (index.html?test=1) bekommt ein eigenes App-Manifest,
-        // damit ein Symbol auf dem Startbildschirm wieder in der TEST-Fassung startet.
+        // damit ein Symbol auf dem Startbildschirm wieder in der TEST-Fassung startet,
+        // dazu ein eigenes Symbol mit rotem Band „TEST“ (auch für das iPhone).
         (function () {
             var test = /[?&]test=1(&|$)/.test(location.search);
             var l = document.createElement("link");
             l.rel = "manifest";
             l.href = test ? "manifest-test.json" : "manifest.json";
             document.head.appendChild(l);
-            if (test) { var m = document.getElementById("appTitelMeta"); if (m) m.setAttribute("content", "Advent Test"); }
+            if (test) {
+                var m = document.getElementById("appTitelMeta"); if (m) m.setAttribute("content", "Advent Test");
+                var ai = document.getElementById("appleIcon"); if (ai) ai.setAttribute("href", "apple-touch-icon-test.png");
+            }
         })();
     </script>
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
