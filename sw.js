@@ -1,6 +1,6 @@
 /* Offline-Speicher: Seite, Geschichten und Bilder werden beim ersten Besuch abgelegt.
    Bei jeder Änderung an der Seite VERSION hochzählen, damit die Handys die neue Fassung holen. */
-const VERSION = "advent-v10";
+const VERSION = "advent-v11";
 const KERN = ["./", "index.html", "config.js", "manifest.json", "manifest-test.json", "icon-192.png", "icon-512.png", "apple-touch-icon.png"];
 for (let i = 1; i <= 24; i++) KERN.push("story-day" + i + ".js");
 const BILDER = ["bilder/landing.jpg", "bilder/finale.jpg"];

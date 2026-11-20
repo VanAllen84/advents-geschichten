@@ -261,6 +261,8 @@
         .tuer-card.pix { background-size: cover; background-position: center; image-rendering: pixelated; }
         .tuer-card.pix .tag-nummer { position: relative; text-shadow: 0 1px 6px #000, 0 0 3px #000; }
         .tuer-card.geoeffnet { image-rendering: auto; }
+        .tuer-card .tag-titel { position: absolute; left: 6px; right: 6px; bottom: 7px; font-size: 0.68rem; line-height: 1.18; font-style: italic; color: #fbf1d0; text-align: center; text-shadow: 0 1px 4px #000, 0 0 2px #000; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; pointer-events: none; }
+        .tuer-card.mit-titel .tag-nummer { transform: translateY(-17px); }
 
         /* Karte „Bevor es losgeht" */
         .vorab-karte { margin: 26px 0 8px; border: 1px solid var(--accent-color); border-radius: 12px; padding: 16px 16px 6px; background: linear-gradient(180deg, rgba(217,180,90,0.10), rgba(217,180,90,0.03)); box-shadow: 0 0 18px rgba(217,180,90,0.18); }
@@ -291,14 +293,14 @@
         #portal.an { background: rgba(0,0,0,1); }
         #portal.aus { opacity: 0; transition: opacity 0.6s ease; pointer-events: none; }
         #portal .portal-wrap { position: fixed; transform-origin: 50% 50%; transform: scale(1); transform-style: preserve-3d; border-radius: 12px; }
-        #portal.an .portal-wrap { transform: scale(var(--pz, 14)); transition: transform 1.15s cubic-bezier(0.6, 0, 0.9, 0.5) 1.5s; }
+        #portal.an .portal-wrap { transform: scale(var(--pz, 14)); transition: transform 1.15s cubic-bezier(0.6, 0, 0.9, 0.5) var(--zd, 1.5s); }
         #portal .portal-innen { position: absolute; inset: 0; border-radius: 12px; background: radial-gradient(circle at center, var(--p1, #fff6dc) 0%, var(--p2, #f5d078) 38%, var(--p3, #be8c28) 100%); box-shadow: 0 0 30px var(--pg, rgba(217,180,90,0.5)); }
-        #portal .portal-fluegel { position: absolute; top: 0; bottom: 0; width: 50%; background-size: 200% 100%; border: 2px solid var(--p2, #d9b45a); backface-visibility: hidden; transition: transform 1.5s cubic-bezier(0.4, 0, 0.4, 1) 0.25s; }
+        #portal .portal-fluegel { position: absolute; top: 0; bottom: 0; width: 50%; background-size: 200% 100%; border: 2px solid var(--p2, #d9b45a); backface-visibility: hidden; transition: transform 1.2s cubic-bezier(0.4, 0, 0.4, 1) 0.25s; }
         #portal .portal-fluegel.l { left: 0; transform-origin: 0 50%; background-position: 0 0; border-radius: 12px 0 0 12px; border-right-width: 1px; }
         #portal .portal-fluegel.r { right: 0; transform-origin: 100% 50%; background-position: 100% 0; border-radius: 0 12px 12px 0; border-left-width: 1px; }
         #portal.an .portal-fluegel.l { transform: rotateY(-105deg); }
         #portal.an .portal-fluegel.r { transform: rotateY(105deg); }
-        #portal.bild.an .portal-wrap { transform: scale(var(--pzb, 6)); opacity: 0; transition: transform 0.95s cubic-bezier(0.55, 0, 0.85, 0.45) 1.6s, opacity 0.5s ease-in 2.05s; }
+        #portal.bild.an .portal-wrap { transform: scale(var(--pzb, 6)); opacity: 0; transition: transform 0.95s cubic-bezier(0.55, 0, 0.85, 0.45) var(--zd, 1.6s), opacity 0.5s ease-in var(--fd, 2.05s); }
         #portal .portal-bild { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 12px; display: block; }
         .container { isolation: isolate; }
         .wm-anker { position: relative; height: 0; }
@@ -536,7 +538,7 @@
         // ==========================================
         try {
             if (location.search.indexOf("reset=1") >= 0) {
-                ["geoeffnet", "lese", "gruss", "finaleAn", "besucht"].forEach(speicherLoeschen);
+                ["geoeffnet", "lese", "gruss", "finaleAn", "besucht", "titel"].forEach(speicherLoeschen);
                 history.replaceState(null, "", location.pathname + (TEST_FASSUNG ? "?test=1" : ""));
             }
         } catch (e) {}
@@ -817,8 +819,8 @@
                     cv.width = CW; cv.height = CH;
                     wrap.appendChild(cv);
                     const bild = new Image();
-                    let geladen = false, stufe = bereitsOffen ? 5 : 0;
-                    const SP = [32, 56, 100, 180, 360, 99999];
+                    let geladen = false, stufe = bereitsOffen ? 9 : 0;
+                    const SP = [32, 42, 56, 76, 104, 144, 200, 280, 400, 99999];
                     const zeichne = function () {
                         if (!geladen) return;
                         const iw = bild.naturalWidth, ih = bild.naturalHeight;
@@ -840,15 +842,21 @@
                     bild.onload = function () { geladen = true; zeichne(); };
                     bild.onerror = function () { if (cv.parentNode) cv.remove(); ov.classList.remove("bild"); };
                     bild.src = bildUrl(tag);
-                    if (!bereitsOffen) [400, 620, 840, 1060, 1280, 1500].forEach(function (ms, i) { setTimeout(function () { stufe = i; zeichne(); }, ms); });
+                    // erst wenn die Tür offen ist (ca. 1,45 s), in rund 2 Sekunden entpixeln
+                    if (!bereitsOffen) for (let i = 1; i < SP.length; i++) (function (i) { setTimeout(function () { stufe = i; zeichne(); }, 1500 + i * 225); })(i);
                 } catch (e) { ov.classList.remove("bild"); }
             }
             ["l", "r"].forEach(function (seite) {
                 const f = document.createElement("div");
                 f.className = "portal-fluegel " + seite;
-                f.style.backgroundImage = "linear-gradient(rgba(5,14,10,0.6), rgba(5,14,10,0.6)), url('" + (bereitsOffen ? bildUrl(tag) : "bilder/pix-mid-" + n + ".png") + "')";
+                f.style.backgroundImage = "linear-gradient(rgba(5,14,10,0.3), rgba(5,14,10,0.3)), url('" + (bereitsOffen ? bildUrl(tag) : "bilder/pix-mid-" + n + ".png") + "')";
                 wrap.appendChild(f);
             });
+            // Zeitplan: Tür auf (bis ca. 1,45 s) – ggf. 2 s entpixeln – dann Zoom
+            const zd = bereitsOffen || !ov.classList.contains("bild") ? 1.5 : 3.65;
+            ov.style.setProperty("--zd", zd + "s");
+            ov.style.setProperty("--fd", (zd + 0.45) + "s");
+            const tEnde = Math.round((zd + 0.95) * 1000);
             ov.appendChild(wrap);
             document.body.appendChild(ov);
             let gewechselt = false, beendet = false;
@@ -861,9 +869,9 @@
             }
             ov.addEventListener("click", beenden);   // Tippen = überspringen
             requestAnimationFrame(function () { requestAnimationFrame(function () { ov.classList.add("an"); }); });
-            setTimeout(wechseln, 2550);
-            setTimeout(beenden, 2700);
-            setTimeout(function () { if (document.body.contains(ov)) { ov.remove(); portalLaeuft = false; } }, 4000);
+            setTimeout(wechseln, tEnde);
+            setTimeout(beenden, tEnde + 150);
+            setTimeout(function () { if (document.body.contains(ov)) { ov.remove(); portalLaeuft = false; } }, tEnde + 1500);
         }
         function istErstesMal(tag) { return geoeffnetListe().indexOf(tag) < 0; }
 
@@ -883,7 +891,7 @@
         function pixelSetzen(card, i, gesperrt) {
             const n = String(i).padStart(2, "0");
             const art = gesperrt ? "lock" : "mid";
-            const dunkel = gesperrt ? 0.55 : 0.6;
+            const dunkel = gesperrt ? 0.55 : 0.3;
             card.classList.add("pix");
             card.style.backgroundImage = "linear-gradient(rgba(5,14,10," + dunkel + "), rgba(5,14,10," + dunkel + ")), url('bilder/pix-" + art + "-" + n + ".png')";
         }
@@ -901,19 +909,47 @@
         function tuerStilAktualisieren() {
             const karten = document.querySelectorAll("#tuerenGridContainer .tuer-card");
             const alle = ab25(), offen = geoeffnetListe(), heute = heuteTag();
-            let wz = 0;
+            let wz = 0; const fehlend = [];
             karten.forEach((el, idx) => {
                 const i = idx + 1;
-                el.classList.remove("pix", "geoeffnet", "heute", "frei", "ausgelassen");
+                el.classList.remove("pix", "geoeffnet", "heute", "frei", "ausgelassen", "mit-titel");
                 el.style.backgroundImage = "";
-                const bild = "linear-gradient(rgba(5,14,10,0.6), rgba(5,14,10,0.6)), url('" + bildUrl(i) + "')";
+                const alt = el.querySelector(".tag-titel"); if (alt) alt.remove();
+                const bild = "linear-gradient(rgba(5,14,10,0.15) 0%, rgba(5,14,10,0.2) 45%, rgba(5,14,10,0.85) 100%), url('" + bildUrl(i) + "')";
                 if (alle && offen.indexOf(i) >= 0) { el.classList.add("frei"); el.style.backgroundImage = bild; }
                 else if (alle) { pixelSetzen(el, i, false); el.classList.add("ausgelassen"); }
                 else if (el.classList.contains("gesperrt")) pixelSetzen(el, i, true);
                 else if (offen.indexOf(i) >= 0) { el.classList.add("geoeffnet"); el.style.backgroundImage = bild; }
                 else { pixelSetzen(el, i, false); if (i === heute) el.classList.add("heute"); else if (heute && i < heute) el.classList.add("ausgelassen"); }
+                if (el.classList.contains("geoeffnet") || el.classList.contains("frei")) {
+                    const t = titelMap()[i];
+                    if (t) { const sp = document.createElement("span"); sp.className = "tag-titel"; sp.textContent = t; el.appendChild(sp); el.classList.add("mit-titel"); }
+                    else fehlend.push(i);
+                }
                 el.style.removeProperty("--sw");
                 if (el.classList.contains("heute") || el.classList.contains("ausgelassen")) el.style.setProperty("--sw", (wz++ * 0.35) + "s");
+            });
+            if (fehlend.length) titelNachladen(fehlend);
+        }
+        // Titel der geöffneten Geschichten (für die Kacheln der Übersicht)
+        function titelMap() { const m = speicherLesen("titel", {}); return (m && typeof m === "object") ? m : {}; }
+        function merkeTitel(day, t) {
+            if (!t) return;
+            const m = titelMap();
+            if (m[day] === t) return;
+            m[day] = t; speicherSchreiben("titel", m);
+        }
+        const titelVersucht = {};
+        function titelNachladen(tage) {
+            const offen = tage.filter(function (d) { return !titelVersucht[d]; });
+            if (!offen.length || !window.fetch) return;
+            let n = offen.length, neu = false;
+            offen.forEach(function (d) {
+                titelVersucht[d] = true;
+                fetch("story-day" + d + ".js").then(function (r) { return r.ok ? r.text() : ""; }).then(function (txt) {
+                    const m = /titel:\s*("(?:[^"\\]|\\.)*")/.exec(txt || "");
+                    if (m) { try { merkeTitel(d, JSON.parse(m[1])); neu = true; } catch (e) {} }
+                }).catch(function () {}).then(function () { if (--n === 0 && neu) { try { tuerStilAktualisieren(); } catch (e) {} } });
             });
         }
         // Bild erst einblenden, wenn es im sichtbaren Bereich ankommt
@@ -1161,6 +1197,7 @@
                 box.innerHTML = absaetzeHtml(st.text);
                 const q = String(st.quelle || "").trim();
                 if (q) { quelle.textContent = "Quelle: " + q; quelle.style.display = ""; }
+                try { merkeTitel(day, st.titel); } catch (e) {}
                 try { merkeGeoeffnet(day); } catch (e) {}
                 storyBildStatus.text = true; storyBildStart();
                 lesePositionHerstellen(day);
