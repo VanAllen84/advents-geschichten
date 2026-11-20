@@ -525,7 +525,7 @@
         // ==========================================
         try {
             if (location.search.indexOf("reset=1") >= 0) {
-                ["geoeffnet", "lese", "gruss", "finaleAn"].forEach(speicherLoeschen);
+                ["geoeffnet", "lese", "gruss", "finaleAn", "besucht"].forEach(speicherLoeschen);
                 history.replaceState(null, "", location.pathname + (TEST_FASSUNG ? "?test=1" : ""));
             }
         } catch (e) {}
@@ -1346,13 +1346,17 @@
         })();
 
         // Startseite: „So funktioniert's" wird nach dem ersten geöffneten Türchen eingeklappt,
-        // die Karte „Bevor es losgeht" bleibt immer aufgeklappt
+        // die Karte „Bevor es losgeht" ab dem zweiten Besuch der Seite (antippen klappt sie auf)
+        const ERSTER_BESUCH = !speicherLesen("besucht", false);
+        speicherSchreiben("besucht", true);
         function rulesAktualisieren() {
             const b = document.getElementById("rulesBox");
             if (!b) return;
             let n = 0; try { n = geoeffnetListe().length; } catch (e) {}
             b.classList.toggle("zu", n > 0);
             if (n === 0) b.classList.remove("auf");
+            const v = document.getElementById("vorabKarte");
+            if (v) { v.classList.toggle("zu", !ERSTER_BESUCH); if (ERSTER_BESUCH) v.classList.remove("auf"); }
         }
         try { rulesAktualisieren(); } catch (e) {}
         function vorabUmschalten() {
