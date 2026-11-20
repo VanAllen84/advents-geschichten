@@ -608,7 +608,7 @@
             const t = document.getElementById("kalenderTitel");
             if (t && CFG.KALENDER_TITEL) t.textContent = CFG.KALENDER_TITEL;
             const a = document.getElementById("absenderZeile");
-            if (a) { if (CFG.ABSENDER) a.textContent = "Von " + CFG.ABSENDER + ", für dich."; else a.style.display = "none"; }
+            if (a) a.textContent = "Von mir, nur für dich!";
             const s = document.getElementById("finaleSignatur");
             if (s) s.textContent = CFG.ABSENDER ? "Frohe Weihnachten, " + CFG.ABSENDER : "Frohe Weihnachten";
         })();
