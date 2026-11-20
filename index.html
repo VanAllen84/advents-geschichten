@@ -9,11 +9,22 @@
     <title>Advent</title>
     <link rel="icon" id="favicon" href="icon-192.png">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
-    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" id="themeColorMeta" content="#07120e">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="Advent">
+    <meta name="apple-mobile-web-app-title" id="appTitelMeta" content="Advent">
+    <script>
+        // TEST-Fassung (index.html?test=1) bekommt ein eigenes App-Manifest,
+        // damit ein Symbol auf dem Startbildschirm wieder in der TEST-Fassung startet.
+        (function () {
+            var test = /[?&]test=1(&|$)/.test(location.search);
+            var l = document.createElement("link");
+            l.rel = "manifest";
+            l.href = test ? "manifest-test.json" : "manifest.json";
+            document.head.appendChild(l);
+            if (test) { var m = document.getElementById("appTitelMeta"); if (m) m.setAttribute("content", "Advent Test"); }
+        })();
+    </script>
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <script src="config.js"></script>
     <style>
