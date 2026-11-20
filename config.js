@@ -14,7 +14,7 @@ window.ADVENT_CONFIG = {
 
   // Adresse der fertigen Seite, z. B. "https://name.github.io/advent/"
   // (wird für die Links in den Kalender-Terminen gebraucht, kommt später)
-  SEITEN_URL: "https://vanallen84.github.io/advents-geschichten/",
+  SEITEN_URL: "https://adventsgeschichten.tkagel.de/",
 
   // Überschrift der Startseite
   KALENDER_TITEL: "Dein Adventskalender",
