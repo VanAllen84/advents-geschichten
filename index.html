@@ -641,6 +641,46 @@
 
 
         // ==========================================
+        // TÖNE: ton/knarren.mp3 (Tür geht auf) und ton/wirbel.mp3 (Buchstaben-Wirbel)
+        // Gespielt wird nur zusammen mit der jeweiligen Animation. Fehlt eine Datei
+        // oder blockiert das Gerät den Ton, passiert einfach nichts.
+        // ==========================================
+        const TON = (function () {
+            const DATEIEN = { knarren: "ton/knarren.mp3", wirbel: "ton/wirbel.mp3" };
+            const el = {}, fade = {};
+            function hole(n) {
+                if (!(n in el)) {
+                    try { const a = new Audio(DATEIEN[n]); a.preload = "auto"; el[n] = a; } catch (e) { el[n] = null; }
+                }
+                return el[n];
+            }
+            function spielen(n) {
+                if (window.TON_AUS) return;
+                const a = hole(n); if (!a) return;
+                try {
+                    clearInterval(fade[n]);
+                    a.pause(); a.currentTime = 0; a.volume = 1;
+                    const pr = a.play(); if (pr && pr.catch) pr.catch(function () {});
+                } catch (e) {}
+            }
+            // leise ausblenden und anhalten (auf dem iPhone lässt sich die Lautstärke
+            // per Skript nicht ändern, dort wird nach der Zeit einfach angehalten)
+            function ausblenden(n, ms) {
+                const a = el[n]; if (!a || a.paused) return;
+                clearInterval(fade[n]);
+                const schritte = Math.max(1, Math.round((ms || 400) / 40)); let k = 0;
+                fade[n] = setInterval(function () {
+                    k++;
+                    try { a.volume = Math.max(0, 1 - k / schritte); } catch (e) {}
+                    if (k >= schritte) { clearInterval(fade[n]); try { a.pause(); a.currentTime = 0; a.volume = 1; } catch (e) {} }
+                }, 40);
+            }
+            // vorab laden, damit der Ton beim ersten Tippen schnell da ist
+            window.addEventListener("load", function () { Object.keys(DATEIEN).forEach(hole); });
+            return { spielen: spielen, ausblenden: ausblenden };
+        })();
+
+        // ==========================================
         // UEBERGANG Einstimmung -> Geschichte: Die Buchstaben der Seite wirbeln und formen den Anfang der Geschichte
         // ==========================================
         let wirbelLaeuft = false;
@@ -680,6 +720,7 @@
             const quelle = document.getElementById("einstimmungScreen");
             const quellen = buchstaben([quelle], 640, true);
             if (quellen.length < 20) { wirbelLaeuft = false; zeigen(); return; }
+            TON.spielen("wirbel");
             const story = document.getElementById("storyScreen"), inhalt = document.getElementById("storyContent");
             const accent = (getComputedStyle(document.documentElement).getPropertyValue("--accent-color") || "#d9b45a").trim();
             inhalt.innerHTML = "";
@@ -711,6 +752,7 @@
             }
             function fertig() {
                 if (beendet) return; beendet = true;
+                TON.ausblenden("wirbel", 700);
                 story.style.transition = "opacity 0.7s ease"; story.style.opacity = "1";
                 ov.style.transition = "opacity 0.7s ease"; ov.style.opacity = "0"; ov.style.pointerEvents = "none";
                 document.documentElement.style.overflow = "";
@@ -787,6 +829,7 @@
             const reduziert = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
             if (window.PORTAL_AUS || portalLaeuft || reduziert) { weiter(); return; }
             portalLaeuft = true;
+            TON.spielen("knarren");
             const n = String(tag).padStart(2, "0");
             // gleiches Bild wie die Kachel in der Uebersicht: geoeffnet = volles Bild, sonst verpixelt
             let bereitsOffen = false;
@@ -868,6 +911,7 @@
             function beenden() {
                 if (beendet) return; beendet = true;
                 wechseln();
+                TON.ausblenden("knarren", 500);
                 ov.classList.add("aus");
                 setTimeout(function () { ov.remove(); portalLaeuft = false; }, 700);
             }

@@ -1,6 +1,6 @@
 /* Offline-Speicher: Seite, Geschichten und Bilder werden beim ersten Besuch abgelegt.
    Bei jeder Änderung an der Seite VERSION hochzählen, damit die Handys die neue Fassung holen. */
-const VERSION = "advent-v12";
+const VERSION = "advent-v13";
 const KERN = ["./", "index.html", "config.js", "manifest.json", "manifest-test.json", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "icon-test-192.png", "icon-test-512.png", "apple-touch-icon-test.png"];
 for (let i = 1; i <= 24; i++) KERN.push("story-day" + i + ".js");
 const BILDER = ["bilder/landing.jpg", "bilder/finale.jpg"];
@@ -22,8 +22,10 @@ self.addEventListener("activate", function (e) {
 self.addEventListener("fetch", function (e) {
   const r = e.request;
   if (r.method !== "GET" || new URL(r.url).origin !== location.origin) return;
-  // Kalender-Termine nie aus dem Speicher (immer frisch laden)
-  if (/\/erinnerung\//.test(r.url)) return;
+  // Kalender-Termine nie aus dem Speicher (immer frisch laden).
+  // Töne ebenfalls nicht über den Service Worker: Safari lädt Audio in Teilstücken
+  // (Range-Anfragen), die ein zwischengespeicherter Ton nicht sauber beantwortet.
+  if (/\/erinnerung\//.test(r.url) || /\/ton\//.test(r.url)) return;
   if (/\/bilder\//.test(r.url)) {
     // Bilder: zuerst aus dem Speicher
     e.respondWith(caches.match(r).then(function (m) { return m || fetch(r).then(function (res) { if (res.ok) { const k = res.clone(); caches.open(VERSION).then(function (c) { c.put(r, k); }); } return res; }); }));

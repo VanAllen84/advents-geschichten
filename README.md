@@ -14,7 +14,7 @@ Absender ist Thilo.
 | GitHub-Repository | `vanallen84/advents-geschichten` |
 | Alte GitHub-Adresse (leitet weiter) | https://vanallen84.github.io/advents-geschichten/ |
 
-Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v12`.
+Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v13`.
 
 ---
 
@@ -91,6 +91,9 @@ Für den Inhalt der Startseite, das Finale und die Begrüßungssätze muss man i
 │   ├── tag-01.jpg … tag-24.jpg       Tagesbilder (1200×600)
 │   ├── pix-mid-01.png … pix-mid-24.png    leicht verpixelt (32×16 Pixel)
 │   └── pix-lock-01.png … pix-lock-24.png  stark verpixelt (10×5 Pixel)
+├── ton/
+│   ├── knarren.mp3       Ton beim Öffnen einer Tür (Portal)
+│   └── wirbel.mp3        Ton beim Buchstaben-Wirbel
 ├── erinnerung/
 │   └── 1700.ics … 2100.ics   Kalender-Termine, je eine Datei pro Uhrzeit
 ├── test/
@@ -365,7 +368,29 @@ Ist am Gerät „Bewegung reduzieren“ eingestellt (`prefers-reduced-motion`), 
 - Sie läuft nur **einmal** von selbst (Speicher-Schlüssel `finaleAn`). Danach kann man sie über „Die Animation noch einmal ansehen“ wieder abspielen.
 - **Variante A „Vier Kerzen“** (Adventskranz) ist noch im Code und wird mit `window.FINALE_VAR = "A"` aktiviert.
 
-### 8.4 Kleinere Effekte
+### 8.4 Töne
+
+Zwei Toneffekte begleiten die Animationen:
+
+| Datei | Wann | Ende |
+|---|---|---|
+| `ton/knarren.mp3` | sobald die **Portal-Animation** startet, also bei jedem Öffnen einer Tür, egal ob über eine Kachel in der Übersicht oder über „Weiter durch das nächste Türchen“, und egal ob das Türchen schon einmal geöffnet war | spielt bis zum Ende der Datei; wird die Animation übersprungen oder ist sie vorbei, wird der Ton in 0,5 s ausgeblendet |
+| `ton/wirbel.mp3` | sobald der **Buchstaben-Wirbel** startet (nach „Geschichte beginnen“) | wird am Ende des Wirbels oder beim Überspringen in 0,7 s ausgeblendet |
+
+- Umgesetzt im Modul `TON` in index.html (`TON.spielen(name)`, `TON.ausblenden(name, ms)`).
+  Die Dateinamen stehen dort in `DATEIEN`.
+- **Ton nur mit Animation:** Läuft keine Animation (Einstellung „Bewegung reduzieren“, `PORTAL_AUS`, sehr kurze Einstimmung), gibt es auch keinen Ton.
+- **Handys spielen Töne nur nach einer Berührung.** Das passt hier immer, weil Portal und Wirbel direkt durch ein Tippen starten. Würde man die Animationen künftig automatisch (ohne Tippen) starten, bliebe der Ton stumm.
+- **Fehlt eine Datei** oder blockiert das Gerät den Ton, laufen die Animationen ganz normal weiter, nur ohne Ton.
+- **Länge der Dateien:** Am besten passt das Knarren mit ca. 1,5–2 s (so lange öffnet sich die Tür), der Wirbel mit ca. 4–5 s. Längere Dateien werden am Ende der Animation ausgeblendet.
+- **Lautstärke:** Die Dateien werden mit voller Lautstärke abgespielt. Ist ein Ton zu laut, die Datei selbst leiser machen.
+  Auf dem iPhone lässt sich die Lautstärke per Skript nicht ändern; dort wird beim „Ausblenden“ nach der Zeit einfach angehalten.
+- **Stummschalter am iPhone:** Je nach iOS-Version spielt Safari die Töne auch bei eingeschaltetem Stummschalter oder eben nicht. Die normale Lautstärke des Handys gilt immer.
+- **Kein Offline-Ton:** Die Töne laufen absichtlich nicht über den Service Worker (siehe [Abschnitt 13](#13-offline-fähigkeit-und-updates-service-worker)). Ohne Netz bleibt es daher still.
+- Töne austauschen: Datei mit **gleichem Namen** in `ton/` ersetzen. Sonst muss `DATEIEN` im Modul `TON` angepasst werden.
+- Zum Abschalten aller Töne beim Testen: `window.TON_AUS = true` in der Browser-Konsole.
+
+### 8.5 Kleinere Effekte
 
 - Bilder blenden weich ein, sobald sie sichtbar werden.
 - Der Begrüßungssatz in der Übersicht blendet ein.
@@ -540,6 +565,9 @@ Es gibt **keine Übertragung an einen Server**. Jedes Gerät und jeder Browser h
 - **Bilder:** zuerst aus dem Speicher (schnell), sonst aus dem Netz.
 - Gespeichert werden nur erfolgreiche Antworten (`res.ok`). Fehlerseiten landen also nicht im Speicher.
 - `.ics`-Dateien werden nie gespeichert.
+- **Töne (`ton/`) werden ebenfalls nie über den Service Worker geladen.**
+  Safari holt Audio in Teilstücken (Range-Anfragen). Eine zwischengespeicherte Antwort beantwortet das nicht sauber, und der Ton würde auf dem iPhone dann gar nicht spielen.
+  Die Töne kommen also immer direkt aus dem Netz (und aus dem normalen Browser-Speicher).
 
 ### Updates
 
@@ -663,6 +691,7 @@ Der Service Worker ist lokal nicht aktiv (nur https), daher gibt es keine Speich
 - Startbildschirm-App, besonders iPhone und das getrennte TEST-Symbol.
 - Übernahme der .ics-Termine in den Handy-Kalender.
 - Wake Lock (Bildschirm bleibt an).
+- Töne: ob sie spielen, wie laut sie sind und wie sie zum Stummschalter stehen.
 
 ---
 
@@ -681,6 +710,7 @@ Der Service Worker ist lokal nicht aktiv (nur https), daher gibt es keine Speich
 - **Speicher-Präfix hängt am Jahr:** Wird `JAHR` geändert, sind alle bisherigen Stände für die Seite „vergessen“. Die alten Daten bleiben unbenutzt im Browser liegen.
 - **Plattdeutsch und „ward“:** Eine automatische Ersetzung „ward → wurde“ hätte in plattdeutschen Sätzen Fehler erzeugt. Die betroffenen Geschichten (9, 16) wurden deshalb vollständig ins Hochdeutsche übertragen.
 - **Titel auf Kacheln:** Werden aus dem Speicher genommen. Nach dem Austausch einer Geschichte bleibt bei bisherigen Lesern bis zum erneuten Öffnen der alte Titel stehen.
+- **Ton spielt nicht:** Datei wirklich unter `ton/knarren.mp3` bzw. `ton/wirbel.mp3` (Kleinschreibung beachten, GitHub unterscheidet Groß/Klein)? Handy-Lautstärke an? Am iPhone ggf. Stummschalter prüfen. Format MP3 funktioniert auf allen gängigen Handys.
 - **`titel:` in den Geschichten-Dateien** muss als `"…"`-String stehen, sonst kann `titelNachladen` ihn nicht lesen. Die Geschichte selbst funktioniert aber trotzdem.
 
 ---
@@ -692,6 +722,7 @@ Der Service Worker ist lokal nicht aktiv (nur https), daher gibt es keine Speich
 | `const testModus = false;` | index.html | `true`: **alle** Türchen offen und eine Entwickler-Leiste oben mit Tagesauswahl. **Niemals so hochladen.** |
 | `window.FINALE_VAR = "B";` | index.html | `"A"` = Finale „Vier Kerzen“, `"B"` = „Die 24 Lichter“ |
 | `window.PORTAL_AUS = true` | Browser-Konsole | schaltet Portal, Wirbel und Finale-Animation ab |
+| `window.TON_AUS = true` | Browser-Konsole | schaltet beide Töne ab |
 | `window.PORTAL_FARBE = true` | Browser-Konsole | Portal nur golden, ohne Bild |
 | `VORTEST_NOVEMBER` | config.js | November = Dezember auch auf LIVE (nicht mehr nötig, TEST-Fassung nutzen) |
 | `?test=1` | Adresse | TEST-Fassung |
@@ -713,6 +744,7 @@ Der Service Worker ist lokal nicht aktiv (nur https), daher gibt es keine Speich
 | Geschichten | `ladeGeschichte`, `absaetzeHtml`, `loadStoryContent`, `geschichteFehler`, `geschichteNochmal` |
 | Bilder | `bildEinblenden`, `zeigeStoryBild`, `storyBildStart`, `wmAn`, `wmAus` |
 | Animationen | `portalDurch`, `wirbelUebergang`, `startStory`, `finaleDurch` (mit `bildA`/`bildB`) |
+| Töne | `TON.spielen`, `TON.ausblenden` (Dateinamen in `DATEIEN`) |
 | Startseite | `rulesAktualisieren`, `vorabUmschalten`, `rulesUmschalten`, `ladeErinnerung`, Countdown, App-Tipp nach Gerät |
 | Übersicht | `begruessungWaehlen`, `begruessungZeigen`, `finaleKnopfAktualisieren` |
 | Sonstiges | `seiteAktualisieren` (Tab-Titel/Symbol), Lesebalken und `lesePositionHerstellen`, Wake Lock, Zurück-Geste, Datumswechsel-Prüfung, Service-Worker-Registrierung |
@@ -757,6 +789,7 @@ Grob in der Reihenfolge der Entstehung (Herbst 2026):
     - Bei schon geöffneten Türchen sofort Zoom.
     - Ungeöffnete Kacheln heller, geöffnete Kacheln scharf und mit Titel der Geschichte.
 16. **Eigenes App-Symbol für TEST** (v12): goldener Stern mit rotem Band „TEST“.
+17. **Töne** (v13): `ton/knarren.mp3` beim Öffnen einer Tür, `ton/wirbel.mp3` beim Buchstaben-Wirbel.
 
 ---
 
