@@ -14,7 +14,7 @@ Der Absender steht in `config.js` (`ABSENDER`) und erscheint nur in der Signatur
 | GitHub-Repository | `vanallen84/advents-geschichten` |
 | Alte GitHub-Adresse (leitet weiter) | https://vanallen84.github.io/advents-geschichten/ |
 
-Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v17`.
+Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v18`.
 
 ---
 
@@ -165,7 +165,7 @@ Beide Fassungen sind **dieselben Dateien**. Unterschieden wird nur über den Adr
 - **`test/index.html`** ist nur eine Weiterleitung.
   - Ein angehängtes `?reset=1` wird mitgenommen: `/test/?reset=1` → `/index.html?test=1&reset=1`.
 - **`?reset=1`** löscht den gespeicherten Stand der jeweiligen Fassung.
-  - Gelöscht werden: geöffnete Türchen, Lesepositionen, Begrüßungs-Verlauf, „Finale gesehen“, „schon mal besucht“, gespeicherte Titel.
+  - Gelöscht werden: geöffnete Türchen, Lesepositionen, Begrüßungs-Verlauf, „Finale gesehen“, „schon mal besucht“, gespeicherte Titel, Lieblingsgeschichten, Schriftgröße.
   - Danach wird der Zusatz aus der Adresszeile entfernt, damit ein Neuladen nicht erneut löscht.
 - **Wichtig:** Im Dezember verhält sich die TEST-Fassung wie die LIVE-Fassung, nur mit eigenem Speicher.
   Zum Vorab-Testen also immer im November nutzen.
@@ -280,7 +280,8 @@ Alle Seiten liegen als `<div>`-Bereiche in `index.html` und werden über die Kla
 - **Titel auf den Kacheln:**
   - Der Titel wird beim Laden einer Geschichte gespeichert (Speicher-Schlüssel `titel`).
   - Fehlt ein Titel (z. B. bei Türchen, die vor dieser Funktion geöffnet wurden), holt die Seite ihn selbst aus `story-dayN.js` (Funktion `titelNachladen`).
-- Knopf **„Zum Finale“**: sichtbar ab dem 25. Dezember oder sobald Türchen 24 geöffnet wurde.
+- Knopf **„Zum Finale“**: sichtbar ab dem 25. Dezember oder sobald Türchen 24 geöffnet wurde. Beim **allerersten** Aufruf der Finale-Seite (egal ob über diesen Knopf oder nach Türchen 24) laufen Finale-Animation und Umschlag, danach geht es direkt zum Brief.
+- Kacheln von **Lieblingsgeschichten** tragen oben links einen goldenen Stern ★.
 - Knopf „Zurück zur Startseite“.
 
 ### 7.3 Einstimmungsseite
@@ -295,6 +296,16 @@ Alle Seiten liegen als `<div>`-Bereiche in `index.html` und werden über die Kla
 - „Türchen N“, Titel, Text (Absätze), darunter **„Quelle: …“** in kleiner Schrift.
 - Darunter das **Tagesbild**. Es blendet langsam ein (4 s), sobald man beim Lesen dort ankommt.
 - Auch hier liegt das Tagesbild schwach als Wasserzeichen im Hintergrund.
+- **Lese-Leiste** unter dem Titel:
+  - **A− / A+:** Schriftgröße in fünf Stufen (90 %, 100 %, 112 %, 125 %, 140 % von 1,05 rem), pro Gerät gemerkt (Schlüssel `schrift`). Der Absatz, der gerade oben steht, bleibt beim Umschalten an seiner Stelle.
+  - **🔈 Vorlesen:** liest Titel und Text mit der Sprachausgabe des Geräts vor (`VORLESEN`).
+    - Deutsche Stimme; bevorzugt eine „Premium“/„Verbessert“-Stimme, wenn auf dem Gerät installiert (iPhone: Einstellungen → Bedienungshilfen → Gesprochene Inhalte → Stimmen). Tempo 0,95.
+    - Der Text wird in Stücke von höchstens ca. 220 Zeichen an Satzgrenzen zerlegt, weil manche Browser lange Texte sonst abbrechen.
+    - Der gerade gelesene Absatz wird leicht golden hinterlegt; die Seite scrollt mit, wenn er aus dem Bild läuft.
+    - „■ Vorlesen anhalten“ merkt sich den Absatz; der Knopf heißt dann „🔈 Weiter vorlesen“ und macht dort weiter. Wer die Geschichte verlässt oder sie zu Ende hört, beginnt beim nächsten Mal von vorn.
+    - Beim Seitenwechsel und wenn die App in den Hintergrund geht, wird das Vorlesen angehalten.
+    - Gibt es auf dem Gerät keine Sprachausgabe, ist der Knopf ausgeblendet. Die Qualität hängt vom Gerät ab und klingt teils mechanisch.
+- **Lieblingsgeschichte:** Knopf „☆ Zu den Lieblingen“ / „★ Lieblingsgeschichte“ unter der Geschichte (Schlüssel `lieblinge`).
 - **Lesefortschritt:** dünner goldener Balken ganz oben.
 - **Leseposition:**
   - Wird beim Scrollen gespeichert und beim erneuten Öffnen **innerhalb von 12 Stunden** wiederhergestellt.
@@ -310,6 +321,8 @@ Alle Seiten liegen als `<div>`-Bereiche in `index.html` und werden über die Kla
   - Die Bögen liegen **untereinander**, leicht überlappend und gegeneinander verdreht (Bogen 1 −0,3°, Bogen 2 +0,45°); man liest sie durch normales Scrollen.
   - Aufteilung nach Absätzen, damit kein Satz über zwei Bögen läuft: Bogen 1 = Überschrift und Absätze 1–2, Bogen 2 = Absätze 3–5 und Unterschrift.
   - Ein einzelnes, sehr langes Blatt wirkte unnatürlich; eine Schriftrolle passte nicht zum Umschlag.
+  - Brieftext in Serifenschrift (Georgia), passend zum alten Briefpapier.
+- **„Deine Lieblingsgeschichten“:** ein kleiner Zettel unter dem Brief mit Nummer und Titel aller gemerkten Geschichten. Antippen öffnet die Geschichte (mit Tür-Animation). Ohne Lieblinge wird der Zettel nicht gezeigt.
 - Darin: Überschrift „Frohe Weihnachten!“, fünf Absätze Brieftext (vom Absender selbst geschrieben, November 2026), linksbündig mit Silbentrennung, darunter rechts der Name aus `ABSENDER` als Unterschrift. Ist `ABSENDER` leer, entfällt die Unterschrift.
 - Bild `bilder/finale.jpg`.
 - Knopf **„✨ Die Animation noch einmal ansehen“**.
@@ -390,7 +403,7 @@ Ist am Gerät „Bewegung reduzieren“ eingestellt (`prefers-reduced-motion`), 
 
 ### 8.4 Finale-Animation (`finaleDurch`, Variante B „Die 24 Lichter“)
 
-- Läuft beim ersten Weg von Türchen 24 zum Finale (etwa 15 s).
+- Läuft beim allerersten Aufruf der Finale-Seite, egal ob von Türchen 24 oder über „Zum Finale“ in der Übersicht (etwa 15 s).
 - Zeitleiste (Variante B, ca.): 0–5,4 s Lichter schweben · 5,4–8 s sie formen den Baum · bis 10,2 s Baum · 10,2–12,5 s Baum wird zum Stern · 12,5–13,4 s Sternschnuppe · ca. 13,2 s Lichtblitz · bis 15,3 s Ausblenden.
 - 24 goldene Lichter (für die 24 Türchen) fügen sich zu einem **Tannenbaum**, dann zu einem **Stern**.
 - Der Stern wird zur **Sternschnuppe**, am Ende folgt ein **Lichtblitz**, und die Finale-Seite erscheint.
@@ -400,7 +413,7 @@ Ist am Gerät „Bewegung reduzieren“ eingestellt (`prefers-reduced-motion`), 
   - Die Finale-Seite liegt schon darunter bereit.
   - Beim Tippen: `ton/umschlag.mp3`, das Siegel verschwindet, die Lasche klappt auf (0–0,65 s), der Brief gleitet heraus (ab 0,65 s), ab 1,7 s wird er größer und blendet aus, während der dunkle Grund verschwindet und den Brief der Finale-Seite freigibt (fertig nach ca. 2,6 s).
   - Tippen während des Öffnens überspringt den Rest.
-  - Der Umschlag kommt **nur zusammen mit der Animation**: beim ersten Mal und bei „Die Animation noch einmal ansehen“. Der Knopf „Zum Finale“ in der Übersicht, „Bewegung reduzieren“ und `PORTAL_AUS` zeigen den Brief sofort offen.
+  - Der Umschlag kommt **nur zusammen mit der Animation**: beim allerersten Aufruf der Finale-Seite (nach Türchen 24 oder über „Zum Finale“) und bei „Die Animation noch einmal ansehen“. Danach, bei „Bewegung reduzieren“ und bei `PORTAL_AUS` liegt der Brief sofort offen da.
   - Die Zurück-Wischgeste entfernt den Umschlag und geht in die Übersicht.
 - **Variante A „Vier Kerzen“** (Adventskranz) ist noch im Code und wird mit `window.FINALE_VAR = "A"` aktiviert.
 
@@ -599,12 +612,14 @@ Es gibt **keine Übertragung an einen Server**. Jedes Gerät und jeder Browser h
 | `gruss` | Begrüßungs-„Beutel“ und Verlauf je Tageszeit |
 | `finaleAn` | `true`, wenn die Finale-Animation schon gelaufen ist |
 | `besucht` | `true` nach dem ersten Besuch (für das Einklappen von „Bevor es losgeht“) |
+| `lieblinge` | gemerkte Lieblingsgeschichten, z. B. `[3,7]` (seit v18) |
+| `schrift` | gewählte Schriftgröße der Geschichten, Stufe 0–4, Standard 1 (seit v18) |
 
 - Funktioniert `localStorage` nicht (z. B. in manchen privaten Modi), arbeitet die Seite mit einem Ersatz im Arbeitsspeicher.
   Dann geht der Stand beim Schließen verloren, aber nichts stürzt ab.
 - **Wichtig für iPhone:** Eine auf dem Startbildschirm installierte Web-App hat **einen anderen Speicher** als Safari.
   Wer erst in Safari liest und dann die App nutzt, beginnt dort von vorn.
-- Töne, Zuklappen, Finale-Ton (v14) und Umschlag (v15) haben **keine neuen Schlüssel** gebracht; der Fortschritt der Leser bleibt unverändert.
+- Töne, Zuklappen, Finale-Ton (v14) und Umschlag (v15) haben **keine neuen Schlüssel** gebracht, v18 nur die zwei neuen `lieblinge` und `schrift`; der Fortschritt der Leser bleibt unverändert.
   Die Töne selbst liegen nicht im `localStorage`, sondern im Offline-Speicher des Service Workers (Abschnitt 13).
 
 ---
@@ -630,7 +645,7 @@ Es gibt **keine Übertragung an einen Server**. Jedes Gerät und jeder Browser h
 
 ### Updates
 
-> **Bei jeder Änderung `VERSION` in `sw.js` hochzählen** (`advent-v17` → `advent-v18` …).
+> **Bei jeder Änderung `VERSION` in `sw.js` hochzählen** (`advent-v18` → `advent-v19` …).
 
 - Eine neue Version löscht beim Aktivieren den alten Speicher und lädt alles neu.
 - Ohne neue Version kommen **geänderte Bilder und Töne** auf Handys, die die Seite schon kennen, nicht an. Beide werden zuerst aus dem Speicher geholt.
@@ -751,6 +766,7 @@ Der Service Worker ist auch lokal auf `localhost` aktiv. Wer beim Entwickeln Än
 
 ### 17.4 Was nur auf echten Geräten zuverlässig prüfbar ist
 
+- Vorlesen: Klang der Stimme, Mitscrollen, Anhalten/Weiter (im Test nur mit einer nachgebildeten Sprachausgabe geprüft).
 - Flüssigkeit der Animationen (Portal-3D-Drehung, Wirbel, Finale), besonders auf älteren iPhones.
 - Startbildschirm-App, besonders iPhone und das getrennte TEST-Symbol.
 - Übernahme der .ics-Termine in den Handy-Kalender.
@@ -810,6 +826,7 @@ Der Service Worker ist auch lokal auf `localhost` aktiv. Wer beim Entwickeln Än
 | Bilder | `bildEinblenden`, `zeigeStoryBild`, `storyBildStart`, `wmAn`, `wmAus` |
 | Animationen | `portalDurch`, `portalZurueck`, `wirbelUebergang`, `startStory`, `finaleDurch` (mit `bildA`/`bildB`), `umschlagZeigen` |
 | Töne | `TON.spielen`, `TON.ausblenden` (Dateinamen in `DATEIEN`) |
+| Lesen | `schriftAendern`, `schriftAnwenden`, `VORLESEN` (`umschalten`, `stop`), `lieblingUmschalten`, `lieblingKnopf`, `lieblingeListe`, `istLiebling`, `lieblingeZeigen` |
 | Startseite | `rulesAktualisieren`, `vorabUmschalten`, `rulesUmschalten`, `ladeErinnerung`, Countdown, App-Tipp nach Gerät |
 | Übersicht | `begruessungWaehlen`, `begruessungZeigen`, `finaleKnopfAktualisieren` |
 | Sonstiges | `seiteAktualisieren` (Tab-Titel/Symbol), Lesebalken und `lesePositionHerstellen`, Wake Lock, Zurück-Geste, Datumswechsel-Prüfung, Service-Worker-Registrierung |
@@ -864,12 +881,13 @@ Grob in der Reihenfolge der Entstehung (Herbst 2026):
 19. **Umschlag und Brief** (v15): Nach der Finale-Animation liegt ein Umschlag mit Stern-Siegel bereit; Tippen öffnet ihn (`ton/umschlag.mp3`), der Brief wird zur Finale-Seite. Die Finale-Seite sieht aus wie ein Brief auf altem Briefpapier.
 20. **Neuer Brieftext** (v16): fünf Absätze, Unterschrift nur noch mit dem Namen.
 21. **Zwei Briefbögen** (v17): Der Brief steht auf zwei leicht versetzten Bögen untereinander statt auf einem langen Blatt; im Umschlag gleitet ein kleiner Stapel heraus.
+22. **Lesen und Finale** (v18): Schriftgröße A−/A+, Vorlesen mit „Weiter vorlesen“, Lieblingsgeschichten (Stern auf Kachel, Zettel im Finale), Brief in Serifenschrift, Finale-Animation und Umschlag beim allerersten Aufruf auch über „Zum Finale“.
 
 ---
 
 ## 22. Rechtliches zu Texten und Bildern
 
 - **Texte:** Alle 24 Geschichten sind gemeinfrei. Die Bearbeitung (Modernisierung) ist bei jeder Geschichte in der Quellenzeile vermerkt.
-- **Eigenformulierungen:** Einstimmungssätze, Begrüßungssätze, Texte der Startseite, „Tippen zum Öffnen“. Der Brief auf der Finale-Seite stammt vom Absender selbst.
+- **Eigenformulierungen:** Einstimmungssätze, Begrüßungssätze, Texte der Startseite, „Tippen zum Öffnen“, die Beschriftungen „Zu den Lieblingen“, „Lieblingsgeschichte“, „Deine Lieblingsgeschichten“, „Vorlesen“, „Weiter vorlesen“, „Vorlesen anhalten“. Der Brief auf der Finale-Seite stammt vom Absender selbst.
 - **Bilder:** Mit Google Gemini erzeugt, für die private Nutzung in diesem Kalender. Keine Fotos realer Personen.
 - Die Seite ist privat, nicht in Suchmaschinen gelistet und sammelt keine Daten. Alles bleibt im Browser des Lesers.

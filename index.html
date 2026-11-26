@@ -234,6 +234,28 @@
             font-size: 0.8rem;
         }
 
+        /* Lese-Leiste unter dem Titel: Schriftgröße und Vorlesen */
+        .lese-leiste { display: flex; justify-content: center; gap: 8px; margin: -6px 0 22px; flex-wrap: wrap; }
+        .lese-leiste button { background: rgba(255,255,255,0.04); border: 1px solid rgba(217,180,90,0.45); color: var(--heading-color); border-radius: 18px; padding: 6px 13px; font-size: 0.85rem; cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent; }
+        .lese-leiste button:disabled { opacity: 0.35; cursor: default; }
+        .lese-leiste button.an { background: rgba(217,180,90,0.18); border-color: var(--accent-color); }
+        .story-text p.vorlesen-aktiv { background: rgba(217,180,90,0.10); box-shadow: -10px 0 0 rgba(217,180,90,0.10), 10px 0 0 rgba(217,180,90,0.10); border-radius: 4px; transition: background 0.4s ease; }
+        /* Lieblingsgeschichte */
+        .btn-liebling { display: block; margin: 22px auto 0; background: transparent; border: 1px solid rgba(217,180,90,0.45); color: var(--heading-color); border-radius: 20px; padding: 9px 18px; font-size: 0.92rem; cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent; transition: background 0.3s ease; }
+        .btn-liebling.an { background: rgba(217,180,90,0.16); border-color: var(--accent-color); }
+        .btn-liebling .stern { color: var(--accent-color); margin-right: 6px; }
+        .btn-liebling.puls .stern { display: inline-block; animation: sternPuls 0.6s ease; }
+        @keyframes sternPuls { 40% { transform: scale(1.7); } }
+        .tuer-card .tag-stern { position: absolute; top: 6px; left: 9px; color: #f2c14e; font-size: 0.95rem; text-shadow: 0 1px 4px #000; pointer-events: none; }
+        .lieblinge { position: relative; margin: 6px -6px 26px; padding: 20px 20px 14px; color: #3b2a18; border-radius: 3px; transform: rotate(0.7deg);
+            background: radial-gradient(ellipse at 80% 15%, rgba(160,110,40,0.14), transparent 50%), linear-gradient(176deg, #f1e3bf, #e3cfa1);
+            box-shadow: 0 10px 26px rgba(0,0,0,0.45), inset 0 0 30px rgba(120,80,25,0.3); }
+        .lieblinge h3 { color: #6a4618; margin: 0 0 10px; font-size: 1.1rem; }
+        .lieblinge ul { list-style: none; margin: 0; padding: 0; }
+        .lieblinge li { padding: 8px 2px; border-top: 1px solid rgba(120,85,35,0.2); font-family: Georgia, 'Times New Roman', serif; cursor: pointer; display: flex; gap: 8px; }
+        .lieblinge li:first-child { border-top: none; }
+        .lieblinge li .nr { color: #8a6424; min-width: 2.2em; }
+
         /* Illustrationen */
         .story-bild { margin: 25px 0 5px; text-align: center; opacity: 0; transition: opacity 4s ease-in-out; }
         .story-bild.sichtbar { opacity: 1; }
@@ -346,7 +368,7 @@
         .brief.brief2 { z-index: 0; margin-top: -10px; padding-top: 30px; transform: rotate(0.45deg) translateX(3px); }
         .brief .brief-seite { text-align: center; font-size: 0.78rem; letter-spacing: 1px; color: rgba(90,60,20,0.55); margin: 6px 0 0; font-family: Georgia, 'Times New Roman', serif; }
         .brief p, .brief .signatur { color: #3b2a18; }
-        .brief .finale-text p { text-align: left; hyphens: auto; -webkit-hyphens: auto; font-size: 0.98rem; line-height: 1.65; margin-bottom: 14px; }
+        .brief .finale-text p { text-align: left; hyphens: auto; -webkit-hyphens: auto; font-family: Georgia, 'Times New Roman', serif; font-size: 1rem; line-height: 1.65; margin-bottom: 14px; }
         .brief .finale-text .signatur { text-align: right; margin: 18px 6px 4px 0; font-size: 1.15rem; }
         /* Umschlag nach der Finale-Animation (umschlagZeigen) */
         #umschlag { position: fixed; inset: 0; z-index: 3400; background: #07120e; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: background 0.8s ease; -webkit-tap-highlight-color: transparent; }
@@ -492,7 +514,7 @@
             <div class="tueren-grid" id="tuerenGridContainer">
                 <!-- wird per JavaScript mit 24 Türchen befüllt -->
             </div>
-            <button class="btn-primary btn-zweit" id="btnFinale" style="margin-top: 25px; display: none;" onclick="zeigeFinale()">Zum Finale</button>
+            <button class="btn-primary btn-zweit" id="btnFinale" style="margin-top: 25px; display: none;" onclick="finaleDurch(zeigeFinale)">Zum Finale</button>
             <button class="btn-primary btn-zweit" style="margin-top: 25px;" onclick="resetToLanding()">Zurück zur Startseite</button>
         </div>
 
@@ -519,11 +541,17 @@
         <div id="storyScreen" class="hidden">
             <p class="story-kicker">Türchen <span id="storyDayNum">1</span></p>
             <h2 id="storyTitle"></h2>
+            <div class="lese-leiste" id="leseLeiste">
+                <button id="btnKleiner" onclick="schriftAendern(-1)" aria-label="Schrift kleiner">A−</button>
+                <button id="btnGroesser" onclick="schriftAendern(1)" aria-label="Schrift größer">A+</button>
+                <button id="btnVorlesen" onclick="VORLESEN.umschalten()" style="display:none;">🔈 Vorlesen</button>
+            </div>
             <div class="story-text" id="storyContent"></div>
             <p class="story-quelle" id="storyQuelle" style="display:none;"></p>
 
             <div class="story-bild" id="storyBild" style="display:none;"><img id="storyBildImg" alt="" src=""></div>
 
+            <button class="btn-liebling" id="btnLiebling" onclick="lieblingUmschalten()" style="display:none;"></button>
             <button class="btn-primary" id="btnWeiter" style="margin-top: 25px;" onclick="nextDaySetup()">Weiter durch das nächste Türchen …</button>
             <button class="btn-primary btn-zweit" style="margin-top: 10px;" onclick="portalZurueck()">Zurück zur Türchen-Auswahl</button>
         </div>
@@ -548,6 +576,10 @@
                     </div>
                     <p class="brief-seite">– 2 –</p>
                 </div>
+            </div>
+            <div class="lieblinge" id="lieblingeBox" style="display:none;">
+                <h3>Deine Lieblingsgeschichten</h3>
+                <ul id="lieblingeListe"></ul>
             </div>
             <div class="story-bild" id="finaleBild" style="display:none;"><img id="finaleBildImg" alt="" src=""></div>
             <button class="btn-primary btn-zweit" style="margin-top: 25px;" onclick="finaleDurch(function () {}, null, true)">&#x2728; Die Animation noch einmal ansehen</button>
@@ -613,7 +645,7 @@
         // ==========================================
         try {
             if (location.search.indexOf("reset=1") >= 0) {
-                ["geoeffnet", "lese", "gruss", "finaleAn", "besucht", "titel"].forEach(speicherLoeschen);
+                ["geoeffnet", "lese", "gruss", "finaleAn", "besucht", "titel", "lieblinge", "schrift"].forEach(speicherLoeschen);
                 history.replaceState(null, "", location.pathname + (TEST_FASSUNG ? "?test=1" : ""));
             }
         } catch (e) {}
@@ -1104,6 +1136,7 @@
                 el.classList.remove("pix", "geoeffnet", "heute", "frei", "ausgelassen", "mit-titel");
                 el.style.backgroundImage = "";
                 const alt = el.querySelector(".tag-titel"); if (alt) alt.remove();
+                const altStern = el.querySelector(".tag-stern"); if (altStern) altStern.remove();
                 const bild = "linear-gradient(rgba(5,14,10,0.15) 0%, rgba(5,14,10,0.2) 45%, rgba(5,14,10,0.85) 100%), url('" + bildUrl(i) + "')";
                 if (alle && offen.indexOf(i) >= 0) { el.classList.add("frei"); el.style.backgroundImage = bild; }
                 else if (alle) { pixelSetzen(el, i, false); el.classList.add("ausgelassen"); }
@@ -1114,6 +1147,7 @@
                     const t = titelMap()[i];
                     if (t) { const sp = document.createElement("span"); sp.className = "tag-titel"; sp.textContent = t; el.appendChild(sp); el.classList.add("mit-titel"); }
                     else fehlend.push(i);
+                    if (istLiebling(i)) { const st = document.createElement("span"); st.className = "tag-stern"; st.textContent = "★"; el.appendChild(st); }
                 }
                 el.style.removeProperty("--sw");
                 if (el.classList.contains("heute") || el.classList.contains("ausgelassen")) el.style.setProperty("--sw", (wz++ * 0.35) + "s");
@@ -1207,6 +1241,7 @@
 
         function alleScreensAus() {
             wmAus();
+            try { VORLESEN.stop(); } catch (e) {}
             ["landingScreen", "calendar-overview", "einstimmungScreen", "storyScreen", "finaleScreen"].forEach(id => {
                 document.getElementById(id).classList.add("hidden");
             });
@@ -1306,7 +1341,137 @@
             img.onload = function () { box.style.display = ""; void box.offsetWidth; bildEinblenden(box); };
             img.onerror = function () { box.style.display = "none"; };
             img.src = "bilder/finale.jpg";
+            try { lieblingeZeigen(); } catch (e) {}
         }
+
+        // ---------- Schriftgröße der Geschichten (pro Gerät gemerkt) ----------
+        const SCHRIFT_STUFEN = [0.9, 1, 1.12, 1.25, 1.4];
+        function schriftStufe() { const n = speicherLesen("schrift", 1); return (typeof n === "number" && n >= 0 && n < SCHRIFT_STUFEN.length) ? n : 1; }
+        function schriftAnwenden() {
+            const n = schriftStufe();
+            document.getElementById("storyContent").style.fontSize = (1.05 * SCHRIFT_STUFEN[n]).toFixed(3) + "rem";
+            document.getElementById("btnKleiner").disabled = n <= 0;
+            document.getElementById("btnGroesser").disabled = n >= SCHRIFT_STUFEN.length - 1;
+        }
+        window.schriftAendern = function (d) {
+            const n = Math.max(0, Math.min(SCHRIFT_STUFEN.length - 1, schriftStufe() + d));
+            // Leseposition halten: den Absatz, der gerade oben steht, nach der Änderung wieder oben zeigen
+            const ps = document.querySelectorAll("#storyContent p");
+            let anker = null, abstand = 0;
+            for (const p of ps) { const r = p.getBoundingClientRect(); if (r.bottom > 80) { anker = p; abstand = r.top; break; } }
+            speicherSchreiben("schrift", n);
+            schriftAnwenden();
+            if (anker && window.scrollY > 50) window.scrollTo(0, window.scrollY + anker.getBoundingClientRect().top - abstand);
+        };
+
+        // ---------- Lieblingsgeschichten (pro Gerät gemerkt) ----------
+        function lieblingeListe() { const l = speicherLesen("lieblinge", []); return Array.isArray(l) ? l.filter(n => Number.isInteger(n) && n >= 1 && n <= 24) : []; }
+        function istLiebling(n) { return lieblingeListe().indexOf(n) >= 0; }
+        function lieblingKnopf() {
+            const b = document.getElementById("btnLiebling"), an = istLiebling(currentDay);
+            b.innerHTML = '<span class="stern">' + (an ? "★" : "☆") + "</span>" + (an ? "Lieblingsgeschichte" : "Zu den Lieblingen");
+            b.classList.toggle("an", an);
+            b.style.display = "";
+        }
+        window.lieblingUmschalten = function () {
+            const l = lieblingeListe(), i = l.indexOf(currentDay);
+            if (i >= 0) l.splice(i, 1); else { l.push(currentDay); l.sort((a, b) => a - b); }
+            speicherSchreiben("lieblinge", l);
+            lieblingKnopf();
+            const b = document.getElementById("btnLiebling");
+            b.classList.remove("puls"); void b.offsetWidth; if (i < 0) b.classList.add("puls");
+        };
+        function lieblingeZeigen() {
+            const box = document.getElementById("lieblingeBox"), ul = document.getElementById("lieblingeListe");
+            const l = lieblingeListe(), t = titelMap();
+            ul.innerHTML = "";
+            l.forEach(function (n) {
+                const li = document.createElement("li");
+                li.innerHTML = '<span class="nr">' + n + '.</span><span></span>';
+                li.lastChild.textContent = t[n] || ("Türchen " + n);
+                li.addEventListener("click", function () { portalDurch(n, null, function () { oeffneTag(n); }); });
+                ul.appendChild(li);
+            });
+            box.style.display = l.length ? "" : "none";
+        }
+
+        // ---------- Vorlesen mit der Sprachausgabe des Geräts ----------
+        // Liest Titel und Absätze in kurzen Stücken vor (lange Texte brechen in manchen Browsern sonst ab).
+        // Beginnt bei dem Absatz, der gerade oben auf dem Bildschirm steht. Der vorgelesene Absatz wird leicht markiert.
+        const VORLESEN = (function () {
+            const ok = "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+            let aktiv = false, schlange = [], stimme = null, markiert = null, fort = null;   // fort = {tag, absatz}: hier geht „Weiter vorlesen“ weiter
+            function stimmeWaehlen() {
+                try {
+                    const v = speechSynthesis.getVoices().filter(x => /^de([-_]|$)/i.test(x.lang));
+                    if (!v.length) return null;
+                    return v.find(x => /premium|enhanced|verbessert|neural|natural/i.test(x.name) && /de[-_]DE/i.test(x.lang))
+                        || v.find(x => /de[-_]DE/i.test(x.lang) && x.localService) || v.find(x => /de[-_]DE/i.test(x.lang)) || v[0];
+                } catch (e) { return null; }
+            }
+            if (ok) {
+                stimme = stimmeWaehlen();
+                try { speechSynthesis.addEventListener("voiceschanged", function () { stimme = stimmeWaehlen(); }); } catch (e) {}
+            }
+            function knopf() {
+                const b = document.getElementById("btnVorlesen"); if (!b) return;
+                b.style.display = ok ? "" : "none";
+                b.textContent = aktiv ? "■ Vorlesen anhalten" : (fort && fort.tag === currentDay ? "🔈 Weiter vorlesen" : "🔈 Vorlesen");
+                b.classList.toggle("an", aktiv);
+            }
+            function markieren(el) {
+                if (markiert) markiert.classList.remove("vorlesen-aktiv");
+                markiert = el;
+                if (!el) return;
+                if (el.tagName === "P") el.classList.add("vorlesen-aktiv");
+                const r = el.getBoundingClientRect();
+                if (r.top < 60 || r.top > window.innerHeight * 0.65) window.scrollTo({ top: window.scrollY + r.top - window.innerHeight * 0.25, behavior: "smooth" });
+            }
+            function stuecke(text) {
+                const saetze = String(text).replace(/\s+/g, " ").match(/[^.!?…]+[.!?…]+["“”»«'’)]*\s*|[^.!?…]+$/g) || [text];
+                const out = []; let akt = "";
+                saetze.forEach(function (x) { if ((akt + x).length > 220 && akt) { out.push(akt.trim()); akt = ""; } akt += x; });
+                if (akt.trim()) out.push(akt.trim());
+                return out;
+            }
+            function weiter() {
+                if (!aktiv) return;
+                const st = schlange.shift();
+                if (!st) { stop(false); return; }   // zu Ende gelesen: nächstes Mal wieder von vorn
+                if (st.el !== markiert) markieren(st.el);
+                const u = new SpeechSynthesisUtterance(st.t);
+                u.lang = "de-DE"; if (stimme) u.voice = stimme; u.rate = 0.95;
+                u.onend = weiter;
+                u.onerror = function (e) { if (aktiv && e.error !== "interrupted" && e.error !== "canceled") stop(); };
+                speechSynthesis.speak(u);
+            }
+            function stop(merken) {
+                const war = aktiv; aktiv = false; schlange = [];
+                const ps = Array.prototype.slice.call(document.querySelectorAll("#storyContent p"));
+                fort = (merken && markiert && ps.indexOf(markiert) >= 0) ? { tag: currentDay, absatz: ps.indexOf(markiert) } : null;
+                if (ok && war) { try { speechSynthesis.cancel(); } catch (e) {} }
+                markieren(null); knopf();
+            }
+            function start() {
+                const titel = document.getElementById("storyTitle");
+                const ps = Array.prototype.slice.call(document.querySelectorAll("#storyContent p"));
+                if (!ps.length) return;
+                // angehalten? dann dort weiter; sonst ab dem Absatz, der gerade oben auf dem Bildschirm steht
+                let ab = (fort && fort.tag === currentDay && fort.absatz < ps.length) ? fort.absatz : ps.findIndex(p => p.getBoundingClientRect().bottom > 80);
+                if (ab < 0) ab = 0;
+                fort = null;
+                schlange = [];
+                if (ab === 0 && titel.textContent) schlange.push({ el: titel, t: titel.textContent + "." });
+                ps.slice(ab).forEach(function (p) { stuecke(p.innerText || p.textContent).forEach(function (t) { schlange.push({ el: p, t: t }); }); });
+                aktiv = true; knopf();
+                try { speechSynthesis.cancel(); } catch (e) {}
+                weiter();   // direkt im Tippen starten (iPhone)
+            }
+            document.addEventListener("visibilitychange", function () { if (document.hidden && aktiv) stop(true); });
+            document.addEventListener("DOMContentLoaded", knopf);
+            return { ok: ok, stop: function () { stop(false); }, knopf: knopf, umschalten: function () { if (aktiv) stop(true); else start(); } };
+        })();
+        window.VORLESEN = VORLESEN;
 
         // --- Seitentitel, Symbol im Tab, Browserleisten-Farbe, nach oben scrollen ---
         function svgUri(svg) { return "data:image/svg+xml," + encodeURIComponent(svg); }
@@ -1415,6 +1580,9 @@
             const titel = document.getElementById("storyTitle");
             const quelle = document.getElementById("storyQuelle");
             quelle.style.display = "none";
+            document.getElementById("btnLiebling").style.display = "none";
+            try { schriftAnwenden(); } catch (e) {}
+            try { VORLESEN.knopf(); } catch (e) {}
             ladeGeschichte(day, function (st) {
                 if (currentDay !== day) return;
                 titel.textContent = st.titel || ("Türchen " + day);
@@ -1423,6 +1591,7 @@
                 if (q) { quelle.textContent = "Quelle: " + q; quelle.style.display = ""; }
                 try { merkeTitel(day, st.titel); } catch (e) {}
                 try { merkeGeoeffnet(day); } catch (e) {}
+                try { lieblingKnopf(); } catch (e) {}
                 storyBildStatus.text = true; storyBildStart();
                 lesePositionHerstellen(day);
             }, function () {
