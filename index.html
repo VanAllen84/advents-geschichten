@@ -306,6 +306,18 @@
         #portal.an .portal-fluegel.r { transform: rotateY(105deg); }
         #portal.bild.an .portal-wrap { transform: scale(var(--pzb, 6)); opacity: 0; transition: transform 0.95s cubic-bezier(0.55, 0, 0.85, 0.45) var(--zd, 1.6s), opacity 0.5s ease-in var(--fd, 2.05s); }
         #portal .portal-bild { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 12px; display: block; }
+        /* Tür rückwärts (Zurück in die Übersicht): heraus aus dem Bild, Flügel schließen, an den Platz der Kachel */
+        #portal.zu { background: rgba(0,0,0,0); transition: background 0.25s ease; }
+        #portal.zu.an { background: rgba(0,0,0,1); }
+        #portal.zu.frei { background: rgba(0,0,0,0); transition: background 0.6s ease; }
+        #portal.zu .portal-wrap { transform: scale(var(--zs, 6)); opacity: 0; transition: none; }
+        #portal.zu.zoom .portal-wrap { transform: scale(1); opacity: 1; transition: transform 0.95s cubic-bezier(0.2, 0.6, 0.35, 1), opacity 0.3s ease-out; }
+        #portal.zu .portal-fluegel { transition: none; }
+        #portal.zu .portal-fluegel.l { transform: rotateY(-105deg); }
+        #portal.zu .portal-fluegel.r { transform: rotateY(105deg); }
+        #portal.zu.zu2 .portal-fluegel { transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        #portal.zu.zu2 .portal-fluegel.l, #portal.zu.zu2 .portal-fluegel.r { transform: none; }
+        #portal.zu .portal-bild { background-size: cover; background-position: center; }
         .container { isolation: isolate; }
         .wm-anker { position: relative; height: 0; }
         .wm-img { position: absolute; left: -30px; right: -30px; top: -30px; height: 520px; z-index: -1; pointer-events: none; background-size: cover; background-position: center top; background-repeat: no-repeat; opacity: 0; filter: blur(1.5px); -webkit-mask-image: linear-gradient(#000 0%, rgba(0,0,0,0) 100%); mask-image: linear-gradient(#000 0%, rgba(0,0,0,0) 100%); border-radius: 12px 12px 0 0; transition: opacity 1.8s ease; }
@@ -454,7 +466,7 @@
             <p class="ein-text" id="einText"></p>
             <div id="einFehler"></div>
             <button class="btn-primary" id="btnBeginnen" onclick="startStory()">Geschichte beginnen</button>
-            <button class="btn-primary btn-zweit" onclick="zeigeTuerenUebersicht()">Zurück zur Türchen-Auswahl</button>
+            <button class="btn-primary btn-zweit" onclick="portalZurueck()">Zurück zur Türchen-Auswahl</button>
         </div>
 
         <!-- GESCHICHTE -->
@@ -467,7 +479,7 @@
             <div class="story-bild" id="storyBild" style="display:none;"><img id="storyBildImg" alt="" src=""></div>
 
             <button class="btn-primary" id="btnWeiter" style="margin-top: 25px;" onclick="nextDaySetup()">Weiter durch das nächste Türchen …</button>
-            <button class="btn-primary btn-zweit" style="margin-top: 10px;" onclick="zeigeTuerenUebersicht()">Zurück zur Türchen-Auswahl</button>
+            <button class="btn-primary btn-zweit" style="margin-top: 10px;" onclick="portalZurueck()">Zurück zur Türchen-Auswahl</button>
         </div>
 
         <!-- FINALE (nach Türchen 24) -->
@@ -641,12 +653,15 @@
 
 
         // ==========================================
-        // TÖNE: ton/knarren.mp3 (Tür geht auf) und ton/wirbel.mp3 (Buchstaben-Wirbel)
+        // TÖNE: ton/knarren.mp3 (Tür geht auf), ton/zuklappen.mp3 (Tür schließt sich),
+        //       ton/wirbel.mp3 (Buchstaben-Wirbel), ton/finale.mp3 (Finale „Die 24 Lichter“)
+        // Die Lautstärke steckt in den Dateien selbst (alle auf ca. −18 LUFS angeglichen),
+        // weil das iPhone eine Lautstärke per Skript ignoriert.
         // Gespielt wird nur zusammen mit der jeweiligen Animation. Fehlt eine Datei
         // oder blockiert das Gerät den Ton, passiert einfach nichts.
         // ==========================================
         const TON = (function () {
-            const DATEIEN = { knarren: "ton/knarren.mp3", wirbel: "ton/wirbel.mp3" };
+            const DATEIEN = { knarren: "ton/knarren.mp3", zuklappen: "ton/zuklappen.mp3", wirbel: "ton/wirbel.mp3", finale: "ton/finale.mp3" };
             const el = {}, fade = {};
             function hole(n) {
                 if (!(n in el)) {
@@ -920,6 +935,71 @@
             setTimeout(wechseln, tEnde);
             setTimeout(beenden, tEnde + 150);
             setTimeout(function () { if (document.body.contains(ov)) { ov.remove(); portalLaeuft = false; } }, tEnde + 1500);
+        }
+        // Beim Zurück aus Einstimmung/Geschichte: Die Tür schließt sich wieder auf ihrer Kachel in der Übersicht.
+        // Nur über die Knöpfe „Zurück zur Türchen-Auswahl“ – die Zurück-Wischgeste bleibt sofort.
+        function portalZurueck() {
+            const tag = currentDay;
+            const reduziert = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            if (window.PORTAL_AUS || portalLaeuft || wirbelLaeuft || reduziert || !(tag >= 1 && tag <= 24)) { zeigeTuerenUebersicht(); return; }
+            portalLaeuft = true;
+            TON.spielen("zuklappen");   // gleich beim Tippen starten (iPhone); die Datei beginnt mit 0,33 s Stille
+            const ov = document.createElement("div");
+            ov.id = "portal"; ov.className = "zu";
+            document.body.appendChild(ov);
+            let fertig = false; const ts = [];
+            const spaeter = function (f, ms) { ts.push(setTimeout(f, ms)); };
+            function ende() {
+                if (fertig) return; fertig = true;
+                ts.forEach(clearTimeout);
+                TON.ausblenden("zuklappen", 400);
+                window.__zuKeinScroll = false;
+                if (document.getElementById("calendar-overview").classList.contains("hidden")) { try { zeigeTuerenUebersicht(); } catch (e) {} }
+                ov.classList.add("aus");
+                setTimeout(function () { ov.remove(); portalLaeuft = false; }, 700);
+            }
+            ov.addEventListener("click", ende);   // Tippen = überspringen
+            requestAnimationFrame(function () { requestAnimationFrame(function () { ov.classList.add("an"); }); });
+            spaeter(function () {
+                window.__zuKeinScroll = true;
+                try { zeigeTuerenUebersicht(); } catch (e) {}
+                const kachel = document.querySelectorAll("#tuerenGridContainer .tuer-card")[tag - 1];
+                if (!kachel) { ende(); return; }
+                // erst nach dem automatischen Hochscrollen beim Seitenwechsel (MutationObserver) die Kachel in die Mitte holen
+                requestAnimationFrame(function () {
+                    if (fertig) return;
+                    const r0 = kachel.getBoundingClientRect();
+                    window.scrollTo({ top: Math.max(0, window.scrollY + r0.top + r0.height / 2 - window.innerHeight / 2), behavior: "instant" });
+                    const r = kachel.getBoundingClientRect();
+                    let offen = false;
+                    try { offen = geoeffnetListe().indexOf(tag) >= 0; } catch (e) {}
+                    const n = String(tag).padStart(2, "0");
+                    const PF = ["#fff6dc", "#f5d078", "#be8c28"];
+                    ov.style.setProperty("--p1", PF[0]); ov.style.setProperty("--p2", PF[1]); ov.style.setProperty("--p3", PF[2]); ov.style.setProperty("--pg", PF[1] + "99");
+                    ov.style.setProperty("--zs", String(Math.max(window.innerWidth / r.width, window.innerHeight / r.height) * 1.08));
+                    const wrap = document.createElement("div");
+                    wrap.className = "portal-wrap";
+                    wrap.style.left = r.left + "px"; wrap.style.top = r.top + "px"; wrap.style.width = r.width + "px"; wrap.style.height = r.height + "px";
+                    const innen = document.createElement("div"); innen.className = "portal-innen"; wrap.appendChild(innen);
+                    if (!window.PORTAL_FARBE) {
+                        const bild = document.createElement("div"); bild.className = "portal-bild"; bild.style.backgroundImage = "url('" + bildUrl(tag) + "')"; wrap.appendChild(bild);
+                    }
+                    // Türflügel zeigen das, was die Kachel jetzt zeigt: geöffnet = scharf, sonst leicht verpixelt
+                    ["l", "r"].forEach(function (seite) {
+                        const f = document.createElement("div");
+                        f.className = "portal-fluegel " + seite;
+                        f.style.backgroundImage = "linear-gradient(rgba(5,14,10,0.3), rgba(5,14,10,0.3)), url('" + (offen ? bildUrl(tag) : "bilder/pix-mid-" + n + ".png") + "')";
+                        wrap.appendChild(f);
+                    });
+                    ov.appendChild(wrap);
+                    void ov.offsetWidth;
+                    spaeter(function () { ov.classList.add("zoom"); }, 80);
+                    spaeter(function () { ov.classList.add("zu2"); }, 730);
+                    spaeter(function () { ov.classList.add("frei"); }, 1380);
+                    spaeter(ende, 1900);
+                });
+            }, 260);
+            spaeter(function () { if (!fertig) ende(); }, 4000);
         }
         function istErstesMal(tag) { return geoeffnetListe().indexOf(tag) < 0; }
 
@@ -1336,7 +1416,7 @@
         })();
 
         // Offline-Speicher (nur über https)
-        if ("serviceWorker" in navigator && location.protocol === "https:") {
+        if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
             window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
         }
 
@@ -1478,6 +1558,7 @@
         }
 
         function zeigeTuerenUebersicht() {
+            try { TON.ausblenden("finale", 800); } catch (e) {}
             alleScreensAus();
             document.getElementById("calendar-overview").classList.remove("hidden");
             begruessungZeigen();
@@ -1486,6 +1567,7 @@
             setTimeout(function () {
                 const h = heuteTag();
                 const el = h ? document.querySelectorAll("#tuerenGridContainer .tuer-card")[h - 1] : null;
+                if (window.__zuKeinScroll) return;   // beim Zuklappen bleibt die Kachel der Geschichte in der Mitte
                 if (el && !ab25() && !document.getElementById("calendar-overview").classList.contains("hidden")) el.scrollIntoView({ block: "center", behavior: "smooth" });
             }, 160);
         }
@@ -1735,6 +1817,7 @@
                 requestAnimationFrame(function () { ov.style.opacity = "1"; });
                 const dauer = variante === "A" ? 12800 : 15300, wechsel = dauer - 500;
                 let t0 = null, gewechselt = false, beendet = false;
+                TON.spielen("finale");
                 function wechselnJetzt() { if (!gewechselt) { gewechselt = true; try { weiter(); } catch (e) {} } }
                 function beenden() {
                     if (beendet) return; beendet = true; wechselnJetzt();
@@ -1750,7 +1833,9 @@
                     if (t >= dauer) { beenden(); return; }
                     requestAnimationFrame(frame);
                 }
-                ov.addEventListener("click", beenden);
+                // Tippen = überspringen, dann wird auch der Ton ausgeblendet.
+                // Läuft die Animation bis zum Ende, klingt der Ton auf der Finale-Seite aus.
+                ov.addEventListener("click", function () { if (!beendet) TON.ausblenden("finale", 1000); beenden(); });
                 requestAnimationFrame(frame);
                 setTimeout(beenden, dauer + 3000);
             };

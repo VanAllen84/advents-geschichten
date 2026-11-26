@@ -5,7 +5,7 @@ Vom 1. bis 24. Dezember öffnet sich jeden Tag ein Türchen, hinter jedem steht 
 Nach Türchen 24 folgt ein Finale.
 
 Der Kalender ist für mehrere Personen gedacht. Es gibt keinen festen Empfängernamen, die Anrede ist durchgehend „du“.
-Absender ist Thilo.
+Der Absender steht in `config.js` (`ABSENDER`) und erscheint nur in der Signatur der Finale-Seite.
 
 | | Adresse |
 |---|---|
@@ -14,7 +14,7 @@ Absender ist Thilo.
 | GitHub-Repository | `vanallen84/advents-geschichten` |
 | Alte GitHub-Adresse (leitet weiter) | https://vanallen84.github.io/advents-geschichten/ |
 
-Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v13`.
+Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v14`.
 
 ---
 
@@ -91,9 +91,11 @@ Für den Inhalt der Startseite, das Finale und die Begrüßungssätze muss man i
 │   ├── tag-01.jpg … tag-24.jpg       Tagesbilder (1200×600)
 │   ├── pix-mid-01.png … pix-mid-24.png    leicht verpixelt (32×16 Pixel)
 │   └── pix-lock-01.png … pix-lock-24.png  stark verpixelt (10×5 Pixel)
-├── ton/
-│   ├── knarren.mp3       Ton beim Öffnen einer Tür (Portal)
-│   └── wirbel.mp3        Ton beim Buchstaben-Wirbel
+├── ton/                  alle Töne, auf ca. −18 LUFS angeglichen
+│   ├── knarren.mp3       Tür geht auf (Portal)
+│   ├── zuklappen.mp3     Tür schließt sich (Zurück in die Übersicht)
+│   ├── wirbel.mp3        Buchstaben-Wirbel
+│   └── finale.mp3        Finale „Die 24 Lichter“
 ├── erinnerung/
 │   └── 1700.ics … 2100.ics   Kalender-Termine, je eine Datei pro Uhrzeit
 ├── test/
@@ -103,6 +105,7 @@ Für den Inhalt der Startseite, das Finale und die Begrüßungssätze muss man i
     ├── pixel.py                Verpixelte Kachel-Bilder erzeugen
     ├── erinnerung.py           .ics-Dateien erzeugen
     ├── test-symbole.py         Erzeugt die TEST-Symbole mit rotem Band
+    ├── toene-angleichen.py     Gleicht die Töne auf −18 LUFS an (braucht ffmpeg)
     ├── bild-prompts.md         Die 26 Gemini-Prompts für die Bilder
     └── platzhalter.py          VERALTET: erzeugte Platzhalterbilder, nicht mehr ausführen
 ```
@@ -120,7 +123,7 @@ Code und Animationen wurden so weit wie möglich übernommen und dann erweitert.
 ```js
 window.ADVENT_CONFIG = {
   EMPFAENGER_NAME: "",                 // leer = kein Name (Kalender für mehrere Personen)
-  ABSENDER: "Thilo",                   // erscheint in der Finale-Signatur
+  ABSENDER: "Vorname",                 // erscheint in der Finale-Signatur
   JAHR: 2026,                          // Jahr, in dem die Türchen im Dezember aufgehen
   SEITEN_URL: "https://adventsgeschichten.tkagel.de/",  // für die Links in den .ics-Terminen
   KALENDER_TITEL: "Dein Adventskalender",               // Überschrift der Startseite
@@ -133,7 +136,7 @@ window.ADVENT_CONFIG = {
   - Ist das Feld leer, verschwindet `{name}` samt Komma (Funktion `mitName`).
   - Aus „Guten Morgen, {name}. …“ wird dann „Guten Morgen. …“.
 - **ABSENDER:**
-  - Erscheint als Signatur „Frohe Weihnachten, Thilo“ auf der Finale-Seite.
+  - Erscheint als Signatur „Frohe Weihnachten, <ABSENDER>“ auf der Finale-Seite.
   - Die Zeile unter der Überschrift der Startseite ist **fest** „Von mir, nur für dich!“ und hängt nicht von `ABSENDER` ab.
 - **JAHR:** Steuert die Freischaltung, den Speicher-Präfix und die .ics-Termine (über `tools/erinnerung.py`).
 - **SEITEN_URL:** Wird nur von `tools/erinnerung.py` gelesen und in die Termine geschrieben. Nach einer Änderung die .ics-Dateien neu erzeugen.
@@ -208,10 +211,11 @@ Startseite ──„Zu den Türchen“──▶ Türchen-Übersicht
   Dann erscheint das Fenster „Geduld … Dieses Türchen öffnet sich am N. Dezember. Bis dahin darf die Vorfreude noch ein wenig wachsen.“ mit dem Knopf „Bis bald“.
 - **„Weiter durch das nächste Türchen“** erscheint unter einer Geschichte nur, wenn das nächste Türchen schon frei ist.
   - Bei Türchen 24 heißt der Knopf „Zum Finale …“.
+- **Knopf „Zurück zur Türchen-Auswahl“** auf Einstimmung und Geschichte: Die Tür schließt sich wieder auf ihrer Kachel (siehe [8.2](#82-tür-schließt-sich--zurück-in-die-übersicht-portalzurueck)). Auf der Finale-Seite geht es ohne Animation zurück.
 - **Zurück-Geste (Wischen/Zurück-Taste):**
-  - Auf Einstimmung, Geschichte und Finale führt sie zurück in die Übersicht und verlässt die Seite nicht.
+  - Auf Einstimmung, Geschichte und Finale führt sie **sofort** (ohne Tür-Animation) zurück in die Übersicht und verlässt die Seite nicht.
   - Während einer Animation wird die Geste ignoriert.
-- **Antippen überspringt Animationen** (Portal, Wirbel, Finale).
+- **Antippen überspringt Animationen** (Portal, Zuklappen, Wirbel, Finale).
 
 ---
 
@@ -301,7 +305,7 @@ Alle Seiten liegen als `<div>`-Bereiche in `index.html` und werden über die Kla
 ### 7.5 Finale
 
 - Erscheint nach Türchen 24 („Zum Finale …“) oder über den Knopf in der Übersicht.
-- Überschrift „Frohe Weihnachten“, zwei Absätze Dank und Wünsche (Eigenformulierung), Signatur „Frohe Weihnachten, Thilo“.
+- Überschrift „Frohe Weihnachten“, zwei Absätze Dank und Wünsche (Eigenformulierung), Signatur „Frohe Weihnachten, <ABSENDER>“.
 - Bild `bilder/finale.jpg`.
 - Knopf **„✨ Die Animation noch einmal ansehen“**.
 
@@ -351,7 +355,26 @@ Ist am Gerät „Bewegung reduzieren“ eingestellt (`prefers-reduced-motion`), 
 - **Zeitsteuerung:** über die CSS-Variablen `--zd` (Beginn des Zooms) und `--fd` (Beginn des Ausblendens), die das Skript je nach Fall setzt.
 - **Bild lädt nicht:** Dann gibt es nur das goldene Portal ohne Bild.
 
-### 8.2 Buchstaben-Wirbel – von der Einstimmung zur Geschichte (`wirbelUebergang`)
+### 8.2 Tür schließt sich – zurück in die Übersicht (`portalZurueck`)
+
+- Startet über die Knöpfe **„Zurück zur Türchen-Auswahl“** auf der Einstimmungsseite und unter der Geschichte.
+  **Nicht** bei der Zurück-Wischgeste (die bleibt sofort) und nicht auf der Finale-Seite.
+- **Ablauf** (etwa 1,9 s):
+
+  | Zeit | Was passiert |
+  |---|---|
+  | 0–0,25 s | Bildschirm wird schwarz, Ton `zuklappen.mp3` startet (hörbar ab ca. 0,33 s) |
+  | 0,26 s | Übersicht wird darunter eingeblendet, die Kachel des Türchens wird **in die Bildschirmmitte** gescrollt |
+  | 0,34–1,3 s | Das Bild schrumpft vom Vollbild auf die Größe der Kachel |
+  | 0,73–1,33 s | Die beiden Flügel schließen sich |
+  | 1,38–1,9 s | Schwarz blendet aus, die Übersicht ist zu sehen |
+
+- **Bild auf der Tür:** genau das, was die Kachel danach zeigt. Wurde die Geschichte gelesen, ist es scharf. Ging es von der Einstimmung zurück (Geschichte noch nicht gelesen), bleibt es **leicht verpixelt**.
+- **Scrollen:** Beim Seitenwechsel scrollt die Seite automatisch nach oben (MutationObserver), und die Übersicht scrollt sonst nach 160 ms zum heutigen Türchen.
+  Während des Zuklappens ist das zweite abgeschaltet (`window.__zuKeinScroll`); die Kachel wird erst im nächsten `requestAnimationFrame` mittig gescrollt, also nach dem automatischen Hochscrollen.
+- Wird „Zurück“ getippt, während die Öffnen-Animation noch ausblendet (ca. 0,7 s), geht es ohne Zuklappen zurück.
+
+### 8.3 Buchstaben-Wirbel – von der Einstimmung zur Geschichte (`wirbelUebergang`)
 
 - Nach „Geschichte beginnen“ lösen sich **alle Buchstaben der Einstimmungsseite** (bis zu 640) und beginnen zu glühen.
 - Sie kreisen in Bahnen um die Bildschirmmitte.
@@ -360,37 +383,53 @@ Ist am Gerät „Bewegung reduzieren“ eingestellt (`prefers-reduced-motion`), 
 - Dauer etwa 4–5 s, spätestens nach 14 s ist Schluss.
 - Nach 1,8 s erscheint unten „Tippen zum Überspringen“.
 
-### 8.3 Finale-Animation (`finaleDurch`, Variante B „Die 24 Lichter“)
+### 8.4 Finale-Animation (`finaleDurch`, Variante B „Die 24 Lichter“)
 
 - Läuft beim ersten Weg von Türchen 24 zum Finale (etwa 15 s).
+- Zeitleiste (Variante B, ca.): 0–5,4 s Lichter schweben · 5,4–8 s sie formen den Baum · bis 10,2 s Baum · 10,2–12,5 s Baum wird zum Stern · 12,5–13,4 s Sternschnuppe · ca. 13,2 s Lichtblitz · bis 15,3 s Ausblenden.
 - 24 goldene Lichter (für die 24 Türchen) fügen sich zu einem **Tannenbaum**, dann zu einem **Stern**.
 - Der Stern wird zur **Sternschnuppe**, am Ende folgt ein **Lichtblitz**, und die Finale-Seite erscheint.
 - Sie läuft nur **einmal** von selbst (Speicher-Schlüssel `finaleAn`). Danach kann man sie über „Die Animation noch einmal ansehen“ wieder abspielen.
 - **Variante A „Vier Kerzen“** (Adventskranz) ist noch im Code und wird mit `window.FINALE_VAR = "A"` aktiviert.
 
-### 8.4 Töne
+### 8.5 Töne
 
-Zwei Toneffekte begleiten die Animationen:
+Vier Toneffekte begleiten die Animationen:
 
 | Datei | Wann | Ende |
 |---|---|---|
-| `ton/knarren.mp3` | sobald die **Portal-Animation** startet, also bei jedem Öffnen einer Tür, egal ob über eine Kachel in der Übersicht oder über „Weiter durch das nächste Türchen“, und egal ob das Türchen schon einmal geöffnet war | spielt bis zum Ende der Datei; wird die Animation übersprungen oder ist sie vorbei, wird der Ton in 0,5 s ausgeblendet |
-| `ton/wirbel.mp3` | sobald der **Buchstaben-Wirbel** startet (nach „Geschichte beginnen“) | wird am Ende des Wirbels oder beim Überspringen in 0,7 s ausgeblendet |
+| `ton/knarren.mp3` (2,6 s) | sobald die **Portal-Animation** startet, also bei jedem Öffnen einer Tür (Kachel oder „Weiter durch das nächste Türchen“, auch bei schon geöffneten Türchen) | spielt aus; beim Überspringen oder am Ende der Animation in 0,5 s ausgeblendet |
+| `ton/zuklappen.mp3` (1,6 s) | sobald die **Tür sich schließt** (Knopf „Zurück zur Türchen-Auswahl“). Die Datei beginnt mit 0,33 s Stille | spielt aus; beim Überspringen in 0,4 s ausgeblendet |
+| `ton/wirbel.mp3` (5,2 s) | sobald der **Buchstaben-Wirbel** startet | am Ende des Wirbels oder beim Überspringen in 0,7 s ausgeblendet |
+| `ton/finale.mp3` (26,5 s) | sobald die **Finale-Animation** startet (auch bei „Die Animation noch einmal ansehen“) | läuft die Animation bis zum Ende, **klingt der Ton auf der Finale-Seite aus** (die Datei blendet selbst ab ca. 23 s aus). Beim Überspringen 1 s Ausblenden, beim Verlassen der Finale-Seite 0,8 s |
 
 - Umgesetzt im Modul `TON` in index.html (`TON.spielen(name)`, `TON.ausblenden(name, ms)`).
-  Die Dateinamen stehen dort in `DATEIEN`.
-- **Ton nur mit Animation:** Läuft keine Animation (Einstellung „Bewegung reduzieren“, `PORTAL_AUS`, sehr kurze Einstimmung), gibt es auch keinen Ton.
-- **Handys spielen Töne nur nach einer Berührung.** Das passt hier immer, weil Portal und Wirbel direkt durch ein Tippen starten. Würde man die Animationen künftig automatisch (ohne Tippen) starten, bliebe der Ton stumm.
+  Die Dateinamen stehen dort in `DATEIEN`. Alle Töne werden nach dem Laden der Seite vorgeladen.
+- **Ton nur mit Animation:** Läuft keine Animation („Bewegung reduzieren“, `PORTAL_AUS`, sehr kurze Einstimmung), gibt es auch keinen Ton.
+- **Handys spielen Töne nur nach einer Berührung.** Deshalb startet jeder Ton **direkt im Tippen**, nie über einen späteren Timer.
+  Darum steckt beim Zuklappen die Verzögerung (0,33 s) in der Datei selbst und nicht im Code.
+  Würde man Animationen künftig automatisch (ohne Tippen) starten, bliebe der Ton stumm.
 - **Fehlt eine Datei** oder blockiert das Gerät den Ton, laufen die Animationen ganz normal weiter, nur ohne Ton.
-- **Länge der Dateien:** Am besten passt das Knarren mit ca. 1,5–2 s (so lange öffnet sich die Tür), der Wirbel mit ca. 4–5 s. Längere Dateien werden am Ende der Animation ausgeblendet.
-- **Lautstärke:** Die Dateien werden mit voller Lautstärke abgespielt. Ist ein Ton zu laut, die Datei selbst leiser machen.
-  Auf dem iPhone lässt sich die Lautstärke per Skript nicht ändern; dort wird beim „Ausblenden“ nach der Zeit einfach angehalten.
+- **Lautstärke:** Alle Dateien sind auf **ca. −18 LUFS** angeglichen, mit Limiter (Spitzen höchstens ca. −2 dBFS, dekodiert unter 1,0).
+  Die Lautstärke steckt in den Dateien, weil das iPhone eine per Skript gesetzte Lautstärke (`audio.volume`) ignoriert.
+  Auf dem iPhone wird beim „Ausblenden“ deshalb nach der Zeit einfach angehalten.
+  Neue Töne immer mit `tools/toene-angleichen.py` angleichen (siehe [Abschnitt 16](#16-werkzeuge-im-ordner-tools)).
+
+  Stand der Angleichung (November 2026):
+
+  | Datei | vorher | nachher |
+  |---|---|---|
+  | knarren.mp3 | −19,6 LUFS, −1,5 dBTP | −18,1 LUFS, −1,9 dBTP |
+  | zuklappen.mp3 | −18,4 LUFS, −7,5 dBTP | −18,1 LUFS, −7,3 dBTP (+0,33 s Stille vorn) |
+  | wirbel.mp3 | −18,5 LUFS, −5,5 dBTP | −18,0 LUFS, −5,1 dBTP |
+  | finale.mp3 | −18,5 LUFS, −5,4 dBTP | −18,0 LUFS, −4,9 dBTP |
+
 - **Stummschalter am iPhone:** Je nach iOS-Version spielt Safari die Töne auch bei eingeschaltetem Stummschalter oder eben nicht. Die normale Lautstärke des Handys gilt immer.
-- **Kein Offline-Ton:** Die Töne laufen absichtlich nicht über den Service Worker (siehe [Abschnitt 13](#13-offline-fähigkeit-und-updates-service-worker)). Ohne Netz bleibt es daher still.
-- Töne austauschen: Datei mit **gleichem Namen** in `ton/` ersetzen. Sonst muss `DATEIEN` im Modul `TON` angepasst werden.
+- **Offline:** Die Töne werden vom Service Worker gespeichert und spielen auch ohne Netz (siehe [Abschnitt 13](#13-offline-fähigkeit-und-updates-service-worker)).
+- Töne austauschen: Datei mit **gleichem Namen** in `ton/` ersetzen, vorher angleichen, und `VERSION` in `sw.js` hochzählen (sonst spielt der alte Ton aus dem Speicher).
 - Zum Abschalten aller Töne beim Testen: `window.TON_AUS = true` in der Browser-Konsole.
 
-### 8.5 Kleinere Effekte
+### 8.6 Kleinere Effekte
 
 - Bilder blenden weich ein, sobald sie sichtbar werden.
 - Der Begrüßungssatz in der Übersicht blendet ein.
@@ -551,30 +590,36 @@ Es gibt **keine Übertragung an einen Server**. Jedes Gerät und jeder Browser h
   Dann geht der Stand beim Schließen verloren, aber nichts stürzt ab.
 - **Wichtig für iPhone:** Eine auf dem Startbildschirm installierte Web-App hat **einen anderen Speicher** als Safari.
   Wer erst in Safari liest und dann die App nutzt, beginnt dort von vorn.
+- Die Töne, Zuklappen und Finale-Ton (v14) haben **keine neuen Schlüssel** gebracht; der Fortschritt der Leser bleibt unverändert.
+  Die Töne selbst liegen nicht im `localStorage`, sondern im Offline-Speicher des Service Workers (Abschnitt 13).
 
 ---
 
 ## 13. Offline-Fähigkeit und Updates (Service Worker)
 
-`sw.js` wird nur über `https` registriert, also nicht beim lokalen Testen über `http://localhost`.
+`sw.js` wird über `https` registriert und zusätzlich auf `http://localhost` (zum Testen am Rechner).
 
 - **Beim ersten Besuch** speichert er im Hintergrund:
   - Seite, `config.js`, Manifeste, Symbole und alle 24 Geschichten,
-  - danach alle Bilder (Tagesbilder plus beide Pixelstufen, Start- und Finale-Bild).
+  - danach alle Bilder (Tagesbilder plus beide Pixelstufen, Start- und Finale-Bild),
+  - danach die vier Töne aus `ton/` (Liste `TOENE` in `sw.js`).
 - **Seiten und Geschichten:** zuerst aus dem Netz (damit Änderungen sofort ankommen); ohne Netz aus dem Speicher.
 - **Bilder:** zuerst aus dem Speicher (schnell), sonst aus dem Netz.
 - Gespeichert werden nur erfolgreiche Antworten (`res.ok`). Fehlerseiten landen also nicht im Speicher.
 - `.ics`-Dateien werden nie gespeichert.
-- **Töne (`ton/`) werden ebenfalls nie über den Service Worker geladen.**
-  Safari holt Audio in Teilstücken (Range-Anfragen). Eine zwischengespeicherte Antwort beantwortet das nicht sauber, und der Ton würde auf dem iPhone dann gar nicht spielen.
-  Die Töne kommen also immer direkt aus dem Netz (und aus dem normalen Browser-Speicher).
+- **Töne (`ton/`):** zuerst aus dem Speicher, damit sie auch **offline** spielen.
+  - Safari fragt Audio in Teilstücken an (**Range-Anfragen**, z. B. `Range: bytes=0-1`). Eine gespeicherte, vollständige Datei passt darauf nicht von selbst.
+  - Der Service Worker schneidet deshalb den angefragten Bereich aus der gespeicherten Datei und antwortet mit **206 Partial Content** (`Content-Range`, `Content-Length`, `Accept-Ranges`).
+    Auch `bytes=500-` und `bytes=-500` (die letzten 500 Bytes) werden verstanden; ein Bereich außerhalb der Datei bekommt **416**.
+  - Ist ein Ton noch nicht gespeichert, kommt er aus dem Netz; eine vollständige, erfolgreiche Antwort (200) wird dann abgelegt.
+  - Bis v13 liefen die Töne bewusst am Service Worker vorbei (offline still). Seit v14 ist das so gelöst.
 
 ### Updates
 
-> **Bei jeder Änderung `VERSION` in `sw.js` hochzählen** (`advent-v11` → `advent-v12` …).
+> **Bei jeder Änderung `VERSION` in `sw.js` hochzählen** (`advent-v14` → `advent-v15` …).
 
 - Eine neue Version löscht beim Aktivieren den alten Speicher und lädt alles neu.
-- Ohne neue Version kommen **geänderte Bilder** auf Handys, die die Seite schon kennen, nicht an. Bilder werden zuerst aus dem Speicher geholt.
+- Ohne neue Version kommen **geänderte Bilder und Töne** auf Handys, die die Seite schon kennen, nicht an. Beide werden zuerst aus dem Speicher geholt.
 - Texte und Code kommen meist trotzdem an, weil sie zuerst aus dem Netz geladen werden. Sicher ist es aber nur mit neuer Version.
 - **GitHub Pages** hält Dateien selbst etwa 10 Minuten im Zwischenspeicher. Nach dem Hochladen also ein paar Minuten warten.
 - Hängt ein Handy trotzdem fest:
@@ -647,11 +692,13 @@ Die Seite trägt `noindex, nofollow`. Sie soll nicht in Suchmaschinen auftauchen
 | `bilder-vorbereiten.py` | Rohbilder aus `bilder-roh/`: Papierrand weg, auf 2:1 zuschneiden, 1200×600, Qualität 82 → `bilder/` | `python3 tools/bilder-vorbereiten.py [quellordner]` |
 | `pixel.py` | `pix-mid-NN.png` (32×16) und `pix-lock-NN.png` (10×5) aus `tag-NN.jpg` | `python3 tools/pixel.py [bilderordner]` |
 | `test-symbole.py` | `icon-test-192.png`, `icon-test-512.png`, `apple-touch-icon-test.png`: normale Symbole mit rotem Band „TEST“ | `python3 tools/test-symbole.py` |
+| `toene-angleichen.py` | alle `*.mp3` aus `ton-roh/` auf −18 LUFS angleichen (Limiter, 44,1 kHz, 160 kbit/s) → `ton/`; `zuklappen.mp3` bekommt 0,33 s Stille vorn; gibt Vorher/Nachher-Werte aus | `python3 tools/toene-angleichen.py [quellordner]` |
 | `erinnerung.py` | `erinnerung/1700.ics` … `2100.ics`, liest `JAHR` und `SEITEN_URL` aus `config.js` | `python3 tools/erinnerung.py` |
 | `bild-prompts.md` | 26 Gemini-Prompts mit gemeinsamem Stil-Block | – |
 | `platzhalter.py` | **Veraltet.** Erzeugte Platzhalterbilder vor den echten Bildern. **Nicht mehr ausführen**, es überschreibt die echten Bilder! | – |
 
-Alle Skripte im Hauptordner des Projekts starten. Benötigt wird Python 3, für die Bild-Skripte zusätzlich Pillow.
+Alle Skripte im Hauptordner des Projekts starten. Benötigt wird Python 3, für die Bild-Skripte zusätzlich Pillow, für die Töne `ffmpeg`.
+Die Rohordner `bilder-roh/` und `ton-roh/` gehören nicht ins Repository.
 
 ---
 
@@ -671,7 +718,7 @@ python3 -m http.server 8765
 # im Browser: http://localhost:8765/index.html?test=1
 ```
 
-Der Service Worker ist lokal nicht aktiv (nur https), daher gibt es keine Speicher-Probleme beim Entwickeln.
+Der Service Worker ist auch lokal auf `localhost` aktiv. Wer beim Entwickeln Änderungen nicht sieht: in den Entwicklerwerkzeugen des Browsers unter „Application → Service Workers“ „Update on reload“ einschalten oder die Website-Daten löschen.
 
 ### 17.3 Automatisch mit Playwright (so wurde entwickelt)
 
@@ -682,6 +729,9 @@ Der Service Worker ist lokal nicht aktiv (nur https), daher gibt es keine Speich
   - Kachelzustände an verschiedenen Tagen (30. Nov., 1., 10., 24., 25., 27. Dez.),
   - Portal-Ablauf per Screenshots zu bestimmten Zeitpunkten,
   - Weiter-Knopf, Finale, Fehler beim Laden, Zurück-Geste,
+  - Zuklappen: Kachel genau in der Bildschirmmitte, sauberes Ende, Antippen überspringt, Wischgeste ohne Animation,
+  - Ton-Aufrufe (wann welcher Ton startet und ausgeblendet wird), „Bewegung reduzieren“ ohne Animation und Ton,
+  - Offline-Start mit echtem Service Worker: Seite, Geschichten, Bilder und alle Töne; Range-Anfragen (206, 416),
   - Einklappen der Karten, TEST-Manifest,
   - keine Fehler in der Browser-Konsole.
 
@@ -710,7 +760,8 @@ Der Service Worker ist lokal nicht aktiv (nur https), daher gibt es keine Speich
 - **Speicher-Präfix hängt am Jahr:** Wird `JAHR` geändert, sind alle bisherigen Stände für die Seite „vergessen“. Die alten Daten bleiben unbenutzt im Browser liegen.
 - **Plattdeutsch und „ward“:** Eine automatische Ersetzung „ward → wurde“ hätte in plattdeutschen Sätzen Fehler erzeugt. Die betroffenen Geschichten (9, 16) wurden deshalb vollständig ins Hochdeutsche übertragen.
 - **Titel auf Kacheln:** Werden aus dem Speicher genommen. Nach dem Austausch einer Geschichte bleibt bei bisherigen Lesern bis zum erneuten Öffnen der alte Titel stehen.
-- **Ton spielt nicht:** Datei wirklich unter `ton/knarren.mp3` bzw. `ton/wirbel.mp3` (Kleinschreibung beachten, GitHub unterscheidet Groß/Klein)? Handy-Lautstärke an? Am iPhone ggf. Stummschalter prüfen. Format MP3 funktioniert auf allen gängigen Handys.
+- **Ton spielt nicht:** Datei wirklich unter `ton/knarren.mp3`, `ton/zuklappen.mp3`, `ton/wirbel.mp3` bzw. `ton/finale.mp3` (Kleinschreibung beachten, GitHub unterscheidet Groß/Klein)? Handy-Lautstärke an? Am iPhone ggf. Stummschalter prüfen. Nach dem Austausch eines Tons `VERSION` hochgezählt?
+- **Ton wird nur verzögert gestartet:** nie einen Ton per `setTimeout` starten, das iPhone blockiert ihn dann womöglich. Verzögerungen gehören als Stille in die Datei.
 - **`titel:` in den Geschichten-Dateien** muss als `"…"`-String stehen, sonst kann `titelNachladen` ihn nicht lesen. Die Geschichte selbst funktioniert aber trotzdem.
 
 ---
@@ -721,8 +772,8 @@ Der Service Worker ist lokal nicht aktiv (nur https), daher gibt es keine Speich
 |---|---|---|
 | `const testModus = false;` | index.html | `true`: **alle** Türchen offen und eine Entwickler-Leiste oben mit Tagesauswahl. **Niemals so hochladen.** |
 | `window.FINALE_VAR = "B";` | index.html | `"A"` = Finale „Vier Kerzen“, `"B"` = „Die 24 Lichter“ |
-| `window.PORTAL_AUS = true` | Browser-Konsole | schaltet Portal, Wirbel und Finale-Animation ab |
-| `window.TON_AUS = true` | Browser-Konsole | schaltet beide Töne ab |
+| `window.PORTAL_AUS = true` | Browser-Konsole | schaltet Portal, Zuklappen, Wirbel und Finale-Animation (und damit ihre Töne) ab |
+| `window.TON_AUS = true` | Browser-Konsole | schaltet alle Töne ab |
 | `window.PORTAL_FARBE = true` | Browser-Konsole | Portal nur golden, ohne Bild |
 | `VORTEST_NOVEMBER` | config.js | November = Dezember auch auf LIVE (nicht mehr nötig, TEST-Fassung nutzen) |
 | `?test=1` | Adresse | TEST-Fassung |
@@ -743,7 +794,7 @@ Der Service Worker ist lokal nicht aktiv (nur https), daher gibt es keine Speich
 | Kacheln | `tuerStilAktualisieren`, `pixelSetzen`, `geoeffnetListe`, `merkeGeoeffnet`, `titelMap`, `merkeTitel`, `titelNachladen`, `bildUrl` |
 | Geschichten | `ladeGeschichte`, `absaetzeHtml`, `loadStoryContent`, `geschichteFehler`, `geschichteNochmal` |
 | Bilder | `bildEinblenden`, `zeigeStoryBild`, `storyBildStart`, `wmAn`, `wmAus` |
-| Animationen | `portalDurch`, `wirbelUebergang`, `startStory`, `finaleDurch` (mit `bildA`/`bildB`) |
+| Animationen | `portalDurch`, `portalZurueck`, `wirbelUebergang`, `startStory`, `finaleDurch` (mit `bildA`/`bildB`) |
 | Töne | `TON.spielen`, `TON.ausblenden` (Dateinamen in `DATEIEN`) |
 | Startseite | `rulesAktualisieren`, `vorabUmschalten`, `rulesUmschalten`, `ladeErinnerung`, Countdown, App-Tipp nach Gerät |
 | Übersicht | `begruessungWaehlen`, `begruessungZeigen`, `finaleKnopfAktualisieren` |
@@ -760,7 +811,7 @@ Grob in der Reihenfolge der Entstehung (Herbst 2026):
 
 1. **Grundlage:**
    - Alter Kalender übernommen und Einstellungen in `config.js` ausgelagert.
-   - Kein fester Empfängername, Absender Thilo.
+   - Kein fester Empfängername, Absender über `config.js`.
    - Eigener, jahresabhängiger Speicher-Präfix.
 2. **Ablauf:**
    - Einstimmungsseite beim ersten Öffnen.
@@ -790,6 +841,12 @@ Grob in der Reihenfolge der Entstehung (Herbst 2026):
     - Ungeöffnete Kacheln heller, geöffnete Kacheln scharf und mit Titel der Geschichte.
 16. **Eigenes App-Symbol für TEST** (v12): goldener Stern mit rotem Band „TEST“.
 17. **Töne** (v13): `ton/knarren.mp3` beim Öffnen einer Tür, `ton/wirbel.mp3` beim Buchstaben-Wirbel.
+18. **Zuklappen, Finale-Ton, Töne offline** (v14):
+    - Die Tür schließt sich beim Knopf „Zurück zur Türchen-Auswahl“ wieder auf ihrer Kachel (`portalZurueck`), mit `ton/zuklappen.mp3`.
+    - `ton/finale.mp3` zur Finale-Animation.
+    - Alle Töne auf −18 LUFS angeglichen (`tools/toene-angleichen.py`).
+    - Service Worker speichert die Töne und beantwortet Range-Anfragen (206), damit sie auch offline spielen.
+    - Übernommen und angepasst aus einer Schwesterversion des Kalenders; Push-Erinnerungen bewusst nicht.
 
 ---
 
