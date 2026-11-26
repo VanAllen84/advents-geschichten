@@ -1,6 +1,6 @@
 /* Offline-Speicher: Seite, Geschichten und Bilder werden beim ersten Besuch abgelegt.
    Bei jeder Änderung an der Seite VERSION hochzählen, damit die Handys die neue Fassung holen. */
-const VERSION = "advent-v23";
+const VERSION = "advent-v25";
 const KERN = ["./", "index.html", "config.js", "manifest.json", "manifest-test.json", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "icon-test-192.png", "icon-test-512.png", "apple-touch-icon-test.png"];
 for (let i = 1; i <= 24; i++) KERN.push("story-day" + i + ".js");
 const BILDER = ["bilder/landing.jpg", "bilder/finale.jpg"];
@@ -83,16 +83,21 @@ self.addEventListener("push", function (e) {
     return self.registration.showNotification(titel, {
       icon: info.test ? "icon-test-192.png" : "icon-192.png",
       tag: "advent-erinnerung",
-      data: { url: info.url || "./index.html" }
+      data: { url: (info.url || "./index.html") + ((info.url || "").indexOf("?") >= 0 ? "&" : "?") + "von=erinnerung" }
     });
   }));
 });
 self.addEventListener("notificationclick", function (e) {
   e.notification.close();
   const ziel = new URL((e.notification.data && e.notification.data.url) || "./index.html", self.registration.scope).href;
+  // Ist der Kalender schon offen: nach vorn holen und ihm sagen, dass er zum heutigen Türchen springen soll.
+  // Sonst neu öffnen – mit „von=erinnerung“ in der Adresse, das erledigt dann die Seite.
+  const istTest = /[?&]test=1/.test(ziel);
   e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (fenster) {
-    for (const f of fenster) { if (f.url.split("#")[0] === ziel && "focus" in f) return f.focus(); }
-    for (const f of fenster) { if ("focus" in f) return f.focus().then(function (x) { return x && x.navigate ? x.navigate(ziel) : x; }); }
+    const passend = fenster.filter(function (f) { return /[?&]test=1/.test(f.url) === istTest; });
+    for (const f of passend) {
+      if ("focus" in f) return f.focus().then(function (x) { (x || f).postMessage({ typ: "erinnerung" }); return x; });
+    }
     return self.clients.openWindow ? self.clients.openWindow(ziel) : null;
   }));
 });

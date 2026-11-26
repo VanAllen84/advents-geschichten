@@ -14,7 +14,7 @@ Der Absender steht in `config.js` (`ABSENDER`) und erscheint nur in der Signatur
 | GitHub-Repository | `vanallen84/advents-geschichten` |
 | Alte GitHub-Adresse (leitet weiter) | https://vanallen84.github.io/advents-geschichten/ |
 
-Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v23`.
+Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v25`.
 
 ---
 
@@ -851,7 +851,7 @@ Der Service Worker ist auch lokal auf `localhost` aktiv. Wer beim Entwickeln Än
 | Bilder | `bildEinblenden`, `zeigeStoryBild`, `storyBildStart`, `wmAn`, `wmAus` |
 | Animationen | `portalDurch`, `portalZurueck`, `wirbelUebergang`, `startStory`, `finaleDurch` (mit `bildA`/`bildB`), `umschlagZeigen` |
 | Töne | `TON.spielen`, `TON.ausblenden` (Dateinamen in `DATEIEN`) |
-| Push | `PUSH` (`start`, `nameGeaendert`), `pushUmschalten`, `pushZeitGeaendert`, `pushTest`; im Service Worker `push`/`notificationclick`, `berlinHeute`, `pushInfo` |
+| Push | `zurHeutigenTuer`, `PUSH` (`start`, `nameGeaendert`), `pushUmschalten`, `pushZeitGeaendert`, `pushTest`; im Service Worker `push`/`notificationclick`, `berlinHeute`, `pushInfo` |
 | Name/Sicherung | `leserName`, `personalisieren`, `nameAnzeigen`, `nameSpeichern`, `nameUeberspringen`, `SYNC` (`abgleichen`, `spaeter`, `loeschen`) |
 | Lesen | `schriftAendern`, `schriftAnwenden`, `VORLESEN` (`umschalten`, `stop`), `lieblingUmschalten`, `lieblingKnopf`, `lieblingeListe`, `istLiebling`, `lieblingeZeigen` |
 | Startseite | `rulesAktualisieren`, `vorabUmschalten`, `rulesUmschalten`, `ladeErinnerung`, Countdown, App-Tipp nach Gerät |
@@ -914,6 +914,8 @@ Grob in der Reihenfolge der Entstehung (Herbst 2026):
 25. **Töne robuster** (v21): gescheiterte Ton-Abspieler werden automatisch neu angelegt.
 26. **Lesezeit** (v22): ungefähre Lesezeit (230 Wörter pro Minute) auf der Einstimmungsseite.
 27. **Push-Erinnerung** (v23): „Anna, Türchen 5 wartet auf dich“ zur frei wählbaren Uhrzeit (15-Minuten-Takt), nur wenn das heutige Türchen noch zu ist; über den eigenen Worker mit Cron-Auslöser, Schlüssel erzeugt der Worker selbst.
+28. **Erinnerung führt zum Türchen** (v24): Tipp auf die Mitteilung öffnet direkt die Übersicht mit der heutigen Kachel in der Mitte, kurz hervorgehoben.
+29. **Schiebeschalter** (v25): „Erinnerung per Mitteilung“ als Toggle statt Häkchen.
 
 ---
 
@@ -972,6 +974,7 @@ oder die App einmal neu installiert. Wer denselben Vornamen eingibt, findet sein
 - Code (`worker-advent-stand.js`) und Einrichtungsanleitung (`ANLEITUNG_Cloudflare_advent-stand.md`) liegen **nicht** im Repository.
   Der gültige Code steht im Cloudflare-Dashboard unter dem Worker („Edit code“).
 - Kosten: kostenloser Tarif reicht (D1: Millionen Lese- und 100.000 Schreibzugriffe pro Tag).
+- **Sicherung:** Der Online-Stand ist eine Kopie – jedes Gerät hat seinen Stand auch lokal und legt ihn beim nächsten Abgleich wieder ab, falls online etwas fehlt. Für den Notfall kann D1 per **Time Travel** auf jede Minute der letzten **7 Tage** (kostenloser Tarif) zurückgesetzt werden – nur über das Kommandozeilen-Werkzeug Wrangler (`npx wrangler d1 time-travel restore advent-stand-db --timestamp=…`). Schritt für Schritt in `ANLEITUNG_Cloudflare_advent-stand.md`, Abschnitt „Sicherung und Wiederherstellung“. Die Tabelle `konfig` enthält den privaten Push-Schlüssel: Sicherungen davon nie ins Repository.
 
 ### 23.4 Testen
 
@@ -988,11 +991,11 @@ Statt (oder zusätzlich zu) den `.ics`-Terminen: eine Mitteilung zur selbst gew�
 
 ### 24.1 Für die Leserin
 
-- In „Bevor es losgeht“ → „Lass dich jeden Tag erinnern“: Schalter **„Erinnerung per Mitteilung“**, Uhrzeit (00:00–23:45 im 15-Minuten-Takt, Standard 20:00), Knopf **„Testnachricht schicken“** (nur wenn eingeschaltet).
+- In „Bevor es losgeht“ → „Lass dich jeden Tag erinnern“: Schiebeschalter (Toggle, gestaltetes Häkchen) **„Erinnerung per Mitteilung“**, Uhrzeit (00:00–23:45 im 15-Minuten-Takt, Standard 20:00), Knopf **„Testnachricht schicken“** (nur wenn eingeschaltet).
 - Erst beim Einschalten fragt das Gerät nach der Erlaubnis.
 - Voraussetzungen: **Name eingegeben** (sonst Hinweis „Dafür brauche ich deinen Vornamen.“), `SYNC_URL` gesetzt, Gerät kann Push. Auf dem **iPhone nur in der installierten App** (ab iOS 16.4) – in Safari ist der Bereich ausgeblendet, dort bleiben die `.ics`-Termine.
 - **Text:** vom 1. bis 24. Dezember (TEST: 1. bis 24. November) „Anna, Türchen 5 wartet auf dich“ (ohne Namen: „Türchen 5 wartet auf dich“). Außerhalb dieser Tage (also bei einer Testnachricht) „Anna, so sieht deine Erinnerung aus“. Symbol: normales bzw. TEST-Symbol.
-- Antippen der Mitteilung öffnet den Kalender (TEST-App → TEST-Fassung).
+- **Antippen der Mitteilung** führt direkt in die Türchen-Übersicht: die heutige Kachel steht in der Mitte und pulsiert dreimal golden (`zurHeutigenTuer`, CSS-Klasse `erinnert`). War die App zu, öffnet sie mit `von=erinnerung` in der Adresse (wird danach wieder entfernt); war sie offen, holt der Service Worker sie nach vorn und schickt ihr die Nachricht `{ typ: "erinnerung" }`. Eine TEST-Mitteilung führt immer in die TEST-Fassung, eine LIVE-Mitteilung in LIVE.
 - Meldungen im Kalender (Eigenformulierungen): „Eingeschaltet. Du wirst um 20:00 Uhr erinnert, wenn dein Türchen dann noch zu ist.“, „Geändert: Erinnerung um … Uhr.“, „Ausgeschaltet.“, „Testnachricht ist unterwegs. Sie kommt in wenigen Sekunden.“, „Mitteilungen sind für den Kalender nicht erlaubt. Du kannst sie in den Einstellungen deines Handys einschalten.“, Fehlermeldungen.
 
 ### 24.2 Wie es funktioniert
@@ -1011,6 +1014,7 @@ Statt (oder zusätzlich zu) den `.ics`-Terminen: eine Mitteilung zur selbst gew�
 
 ### 24.3 Einrichtung und Grenzen
 
+- **Grenze im kostenlosen Tarif:** höchstens 50 Datenbank-Abfragen pro Worker-Aufruf. Ein Cron-Lauf braucht etwa 4 + 2 pro Anmeldung – reicht für gut 20 Geräte.
 - Cloudflare: neuer Worker-Code + **Cron-Auslöser `*/15 * * * *`** beim Worker `advent-stand` (Anleitung: `ANLEITUNG_Cloudflare_advent-stand.md`, Abschnitt „Push-Erinnerung einschalten“). Neue Tabellen `push` (endpoint, schluessel, zeit, gesendet, t) und `konfig` legt der Worker selbst an.
 - Die Mitteilung kommt bis zu ~15 Minuten nach der gewählten Zeit.
 - Ob sie angezeigt wird, hängt auch von Fokus-/Mitteilungseinstellungen des Geräts ab.

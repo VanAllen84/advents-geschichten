@@ -292,10 +292,21 @@
         .tuer-card.mit-titel .tag-nummer { transform: translateY(-17px); }
 
         /* Karte „Bevor es losgeht" */
+        /* Nach Tipp auf die Erinnerung: heutige Kachel kurz hervorheben */
+        .tuer-card.erinnert { animation: erinnertPuls 0.9s ease-in-out 3 !important; z-index: 2; }
+        @keyframes erinnertPuls { 0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(242,193,78,0.4); } 50% { transform: scale(1.07); box-shadow: 0 0 34px rgba(242,193,78,0.95); } }
         /* Push-Erinnerung */
         .push-block { margin: 12px 0 6px; }
-        .push-schalter { display: flex; align-items: center; gap: 10px; font-size: 1rem; color: var(--heading-color); cursor: pointer; }
-        .push-schalter input { width: 22px; height: 22px; accent-color: var(--accent-color); }
+        .push-schalter { display: flex; align-items: center; gap: 12px; font-size: 1rem; color: var(--heading-color); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        /* Häkchen als Schiebeschalter (Toggle) */
+        .push-schalter input { -webkit-appearance: none; appearance: none; flex: 0 0 auto; position: relative; width: 50px; height: 30px; margin: 0; border-radius: 15px; cursor: pointer;
+            background: rgba(255,255,255,0.12); border: 1px solid rgba(217,180,90,0.45); transition: background 0.25s ease, border-color 0.25s ease; }
+        .push-schalter input::before { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%;
+            background: #e9dfc6; box-shadow: 0 1px 3px rgba(0,0,0,0.45); transition: transform 0.25s cubic-bezier(0.3, 0.7, 0.4, 1), background 0.25s ease; }
+        .push-schalter input:checked { background: var(--accent-color); border-color: var(--accent-color); }
+        .push-schalter input:checked::before { transform: translateX(20px); background: #fffaf0; }
+        .push-schalter input:focus-visible { outline: 2px solid var(--accent-color); outline-offset: 3px; }
+        .push-schalter input:disabled { opacity: 0.5; cursor: default; }
         .push-meldung { font-size: 0.85rem; margin: 10px 0 0; min-height: 1em; color: var(--heading-color); opacity: 0.9; }
         .push-hinweis { font-size: 0.9rem; opacity: 0.85; }
         .push-hinweis button { background: none; border: none; color: var(--accent-color); text-decoration: underline; font-size: inherit; cursor: pointer; padding: 2px; font-family: inherit; }
@@ -517,7 +528,7 @@
                                 <p style="margin: 0 0 10px;">Am einfachsten per Mitteilung: Du wirst zur gewählten Uhrzeit erinnert, aber nur an Tagen, an denen dein Türchen noch zu ist.</p>
                                 <p class="push-hinweis" id="pushOhneName" style="display:none;">Dafür brauche ich deinen Vornamen. <button onclick="nameKarteZeigen()">Namen eingeben</button></p>
                                 <div id="pushBedienung">
-                                    <label class="push-schalter"><input type="checkbox" id="pushAn" onchange="pushUmschalten()"> Erinnerung per Mitteilung</label>
+                                    <label class="push-schalter"><input type="checkbox" role="switch" id="pushAn" onchange="pushUmschalten()"> Erinnerung per Mitteilung</label>
                                     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px;">
                                         <span>um</span>
                                         <select id="pushZeit" class="erinnerung-zeit" onchange="pushZeitGeaendert()"></select>
@@ -1748,6 +1759,30 @@
             return { start: start, nameGeaendert: nameGeaendert, unterstuetzt: unterstuetzt };
         })();
         window.PUSH = PUSH;
+
+        // Tipp auf die Erinnerung (Mitteilung): direkt in die Übersicht, heutige Kachel in der Mitte und kurz hervorgehoben.
+        // Kommt als Adresszusatz „von=erinnerung“ (App war zu) oder als Nachricht vom Service Worker (App war offen).
+        function zurHeutigenTuer() {
+            if (portalLaeuft || wirbelLaeuft) return;
+            const um = document.getElementById("umschlag"); if (um) um.remove();
+            zeigeTuerenUebersicht();   // scrollt selbst die heutige Kachel in die Mitte
+            const h = heuteTag();
+            if (!(h >= 1 && h <= 24)) return;
+            setTimeout(function () {
+                const k = document.querySelectorAll("#tuerenGridContainer .tuer-card")[h - 1];
+                if (!k) return;
+                k.classList.remove("erinnert"); void k.offsetWidth; k.classList.add("erinnert");
+                setTimeout(function () { k.classList.remove("erinnert"); }, 2900);
+            }, 750);
+        }
+        if ("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message", function (e) {
+            if (e.data && e.data.typ === "erinnerung") zurHeutigenTuer();
+        });
+        document.addEventListener("DOMContentLoaded", function () {
+            if (!/[?&]von=erinnerung(&|$)/.test(location.search)) return;
+            try { history.replaceState(history.state, "", location.pathname + location.search.replace(/([?&])von=erinnerung(&|$)/, "$1").replace(/[?&]$/, "") + location.hash); } catch (e) {}
+            setTimeout(zurHeutigenTuer, 50);
+        });
 
         // ---------- Schriftgröße der Geschichten (pro Gerät gemerkt) ----------
         const SCHRIFT_STUFEN = [0.9, 1, 1.12, 1.25, 1.4];
