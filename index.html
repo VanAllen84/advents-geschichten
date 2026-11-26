@@ -291,6 +291,17 @@
         .tuer-card.mit-titel .tag-nummer { transform: translateY(-17px); }
 
         /* Karte „Bevor es losgeht" */
+        /* Namenskarte (freiwillig) und Meldung */
+        .name-karte { margin: 4px 0 24px; border: 1px solid var(--accent-color); border-radius: 12px; padding: 16px; text-align: center; background: linear-gradient(180deg, rgba(217,180,90,0.12), rgba(217,180,90,0.04)); box-shadow: 0 0 18px rgba(217,180,90,0.18); }
+        .name-frage { font-family: Georgia, serif; font-size: 1.15rem; color: var(--heading-color); margin: 0 0 12px; }
+        .name-zeile { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+        .name-zeile input { flex: 1 1 150px; max-width: 220px; background: rgba(255,255,255,0.06); color: var(--heading-color); border: 1px solid var(--accent-color); border-radius: 8px; padding: 10px 12px; font-size: 1rem; font-family: inherit; }
+        .name-zeile .btn-option { width: auto; padding: 10px 16px; }
+        .name-info { font-size: 0.82rem; opacity: 0.8; margin: 12px 0 4px; line-height: 1.5; }
+        .name-ohne { background: none; border: none; color: var(--text-color); opacity: 0.7; text-decoration: underline; font-size: 0.85rem; cursor: pointer; padding: 6px; font-family: inherit; }
+        .name-meldung { text-align: center; color: var(--heading-color); font-family: Georgia, serif; font-size: 1.05rem; margin: 0 0 20px; transition: opacity 1s ease; }
+        .name-fuss { text-align: center; font-size: 0.82rem; opacity: 0.75; margin: 18px 0 0; }
+        .name-fuss button { background: none; border: none; color: var(--accent-color); text-decoration: underline; font-size: inherit; cursor: pointer; padding: 2px; font-family: inherit; }
         .vorab-karte { margin: 26px 0 8px; border: 1px solid var(--accent-color); border-radius: 12px; padding: 16px 16px 6px; background: linear-gradient(180deg, rgba(217,180,90,0.10), rgba(217,180,90,0.03)); box-shadow: 0 0 18px rgba(217,180,90,0.18); }
         .vorab-titel { text-align: center; font-family: Georgia, serif; font-size: 1.25rem; color: var(--accent-color); letter-spacing: 1px; margin-bottom: 4px; }
         .vorab-karte.zu { padding: 12px 16px; }
@@ -449,6 +460,17 @@
             <h1 id="kalenderTitel">Dein Adventskalender</h1>
             <p class="absender-zeile" id="absenderZeile"></p>
 
+            <div class="name-karte" id="nameKarte" style="display:none;">
+                <p class="name-frage">Schön, dass du da bist! Wie heißt du?</p>
+                <div class="name-zeile">
+                    <input id="nameFeld" type="text" maxlength="30" autocomplete="given-name" autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="done" placeholder="Dein Vorname" onkeydown="if (event.key === 'Enter') nameSpeichern()">
+                    <button class="btn-option" onclick="nameSpeichern()">Los geht’s</button>
+                </div>
+                <p class="name-info" id="nameInfo">Mit deinem Vornamen wird dein Fortschritt online gesichert. Gib ihn in der App oder auf einem anderen Gerät genauso ein, dann findest du deine Geschichten dort wieder.</p>
+                <button class="name-ohne" onclick="nameUeberspringen()">Ohne Namen weiter</button>
+            </div>
+            <p class="name-meldung" id="nameMeldung" style="display:none;"></p>
+
             <p class="landing-countdown" id="landingCountdown" style="display:none;"></p>
 
             <div class="story-bild" id="landingBild" style="display:none; margin-top: 0;"><img id="landingBildImg" alt="" src=""></div>
@@ -505,6 +527,7 @@
             <p style="text-align: center; font-size: 0.88rem; opacity: 0.8;">Lässt sich ein Türchen nicht öffnen, obwohl sein Tag schon da ist? Dann stimmt vermutlich das Datum auf deinem Handy nicht. Sonst sag mir einfach Bescheid.</p>
             <p style="text-align: center; font-style: italic; color: var(--text-color);">Mach es dir gemütlich. Die Geschichten warten schon.</p>
             <button class="btn-primary" onclick="zeigeTuerenUebersicht()">Zu den Türchen</button>
+            <p class="name-fuss" id="nameFuss"></p>
         </div>
 
         <!-- TÜRCHEN-ÜBERSICHT -->
@@ -560,7 +583,7 @@
         <div id="finaleScreen" class="hidden">
             <div class="briefe" id="finaleBrief">
                 <div class="brief">
-                    <h2>Frohe Weihnachten!</h2>
+                    <h2 id="finaleGruss">Frohe Weihnachten!</h2>
                     <div class="story-text finale-text">
                         <p>Vierundzwanzig Türchen, vierundzwanzig Geschichten, und jetzt ist es so weit: Heiligabend ist da.</p>
                         <p>Als ich angefangen habe, diesen Kalender zusammenzustellen, hatte ich vor allem einen Wunsch: jeden Tag im Dezember einen kleinen Moment zu schenken. Einen Moment zum Innehalten, mit einer Tasse Tee oder Kakao, vielleicht mit Kerzenlicht, vielleicht auch nur kurz zwischendurch in all dem Trubel. Manche Geschichten waren kurz, manche länger, manche zum Schmunzeln und andere zum Nachdenken. Ich hoffe, dass die eine oder andere ein bisschen im Herzen geblieben ist.</p>
@@ -634,7 +657,10 @@
             const s = JSON.stringify(wert);
             speicherMem[k] = s;
             try { localStorage.setItem(PFX + k, s); } catch (e) {}
+            // Änderungen am Fortschritt werden einige Sekunden später online gesichert (siehe SYNC)
+            if (SYNC_FELDER.indexOf(k) >= 0) { try { SYNC.spaeter(); } catch (e) {} }
         }
+        const SYNC_FELDER = ["geoeffnet", "titel", "lieblinge", "finaleAn"];
         function speicherLoeschen(k) {
             delete speicherMem[k];
             try { localStorage.removeItem(PFX + k); } catch (e) {}
@@ -645,7 +671,8 @@
         // ==========================================
         try {
             if (location.search.indexOf("reset=1") >= 0) {
-                ["geoeffnet", "lese", "gruss", "finaleAn", "besucht", "titel", "lieblinge", "schrift"].forEach(speicherLoeschen);
+                window.__resetName = speicherLesen("name", "");   // damit auch der Online-Stand gelöscht werden kann
+                ["geoeffnet", "lese", "gruss", "finaleAn", "besucht", "titel", "lieblinge", "lieblingeTs", "schrift", "name", "nameOhne"].forEach(speicherLoeschen);
                 history.replaceState(null, "", location.pathname + (TEST_FASSUNG ? "?test=1" : ""));
             }
         } catch (e) {}
@@ -716,17 +743,29 @@
         }
 
         // Texte mit optionalem Namen: {name} wird ersetzt oder samt Komma entfernt
+        // Name der lesenden Person: selbst eingegeben (Startseite), sonst EMPFAENGER_NAME aus config.js
+        function leserName() {
+            const n = speicherLesen("name", "");
+            return (typeof n === "string" && n.trim()) ? n.trim() : String(CFG.EMPFAENGER_NAME || "").trim();
+        }
         function mitName(t) {
-            const name = String(CFG.EMPFAENGER_NAME || "").trim();
+            const name = leserName();
             if (name) return String(t).replace(/\{name\}/g, name);
             return String(t).replace(/,\s*\{name\}/g, "").replace(/\{name\},?\s*/g, "").replace(/\s{2,}/g, " ").trim();
         }
         function esc(t) { return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 
         // Texte aus der Konfiguration auf der Seite setzen
-        (function () {
+        // Persönliche Stellen: Überschrift der Startseite und Gruß im Brief (Begrüßung in der Übersicht über mitName)
+        function personalisieren() {
+            const name = leserName();
             const t = document.getElementById("kalenderTitel");
-            if (t && CFG.KALENDER_TITEL) t.textContent = CFG.KALENDER_TITEL;
+            if (t) t.textContent = name ? name + (/[sßxz]$/i.test(name) ? "’" : "s") + " Adventskalender" : (CFG.KALENDER_TITEL || "Dein Adventskalender");
+            const g = document.getElementById("finaleGruss");
+            if (g) g.textContent = name ? "Frohe Weihnachten, " + name + "!" : "Frohe Weihnachten!";
+        }
+        (function () {
+            personalisieren();
             const a = document.getElementById("absenderZeile");
             if (a) a.textContent = "Von mir, nur für dich!";
             const s = document.getElementById("finaleSignatur");
@@ -1344,6 +1383,176 @@
             try { lieblingeZeigen(); } catch (e) {}
         }
 
+        // ---------- Name (freiwillig, nur auf dem Gerät gespeichert) ----------
+        function nameAnzeigen() {
+            const name = speicherLesen("name", ""), ohne = speicherLesen("nameOhne", false) === true;
+            const karte = document.getElementById("nameKarte"), fuss = document.getElementById("nameFuss");
+            document.getElementById("nameInfo").style.display = SYNC.moeglich ? "" : "none";
+            karte.style.display = (!name && !ohne) ? "" : "none";
+            fuss.innerHTML = "";
+            if (name) {
+                fuss.appendChild(document.createTextNode("Nicht " + name + "? "));
+            }
+            if (name || ohne) {
+                const b = document.createElement("button");
+                b.textContent = name ? "Namen ändern" : "Namen eingeben";
+                b.onclick = function () { karte.style.display = ""; const f = document.getElementById("nameFeld"); f.value = ""; f.focus(); karte.scrollIntoView({ block: "center", behavior: "smooth" }); };
+                fuss.appendChild(b);
+            }
+        }
+        let meldungTimer = null;
+        function nameMeldung(text) {
+            const m = document.getElementById("nameMeldung");
+            clearTimeout(meldungTimer);
+            m.textContent = text; m.style.display = ""; m.style.opacity = "1";
+            meldungTimer = setTimeout(function () { m.style.opacity = "0"; setTimeout(function () { m.style.display = "none"; }, 1000); }, 6000);
+        }
+        window.nameSpeichern = function () {
+            const f = document.getElementById("nameFeld");
+            let v = f.value.replace(/\s+/g, " ").trim();
+            if (!v) { f.focus(); return; }
+            // nur GROSS oder nur klein getippt? Dann schön schreiben: „anna-lena“ → „Anna-Lena“ (sonst wie eingegeben, z. B. „McKenzie“)
+            if (v === v.toUpperCase() || v === v.toLowerCase()) v = v.toLowerCase().replace(/(^|[\s-])(\S)/g, function (m, a, b) { return a + b.toUpperCase(); });
+            else v = v.charAt(0).toUpperCase() + v.slice(1);
+            speicherSchreiben("name", v);
+            speicherLoeschen("nameOhne");
+            f.blur();
+            personalisieren(); nameAnzeigen();
+            nameMeldung("Schön, dass du da bist, " + v + "!");
+            SYNC.abgleichen().then(function (r) {
+                if (r && r.hatteStand && speicherLesen("name", "") === v) nameMeldung("Willkommen zurück, " + v + "! Dein Fortschritt ist wieder da.");
+            });
+        };
+        window.nameUeberspringen = function () {
+            speicherSchreiben("nameOhne", true);
+            nameAnzeigen();
+        };
+
+        // ---------- Online-Sicherung (SYNC) ----------
+        // Der Schlüssel wird aus Jahr, SYNC_ZUSATZ und Vornamen berechnet (SHA-256, 40 Zeichen; TEST-Fassung mit „-t“).
+        // Durch das Jahr beginnt jeder neue Kalender-Jahrgang automatisch mit einem leeren Online-Stand.
+        // Gesichert werden: geöffnete Türchen, Titel, Lieblingsgeschichten (mit Zeitstempel), „Finale gesehen“, „schon besucht“.
+        // Nicht gesichert: Name, Schriftgröße, Lesepositionen, Begrüßungen (das bleibt auf dem Gerät).
+        // Zusammenführen: Türchen und Titel werden vereinigt; bei den Lieblingen gewinnt die zuletzt geänderte Liste;
+        // „Finale gesehen“/„besucht“: einmal gesehen = überall gesehen.
+        const SYNC = (function () {
+            const url = String(CFG.SYNC_URL || "").trim().replace(/\/+$/, "");
+            const moeglich = !!(url && window.fetch && window.crypto && crypto.subtle && window.TextEncoder);
+            let schl = { name: null, p: null }, timer = null, laeuft = false, nochmal = false, unterdrueckt = false, offen = false, zuletzt = 0;
+            function norm(n) { return String(n || "").normalize("NFC").replace(/\s+/g, " ").trim().toLowerCase(); }
+            function schluesselAus(name) {
+                return crypto.subtle.digest("SHA-256", new TextEncoder().encode("adventsgeschichten|" + JAHR + "|" + (CFG.SYNC_ZUSATZ || "") + "|" + norm(name)))
+                    .then(function (d) { return Array.prototype.map.call(new Uint8Array(d), function (b) { return b.toString(16).padStart(2, "0"); }).join("").slice(0, 40) + (TEST_FASSUNG ? "-t" : ""); });
+            }
+            function schluessel() {
+                const n = speicherLesen("name", "");
+                if (!moeglich || !n) return Promise.resolve(null);
+                if (schl.name !== n) schl = { name: n, p: schluesselAus(n) };
+                return schl.p;
+            }
+            const gueltig = n => Number.isInteger(n) && n >= 1 && n <= 24;
+            function sauber(d) {
+                d = d && typeof d === "object" ? d : {};
+                const titel = {};
+                const t = d.titel && typeof d.titel === "object" ? d.titel : {};
+                Object.keys(t).map(Number).filter(gueltig).sort((a, b) => a - b).forEach(function (k) { if (typeof t[k] === "string") titel[k] = t[k].slice(0, 200); });
+                return {
+                    v: 1,
+                    geoeffnet: (Array.isArray(d.geoeffnet) ? d.geoeffnet : []).filter(gueltig).filter((x, i, a) => a.indexOf(x) === i).sort((a, b) => a - b),
+                    titel: titel,
+                    lieblinge: (Array.isArray(d.lieblinge) ? d.lieblinge : []).filter(gueltig).filter((x, i, a) => a.indexOf(x) === i).sort((a, b) => a - b),
+                    lieblingeTs: Number(d.lieblingeTs) || 0,
+                    finaleAn: d.finaleAn === true,
+                    besucht: d.besucht === true
+                };
+            }
+            function lokal() {
+                return sauber({ geoeffnet: geoeffnetListe(), titel: titelMap(), lieblinge: lieblingeListe(), lieblingeTs: speicherLesen("lieblingeTs", 0),
+                    finaleAn: speicherLesen("finaleAn", false) === true, besucht: speicherLesen("besucht", false) === true });
+            }
+            function zusammen(a, b) {
+                const neuer = b.lieblingeTs > a.lieblingeTs;
+                return sauber({
+                    geoeffnet: a.geoeffnet.concat(b.geoeffnet),
+                    titel: Object.assign({}, b.titel, a.titel),
+                    lieblinge: neuer ? b.lieblinge : a.lieblinge,
+                    lieblingeTs: neuer ? b.lieblingeTs : a.lieblingeTs,
+                    finaleAn: a.finaleAn || b.finaleAn,
+                    besucht: a.besucht || b.besucht
+                });
+            }
+            const gleich = (x, y) => JSON.stringify(x) === JSON.stringify(y);
+            function anwenden(z) {
+                unterdrueckt = true;
+                try {
+                    speicherSchreiben("geoeffnet", z.geoeffnet);
+                    speicherSchreiben("titel", z.titel);
+                    speicherSchreiben("lieblingeTs", z.lieblingeTs);
+                    speicherSchreiben("lieblinge", z.lieblinge);
+                    if (z.finaleAn) speicherSchreiben("finaleAn", true);
+                    if (z.besucht) speicherSchreiben("besucht", true);
+                } finally { unterdrueckt = false; }
+                try { tuerStilAktualisieren(); } catch (e) {}
+                try { finaleKnopfAktualisieren(); } catch (e) {}
+                try { rulesAktualisieren(); } catch (e) {}
+                try { if (!document.getElementById("storyScreen").classList.contains("hidden")) lieblingKnopf(); } catch (e) {}
+                try { if (!document.getElementById("finaleScreen").classList.contains("hidden")) lieblingeZeigen(); } catch (e) {}
+            }
+            function ablegen(k, z, versuch) {
+                return fetch(url + "/stand/" + k, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(z) })
+                    .then(function (r) {
+                        if (r.status === 429 && !versuch) return new Promise(function (res) { setTimeout(res, 1800); }).then(function () { return ablegen(k, z, true); });
+                        return r.ok;
+                    });
+            }
+            // holen, zusammenführen, lokal übernehmen und (wenn nötig) wieder ablegen
+            function abgleichen() {
+                clearTimeout(timer); offen = false;
+                return schluessel().then(function (k) {
+                    if (!k) return null;
+                    if (laeuft) { nochmal = true; return null; }
+                    laeuft = true; zuletzt = Date.now();
+                    return fetch(url + "/stand/" + k, { cache: "no-store" }).then(function (r) {
+                        if (!r.ok) throw new Error("HTTP " + r.status);
+                        return r.json().then(function (j) { return j && j.daten ? sauber(j.daten) : null; });
+                    }).then(function (server) {
+                        const lok = lokal(), z = zusammen(lok, server || sauber({}));
+                        if (!gleich(z, lok)) anwenden(z);
+                        const ergebnis = { hatteStand: !!(server && (server.geoeffnet.length || server.lieblinge.length)) };
+                        if (!server || !gleich(z, server)) return ablegen(k, z).then(function () { return ergebnis; });
+                        return ergebnis;
+                    }).catch(function () { offen = true; return null; })   // ohne Netz: später nachholen
+                      .then(function (e) { laeuft = false; if (nochmal) { nochmal = false; spaeter(); } return e; });
+                });
+            }
+            function spaeter() {
+                if (!moeglich || unterdrueckt || !speicherLesen("name", "")) return;
+                offen = true;
+                clearTimeout(timer); timer = setTimeout(abgleichen, 3000);
+            }
+            // App geht in den Hintergrund: noch nicht gesicherte Änderungen sofort senden
+            document.addEventListener("visibilitychange", function () {
+                if (document.hidden) {
+                    if (offen) schluessel().then(function (k) {
+                        if (!k) return;
+                        clearTimeout(timer); offen = false;
+                        try { fetch(url + "/stand/" + k, { method: "PUT", keepalive: true, headers: { "Content-Type": "application/json" }, body: JSON.stringify(lokal()) }).catch(function () {}); } catch (e) {}
+                    });
+                } else if (Date.now() - zuletzt > 20000) abgleichen();   // zurück im Vordergrund: Stand der anderen Geräte holen
+            });
+            function loeschen(name) {
+                if (!moeglich || !name) return Promise.resolve();
+                return schluesselAus(name).then(function (k) { return fetch(url + "/stand/" + k, { method: "DELETE" }); }).catch(function () {});
+            }
+            return { moeglich: moeglich, abgleichen: abgleichen, spaeter: spaeter, loeschen: loeschen };
+        })();
+        window.SYNC = SYNC;
+        document.addEventListener("DOMContentLoaded", function () {
+            try { nameAnzeigen(); } catch (e) {}
+            if (window.__resetName) SYNC.loeschen(window.__resetName);
+            else SYNC.abgleichen();
+        });
+
         // ---------- Schriftgröße der Geschichten (pro Gerät gemerkt) ----------
         const SCHRIFT_STUFEN = [0.9, 1, 1.12, 1.25, 1.4];
         function schriftStufe() { const n = speicherLesen("schrift", 1); return (typeof n === "number" && n >= 0 && n < SCHRIFT_STUFEN.length) ? n : 1; }
@@ -1376,6 +1585,7 @@
         window.lieblingUmschalten = function () {
             const l = lieblingeListe(), i = l.indexOf(currentDay);
             if (i >= 0) l.splice(i, 1); else { l.push(currentDay); l.sort((a, b) => a - b); }
+            speicherSchreiben("lieblingeTs", Date.now());   // für den Abgleich: die zuletzt geänderte Liste gewinnt
             speicherSchreiben("lieblinge", l);
             lieblingKnopf();
             const b = document.getElementById("btnLiebling");

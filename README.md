@@ -14,7 +14,7 @@ Der Absender steht in `config.js` (`ABSENDER`) und erscheint nur in der Signatur
 | GitHub-Repository | `vanallen84/advents-geschichten` |
 | Alte GitHub-Adresse (leitet weiter) | https://vanallen84.github.io/advents-geschichten/ |
 
-Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v18`.
+Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v19`.
 
 ---
 
@@ -42,6 +42,7 @@ Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v18`.
 20. [Wichtige Funktionen in index.html](#20-wichtige-funktionen-in-indexhtml)
 21. [Verlauf der Änderungen](#21-verlauf-der-änderungen)
 22. [Rechtliches zu Texten und Bildern](#22-rechtliches-zu-texten-und-bildern)
+23. [Name und Online-Sicherung](#23-name-und-online-sicherung)
 
 ---
 
@@ -51,6 +52,7 @@ Wenn der Kalender in einem neuen Jahr wieder laufen soll:
 
 1. **config.js:** `JAHR` auf das neue Jahr setzen.
    Dadurch ändert sich auch der Speicher-Präfix (`weihnacht2027_` …), alle Leser beginnen also mit einem leeren Kalender.
+   Auch die Online-Sicherung beginnt leer, weil das Jahr im Online-Schlüssel steckt. `SYNC_ZUSATZ` und `SYNC_URL` bleiben, wie sie sind.
 2. **Neue Geschichten (optional):** `story-day1.js` bis `story-day24.js` ersetzen (Format siehe [Abschnitt 10](#10-geschichten)).
 3. **Neue Bilder (optional):** Rohbilder in `bilder-roh/` legen, dann
    ```bash
@@ -123,17 +125,20 @@ Code und Animationen wurden so weit wie möglich übernommen und dann erweitert.
 
 ```js
 window.ADVENT_CONFIG = {
-  EMPFAENGER_NAME: "",                 // leer = kein Name (Kalender für mehrere Personen)
+  EMPFAENGER_NAME: "",                 // leer = der Name, den die Person selbst eingibt (freiwillig)
   ABSENDER: "Vorname",                 // erscheint in der Finale-Signatur
   JAHR: 2026,                          // Jahr, in dem die Türchen im Dezember aufgehen
   SEITEN_URL: "https://adventsgeschichten.tkagel.de/",  // für die Links in den .ics-Terminen
-  KALENDER_TITEL: "Dein Adventskalender",               // Überschrift der Startseite
+  KALENDER_TITEL: "Dein Adventskalender",               // Überschrift der Startseite (ohne Namen)
+  SYNC_URL: "https://advent-stand.….workers.dev",       // Online-Sicherung; leer = aus
+  SYNC_ZUSATZ: "…",                    // fester Zufallswert für den Online-Schlüssel – NIE ändern
   VORTEST_NOVEMBER: false              // false = LIVE (immer so lassen!)
 };
 ```
 
-- **EMPFAENGER_NAME:** In den Begrüßungssätzen steht an einigen Stellen `{name}`.
-  - Ist ein Name eingetragen, wird `{name}` ersetzt.
+- **EMPFAENGER_NAME:** Rückfall für den Namen der lesenden Person. Normalerweise leer: Dann gilt der Vorname, den die Person auf der Startseite selbst eingibt (siehe [Abschnitt 23](#23-name-und-online-sicherung)).
+  In den Begrüßungssätzen steht an einigen Stellen `{name}`.
+  - Ist ein Name bekannt, wird `{name}` ersetzt.
   - Ist das Feld leer, verschwindet `{name}` samt Komma (Funktion `mitName`).
   - Aus „Guten Morgen, {name}. …“ wird dann „Guten Morgen. …“.
 - **ABSENDER:**
@@ -141,6 +146,8 @@ window.ADVENT_CONFIG = {
   - Die Zeile unter der Überschrift der Startseite ist **fest** „Von mir, nur für dich!“ und hängt nicht von `ABSENDER` ab.
 - **JAHR:** Steuert die Freischaltung, den Speicher-Präfix und die .ics-Termine (über `tools/erinnerung.py`).
 - **SEITEN_URL:** Wird nur von `tools/erinnerung.py` gelesen und in die Termine geschrieben. Nach einer Änderung die .ics-Dateien neu erzeugen.
+- **SYNC_URL:** Adresse des eigenen Cloudflare-Workers „advent-stand“ für die Online-Sicherung. Leer = keine Online-Sicherung (der Name personalisiert trotzdem).
+- **SYNC_ZUSATZ:** fester Zufallswert (einmalig erzeugt). Zusammen mit Jahr und Vorname ergibt er den Online-Schlüssel. **Nie ändern**, sonst sind gesicherte Stände nicht mehr auffindbar.
 - **VORTEST_NOVEMBER:** Wenn `true`, zählt der November **auch auf der LIVE-Adresse** als Dezember.
   - Das war früher der Weg zum Testen.
   - Heute gibt es dafür die TEST-Fassung, deshalb bleibt der Wert immer `false`.
@@ -165,7 +172,8 @@ Beide Fassungen sind **dieselben Dateien**. Unterschieden wird nur über den Adr
 - **`test/index.html`** ist nur eine Weiterleitung.
   - Ein angehängtes `?reset=1` wird mitgenommen: `/test/?reset=1` → `/index.html?test=1&reset=1`.
 - **`?reset=1`** löscht den gespeicherten Stand der jeweiligen Fassung.
-  - Gelöscht werden: geöffnete Türchen, Lesepositionen, Begrüßungs-Verlauf, „Finale gesehen“, „schon mal besucht“, gespeicherte Titel, Lieblingsgeschichten, Schriftgröße.
+  - Gelöscht werden: geöffnete Türchen, Lesepositionen, Begrüßungs-Verlauf, „Finale gesehen“, „schon mal besucht“, gespeicherte Titel, Lieblingsgeschichten, Schriftgröße, Name.
+  - War ein Name eingegeben und ist die Online-Sicherung eingerichtet, wird auch dessen **Online-Stand** dieser Fassung gelöscht (sonst käme er beim nächsten Abgleich zurück).
   - Danach wird der Zusatz aus der Adresszeile entfernt, damit ein Neuladen nicht erneut löscht.
 - **Wichtig:** Im Dezember verhält sich die TEST-Fassung wie die LIVE-Fassung, nur mit eigenem Speicher.
   Zum Vorab-Testen also immer im November nutzen.
@@ -235,7 +243,9 @@ Alle Seiten liegen als `<div>`-Bereiche in `index.html` und werden über die Kla
 
 ### 7.1 Startseite
 
-- **Überschrift** aus `KALENDER_TITEL`, darunter fest **„Von mir, nur für dich!“**.
+- **Überschrift:** mit Namen „Annas Adventskalender“ (bei Namen auf s, ß, x, z: „Klaus’ Adventskalender“), sonst `KALENDER_TITEL`. Darunter fest **„Von mir, nur für dich!“**.
+- **Namenskarte** (nur solange kein Name eingegeben und nicht „Ohne Namen weiter“ gewählt wurde): „Schön, dass du da bist! Wie heißt du?“ mit Feld, Knopf „Los geht’s“, Hinweis zur Online-Sicherung (nur wenn `SYNC_URL` gesetzt) und „Ohne Namen weiter“. Danach kurz „Schön, dass du da bist, Anna!“ bzw. „Willkommen zurück, Anna! Dein Fortschritt ist wieder da.“
+- **Ganz unten:** „Nicht Anna? Namen ändern“ bzw. „Namen eingeben“.
 - **Countdown:** nur vor dem 1. Dezember und höchstens 60 Tage vorher.
   - Text: „Noch N Tage, dann öffnet sich das erste Türchen.“ bzw. „Morgen öffnet sich das erste Türchen.“
   - In der TEST-Fassung zählt er bis zum 1. November.
@@ -256,7 +266,7 @@ Alle Seiten liegen als `<div>`-Bereiche in `index.html` und werden über die Kla
 ### 7.2 Türchen-Übersicht
 
 - Überschrift „Wähle das heutige Türchen“.
-- **Begrüßungssatz** unter der Überschrift, abhängig von der Tageszeit:
+- **Begrüßungssatz** unter der Überschrift, abhängig von der Tageszeit (mit Namen, wo der Satz `{name}` enthält):
   - morgens 5–11 Uhr, mittags 11–17 Uhr, abends 17–22 Uhr, nachts 22–5 Uhr.
   - Je Tageszeit gibt es 8 Sätze (Liste `BEGRUESSUNG` in index.html). Die Sätze sind Eigenformulierungen.
   - Pro Tag und Tageszeit gilt ein fester Satz; er bleibt den ganzen Tag gleich.
@@ -323,7 +333,7 @@ Alle Seiten liegen als `<div>`-Bereiche in `index.html` und werden über die Kla
   - Ein einzelnes, sehr langes Blatt wirkte unnatürlich; eine Schriftrolle passte nicht zum Umschlag.
   - Brieftext in Serifenschrift (Georgia), passend zum alten Briefpapier.
 - **„Deine Lieblingsgeschichten“:** ein kleiner Zettel unter dem Brief mit Nummer und Titel aller gemerkten Geschichten. Antippen öffnet die Geschichte (mit Tür-Animation). Ohne Lieblinge wird der Zettel nicht gezeigt.
-- Darin: Überschrift „Frohe Weihnachten!“, fünf Absätze Brieftext (vom Absender selbst geschrieben, November 2026), linksbündig mit Silbentrennung, darunter rechts der Name aus `ABSENDER` als Unterschrift. Ist `ABSENDER` leer, entfällt die Unterschrift.
+- Darin: Überschrift „Frohe Weihnachten!“ bzw. mit Namen „Frohe Weihnachten, Anna!“ (`#finaleGruss`), fünf Absätze Brieftext (vom Absender selbst geschrieben, November 2026), linksbündig mit Silbentrennung, darunter rechts der Name aus `ABSENDER` als Unterschrift. Ist `ABSENDER` leer, entfällt die Unterschrift.
 - Bild `bilder/finale.jpg`.
 - Knopf **„✨ Die Animation noch einmal ansehen“**.
 
@@ -602,7 +612,7 @@ Mit Rosegger steht eine Geschichte am Heiligabend am Ende.
 ## 12. Was im Browser gespeichert wird
 
 Alles liegt im `localStorage` des Geräts, mit dem Präfix `weihnacht2026_` (TEST: `weihnacht2026_test_`).
-Es gibt **keine Übertragung an einen Server**. Jedes Gerät und jeder Browser hat seinen eigenen Stand.
+Jedes Gerät und jeder Browser hat seinen eigenen Stand. Nur wenn ein Vorname eingegeben wurde und `SYNC_URL` gesetzt ist, wird ein Teil davon zusätzlich online gesichert (siehe [Abschnitt 23](#23-name-und-online-sicherung)).
 
 | Schlüssel | Inhalt |
 |---|---|
@@ -614,11 +624,14 @@ Es gibt **keine Übertragung an einen Server**. Jedes Gerät und jeder Browser h
 | `besucht` | `true` nach dem ersten Besuch (für das Einklappen von „Bevor es losgeht“) |
 | `lieblinge` | gemerkte Lieblingsgeschichten, z. B. `[3,7]` (seit v18) |
 | `schrift` | gewählte Schriftgröße der Geschichten, Stufe 0–4, Standard 1 (seit v18) |
+| `lieblingeTs` | Zeitpunkt der letzten Änderung an den Lieblingen (für den Abgleich, seit v19) |
+| `name` | selbst eingegebener Vorname (nur auf dem Gerät, wird **nicht** online gespeichert; seit v19) |
+| `nameOhne` | `true`, wenn „Ohne Namen weiter“ gewählt wurde (seit v19) |
 
 - Funktioniert `localStorage` nicht (z. B. in manchen privaten Modi), arbeitet die Seite mit einem Ersatz im Arbeitsspeicher.
   Dann geht der Stand beim Schließen verloren, aber nichts stürzt ab.
 - **Wichtig für iPhone:** Eine auf dem Startbildschirm installierte Web-App hat **einen anderen Speicher** als Safari.
-  Wer erst in Safari liest und dann die App nutzt, beginnt dort von vorn.
+  Wer erst in Safari liest und dann die App nutzt, beginnt dort von vorn – außer er gibt dort denselben Vornamen ein (Online-Sicherung, Abschnitt 23).
 - Töne, Zuklappen, Finale-Ton (v14) und Umschlag (v15) haben **keine neuen Schlüssel** gebracht, v18 nur die zwei neuen `lieblinge` und `schrift`; der Fortschritt der Leser bleibt unverändert.
   Die Töne selbst liegen nicht im `localStorage`, sondern im Offline-Speicher des Service Workers (Abschnitt 13).
 
@@ -807,7 +820,8 @@ Der Service Worker ist auch lokal auf `localhost` aktiv. Wer beim Entwickeln Än
 | `window.PORTAL_FARBE = true` | Browser-Konsole | Portal nur golden, ohne Bild |
 | `VORTEST_NOVEMBER` | config.js | November = Dezember auch auf LIVE (nicht mehr nötig, TEST-Fassung nutzen) |
 | `?test=1` | Adresse | TEST-Fassung |
-| `?reset=1` | Adresse | gespeicherten Stand der Fassung löschen |
+| `?reset=1` | Adresse | gespeicherten Stand der Fassung löschen (inkl. Name und Online-Stand dieses Namens) |
+| `SYNC_URL: ""` | config.js | Online-Sicherung abschalten |
 
 ---
 
@@ -826,6 +840,7 @@ Der Service Worker ist auch lokal auf `localhost` aktiv. Wer beim Entwickeln Än
 | Bilder | `bildEinblenden`, `zeigeStoryBild`, `storyBildStart`, `wmAn`, `wmAus` |
 | Animationen | `portalDurch`, `portalZurueck`, `wirbelUebergang`, `startStory`, `finaleDurch` (mit `bildA`/`bildB`), `umschlagZeigen` |
 | Töne | `TON.spielen`, `TON.ausblenden` (Dateinamen in `DATEIEN`) |
+| Name/Sicherung | `leserName`, `personalisieren`, `nameAnzeigen`, `nameSpeichern`, `nameUeberspringen`, `SYNC` (`abgleichen`, `spaeter`, `loeschen`) |
 | Lesen | `schriftAendern`, `schriftAnwenden`, `VORLESEN` (`umschalten`, `stop`), `lieblingUmschalten`, `lieblingKnopf`, `lieblingeListe`, `istLiebling`, `lieblingeZeigen` |
 | Startseite | `rulesAktualisieren`, `vorabUmschalten`, `rulesUmschalten`, `ladeErinnerung`, Countdown, App-Tipp nach Gerät |
 | Übersicht | `begruessungWaehlen`, `begruessungZeigen`, `finaleKnopfAktualisieren` |
@@ -881,6 +896,7 @@ Grob in der Reihenfolge der Entstehung (Herbst 2026):
 19. **Umschlag und Brief** (v15): Nach der Finale-Animation liegt ein Umschlag mit Stern-Siegel bereit; Tippen öffnet ihn (`ton/umschlag.mp3`), der Brief wird zur Finale-Seite. Die Finale-Seite sieht aus wie ein Brief auf altem Briefpapier.
 20. **Neuer Brieftext** (v16): fünf Absätze, Unterschrift nur noch mit dem Namen.
 21. **Zwei Briefbögen** (v17): Der Brief steht auf zwei leicht versetzten Bögen untereinander statt auf einem langen Blatt; im Umschlag gleitet ein kleiner Stapel heraus.
+23. **Name und Online-Sicherung** (v19): freiwillige Namenseingabe auf der Startseite, persönliche Überschrift, Begrüßung und Brief-Gruß; Abgleich von Türchen, Titeln, Lieblingen und „Finale gesehen“ über einen eigenen Cloudflare-Worker „advent-stand“.
 22. **Lesen und Finale** (v18): Schriftgröße A−/A+, Vorlesen mit „Weiter vorlesen“, Lieblingsgeschichten (Stern auf Kachel, Zettel im Finale), Brief in Serifenschrift, Finale-Animation und Umschlag beim allerersten Aufruf auch über „Zum Finale“.
 
 ---
@@ -890,4 +906,55 @@ Grob in der Reihenfolge der Entstehung (Herbst 2026):
 - **Texte:** Alle 24 Geschichten sind gemeinfrei. Die Bearbeitung (Modernisierung) ist bei jeder Geschichte in der Quellenzeile vermerkt.
 - **Eigenformulierungen:** Einstimmungssätze, Begrüßungssätze, Texte der Startseite, „Tippen zum Öffnen“, die Beschriftungen „Zu den Lieblingen“, „Lieblingsgeschichte“, „Deine Lieblingsgeschichten“, „Vorlesen“, „Weiter vorlesen“, „Vorlesen anhalten“. Der Brief auf der Finale-Seite stammt vom Absender selbst.
 - **Bilder:** Mit Google Gemini erzeugt, für die private Nutzung in diesem Kalender. Keine Fotos realer Personen.
-- Die Seite ist privat, nicht in Suchmaschinen gelistet und sammelt keine Daten. Alles bleibt im Browser des Lesers.
+- Die Seite ist privat und nicht in Suchmaschinen gelistet.
+- **Daten:** Ohne Namenseingabe bleibt alles im Browser des Lesers. Mit Namen werden geöffnete Türchen, Titel, Lieblinge und „Finale gesehen“ unter einem aus dem Namen berechneten Schlüssel bei Cloudflare gespeichert (KV-Speicher des eigenen Workers). Der Name selbst wird nicht übertragen.
+
+---
+
+## 23. Name und Online-Sicherung
+
+Gedacht für eine Person (oder wenige), die den Kalender auf mehreren Geräten, in Safari **und** in der App nutzt
+oder die App einmal neu installiert. Wer denselben Vornamen eingibt, findet seinen Stand wieder.
+
+### 23.1 Name (freiwillig)
+
+- Beim ersten Besuch fragt die **Namenskarte** oben auf der Startseite nach dem Vornamen. „Ohne Namen weiter“ ist jederzeit möglich; später unten auf der Startseite „Namen eingeben“ bzw. „Nicht Anna? Namen ändern“.
+- Schreibweise: nur GROSS oder nur klein getippte Namen werden schön geschrieben („anna-lena“ → „Anna-Lena“), sonst bleibt die Eingabe (z. B. „McKenzie“).
+- Der Name steht nur im Speicher des Geräts (`name`), **nicht** online und **nicht** im Code.
+- **Personalisierung:**
+  1. Überschrift der Startseite „Annas Adventskalender“ (Namen auf s/ß/x/z: „Klaus’ Adventskalender“).
+  2. Begrüßung in der Übersicht, wo der Satz `{name}` enthält („Guten Morgen, Anna. …“).
+  3. Überschrift des Briefs: „Frohe Weihnachten, Anna!“ (bewusst ohne „Liebe/Lieber“, dafür müsste das Geschlecht bekannt sein).
+
+### 23.2 Wie die Sicherung funktioniert
+
+- **Schlüssel:** SHA-256 aus `adventsgeschichten|JAHR|SYNC_ZUSATZ|vorname` (Vorname klein, Leerzeichen bereinigt), davon 40 Hex-Zeichen; die TEST-Fassung hängt `-t` an.
+  Groß-/Kleinschreibung und Leerzeichen spielen also keine Rolle, ein Tippfehler ergibt aber einen anderen Speicher.
+  Durch das Jahr beginnt jeder neue Jahrgang leer; durch `-t` sind TEST und LIVE getrennt.
+- **Gesichert werden:** geöffnete Türchen, Titel, Lieblingsgeschichten (mit Zeitstempel), „Finale gesehen“, „schon besucht“.
+  **Nicht:** Name, Schriftgröße, Lesepositionen, Begrüßungen (gerätebezogen).
+- **Wann:**
+  - beim Start der Seite und nach der Namenseingabe (holen → zusammenführen → ggf. ablegen),
+  - etwa 3 s nach jeder Änderung (neues Türchen, Liebling, Finale),
+  - wenn die App in den Hintergrund geht und noch etwas offen ist (sofort, `keepalive`),
+  - wenn die App nach mehr als 20 s wieder in den Vordergrund kommt (Stand der anderen Geräte holen).
+- **Zusammenführen:** Türchen und Titel werden vereinigt; bei den Lieblingen gewinnt die **zuletzt geänderte** Liste (damit ein entfernter Favorit nicht von einem anderen Gerät zurückkommt); „Finale gesehen“/„besucht“: einmal gesehen = überall gesehen.
+- **Ohne Netz** läuft alles wie bisher; der Abgleich wird beim nächsten Mal nachgeholt. Ist der Worker nicht erreichbar, merkt die Leserin nichts davon.
+- „Willkommen zurück“ erscheint nur, wenn online schon ein Stand mit geöffneten Türchen oder Lieblingen lag.
+
+### 23.3 Der Worker „advent-stand“
+
+- Eigener Cloudflare-Worker, **getrennt** vom Worker des anderen Kalenders, mit eigenem KV-Speicher (Binding `STAND`).
+- Wege: `GET /stand/<schlüssel>` (holen; ohne Stand `{"t":0,"daten":null}`), `PUT /stand/<schlüssel>` (ablegen), `DELETE /stand/<schlüssel>` (löschen, für `?reset=1`).
+- Schutz: nur Anfragen mit der Herkunft `https://adventsgeschichten.tkagel.de` (oder `ALLOWED_ORIGINS`), Schlüssel genau 40 Hex-Zeichen (+ `-t`), höchstens 16 KB, frühestens alle 1,5 s ein Schreibvorgang pro Schlüssel.
+- Keine Passwörter oder Geheimnisse. Wer den Vornamen kennt und `config.js` liest, könnte den Stand theoretisch abrufen; gespeichert sind aber nur Türchen-Nummern, Titel und Lieblinge.
+- Code (`worker-advent-stand.js`) und Einrichtungsanleitung (`ANLEITUNG_Cloudflare_advent-stand.md`) liegen **nicht** im Repository.
+  Der gültige Code steht im Cloudflare-Dashboard unter dem Worker („Edit code“).
+- Kosten: kostenloser Tarif reicht (100.000 Lese- und 1.000 Schreibvorgänge pro Tag).
+
+### 23.4 Testen
+
+- TEST-Fassung: `…/test/?reset=1`, Namen eingeben, Türchen lesen, Liebling setzen, ca. 5 s warten.
+  Dann in einem privaten Fenster, auf einem anderen Gerät oder in der TEST-App denselben Namen eingeben → „Willkommen zurück“.
+- In Cloudflare unter KV → `advent-stand-kv` sind die Einträge `stand:…` (LIVE) bzw. `stand:…-t` (TEST) zu sehen.
+- Entwickelt und geprüft wurde mit dem echten Worker-Code, lokal in Node mit nachgebildetem KV-Speicher, und mehreren getrennten Browser-Kontexten als „Geräten“.
