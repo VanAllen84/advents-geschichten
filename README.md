@@ -14,7 +14,7 @@ Der Absender steht in `config.js` (`ABSENDER`) und erscheint nur in der Signatur
 | GitHub-Repository | `vanallen84/advents-geschichten` |
 | Alte GitHub-Adresse (leitet weiter) | https://vanallen84.github.io/advents-geschichten/ |
 
-Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v19`.
+Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v20`.
 
 ---
 
@@ -173,7 +173,9 @@ Beide Fassungen sind **dieselben Dateien**. Unterschieden wird nur über den Adr
   - Ein angehängtes `?reset=1` wird mitgenommen: `/test/?reset=1` → `/index.html?test=1&reset=1`.
 - **`?reset=1`** löscht den gespeicherten Stand der jeweiligen Fassung.
   - Gelöscht werden: geöffnete Türchen, Lesepositionen, Begrüßungs-Verlauf, „Finale gesehen“, „schon mal besucht“, gespeicherte Titel, Lieblingsgeschichten, Schriftgröße, Name.
-  - War ein Name eingegeben und ist die Online-Sicherung eingerichtet, wird auch dessen **Online-Stand** dieser Fassung gelöscht (sonst käme er beim nächsten Abgleich zurück).
+  - Der **Online-Stand bleibt** dabei erhalten: Wer danach denselben Namen eingibt, bekommt ihn zurück („Willkommen zurück“).
+- **`?reset=alles`** (bzw. `/test/?reset=alles`) löscht zusätzlich den Online-Stand des auf diesem Gerät zuletzt eingegebenen Namens, nur für diese Fassung.
+  (Bis v19 tat das schon `?reset=1` – das hat beim Testen den Stand eines anderen Geräts gelöscht, wenn im Browser noch derselbe Name gespeichert war.)
   - Danach wird der Zusatz aus der Adresszeile entfernt, damit ein Neuladen nicht erneut löscht.
 - **Wichtig:** Im Dezember verhält sich die TEST-Fassung wie die LIVE-Fassung, nur mit eigenem Speicher.
   Zum Vorab-Testen also immer im November nutzen.
@@ -820,7 +822,8 @@ Der Service Worker ist auch lokal auf `localhost` aktiv. Wer beim Entwickeln Än
 | `window.PORTAL_FARBE = true` | Browser-Konsole | Portal nur golden, ohne Bild |
 | `VORTEST_NOVEMBER` | config.js | November = Dezember auch auf LIVE (nicht mehr nötig, TEST-Fassung nutzen) |
 | `?test=1` | Adresse | TEST-Fassung |
-| `?reset=1` | Adresse | gespeicherten Stand der Fassung löschen (inkl. Name und Online-Stand dieses Namens) |
+| `?reset=1` | Adresse | gespeicherten Stand dieses Geräts in dieser Fassung löschen (inkl. Name; Online-Stand bleibt) |
+| `?reset=alles` | Adresse | wie `?reset=1`, löscht zusätzlich den Online-Stand des hier zuletzt eingegebenen Namens |
 | `SYNC_URL: ""` | config.js | Online-Sicherung abschalten |
 
 ---
@@ -896,8 +899,9 @@ Grob in der Reihenfolge der Entstehung (Herbst 2026):
 19. **Umschlag und Brief** (v15): Nach der Finale-Animation liegt ein Umschlag mit Stern-Siegel bereit; Tippen öffnet ihn (`ton/umschlag.mp3`), der Brief wird zur Finale-Seite. Die Finale-Seite sieht aus wie ein Brief auf altem Briefpapier.
 20. **Neuer Brieftext** (v16): fünf Absätze, Unterschrift nur noch mit dem Namen.
 21. **Zwei Briefbögen** (v17): Der Brief steht auf zwei leicht versetzten Bögen untereinander statt auf einem langen Blatt; im Umschlag gleitet ein kleiner Stapel heraus.
-23. **Name und Online-Sicherung** (v19): freiwillige Namenseingabe auf der Startseite, persönliche Überschrift, Begrüßung und Brief-Gruß; Abgleich von Türchen, Titeln, Lieblingen und „Finale gesehen“ über einen eigenen Cloudflare-Worker „advent-stand“.
 22. **Lesen und Finale** (v18): Schriftgröße A−/A+, Vorlesen mit „Weiter vorlesen“, Lieblingsgeschichten (Stern auf Kachel, Zettel im Finale), Brief in Serifenschrift, Finale-Animation und Umschlag beim allerersten Aufruf auch über „Zum Finale“.
+23. **Name und Online-Sicherung** (v19): freiwillige Namenseingabe auf der Startseite, persönliche Überschrift, Begrüßung und Brief-Gruß; Abgleich von Türchen, Titeln, Lieblingen und „Finale gesehen“ über einen eigenen Cloudflare-Worker „advent-stand“.
+24. **Online-Sicherung robuster** (v20): D1 statt KV, Worker führt beim Ablegen zusammen, leere Stände werden nie abgelegt, `?reset=1` nur noch lokal (`?reset=alles` auch online), Statuszeile in TEST.
 
 ---
 
@@ -907,7 +911,7 @@ Grob in der Reihenfolge der Entstehung (Herbst 2026):
 - **Eigenformulierungen:** Einstimmungssätze, Begrüßungssätze, Texte der Startseite, „Tippen zum Öffnen“, die Beschriftungen „Zu den Lieblingen“, „Lieblingsgeschichte“, „Deine Lieblingsgeschichten“, „Vorlesen“, „Weiter vorlesen“, „Vorlesen anhalten“. Der Brief auf der Finale-Seite stammt vom Absender selbst.
 - **Bilder:** Mit Google Gemini erzeugt, für die private Nutzung in diesem Kalender. Keine Fotos realer Personen.
 - Die Seite ist privat und nicht in Suchmaschinen gelistet.
-- **Daten:** Ohne Namenseingabe bleibt alles im Browser des Lesers. Mit Namen werden geöffnete Türchen, Titel, Lieblinge und „Finale gesehen“ unter einem aus dem Namen berechneten Schlüssel bei Cloudflare gespeichert (KV-Speicher des eigenen Workers). Der Name selbst wird nicht übertragen.
+- **Daten:** Ohne Namenseingabe bleibt alles im Browser des Lesers. Mit Namen werden geöffnete Türchen, Titel, Lieblinge und „Finale gesehen“ unter einem aus dem Namen berechneten Schlüssel bei Cloudflare gespeichert (D1-Datenbank des eigenen Workers). Der Name selbst wird nicht übertragen.
 
 ---
 
@@ -941,20 +945,24 @@ oder die App einmal neu installiert. Wer denselben Vornamen eingibt, findet sein
 - **Zusammenführen:** Türchen und Titel werden vereinigt; bei den Lieblingen gewinnt die **zuletzt geänderte** Liste (damit ein entfernter Favorit nicht von einem anderen Gerät zurückkommt); „Finale gesehen“/„besucht“: einmal gesehen = überall gesehen.
 - **Ohne Netz** läuft alles wie bisher; der Abgleich wird beim nächsten Mal nachgeholt. Ist der Worker nicht erreichbar, merkt die Leserin nichts davon.
 - „Willkommen zurück“ erscheint nur, wenn online schon ein Stand mit geöffneten Türchen oder Lieblingen lag.
+- **Ein leerer Stand wird nie abgelegt.** Ein frisches Gerät legt erst etwas ab, wenn es selbst etwas beiträgt (Türchen, Liebling, Finale).
+- **Der Worker führt beim Ablegen selbst zusammen** und schickt den Gesamtstand zurück; das Gerät übernimmt ihn. So kann ein Gerät mit veraltetem Stand nie den Stand eines anderen löschen.
+- **TEST-Statuszeile:** In der TEST-Fassung steht unten auf der Startseite z. B. „TEST · Online abgeglichen 11:52:10 · 7 Türchen, 3 Lieblinge“, „nicht erreichbar“, „erst nach Namenseingabe“ oder „aus (SYNC_URL leer)“. In LIVE wird sie nicht gezeigt.
 
 ### 23.3 Der Worker „advent-stand“
 
-- Eigener Cloudflare-Worker, **getrennt** vom Worker des anderen Kalenders, mit eigenem KV-Speicher (Binding `STAND`).
-- Wege: `GET /stand/<schlüssel>` (holen; ohne Stand `{"t":0,"daten":null}`), `PUT /stand/<schlüssel>` (ablegen), `DELETE /stand/<schlüssel>` (löschen, für `?reset=1`).
-- Schutz: nur Anfragen mit der Herkunft `https://adventsgeschichten.tkagel.de` (oder `ALLOWED_ORIGINS`), Schlüssel genau 40 Hex-Zeichen (+ `-t`), höchstens 16 KB, frühestens alle 1,5 s ein Schreibvorgang pro Schlüssel.
+- Eigener Cloudflare-Worker, **getrennt** vom Worker des anderen Kalenders, mit eigener **D1-Datenbank** (Binding `DB`, Tabelle `stand` mit `schluessel`, `t`, `daten`; legt der Worker selbst an).
+- **Warum D1 statt KV:** KV gleicht sich zwischen Cloudflare-Rechenzentren erst nach bis zu ~60 s ab. Handy (Mobilnetz) und PC landen oft in verschiedenen Rechenzentren; in v19 (mit KV) sah das Handy deshalb einen leeren Stand und überschrieb den des PCs. D1 liefert sofort überall denselben Stand.
+- Wege: `GET /stand/<schlüssel>` (holen; ohne Stand `{"t":0,"daten":null}`), `PUT /stand/<schlüssel>` (ablegen = **mit dem vorhandenen Stand zusammenführen**, Antwort enthält den Gesamtstand), `DELETE /stand/<schlüssel>` (löschen, für `?reset=alles`).
+- Schutz: nur Anfragen mit der Herkunft `https://adventsgeschichten.tkagel.de` (oder `ALLOWED_ORIGINS`), Schlüssel genau 40 Hex-Zeichen (+ `-t`), höchstens 16 KB.
 - Keine Passwörter oder Geheimnisse. Wer den Vornamen kennt und `config.js` liest, könnte den Stand theoretisch abrufen; gespeichert sind aber nur Türchen-Nummern, Titel und Lieblinge.
 - Code (`worker-advent-stand.js`) und Einrichtungsanleitung (`ANLEITUNG_Cloudflare_advent-stand.md`) liegen **nicht** im Repository.
   Der gültige Code steht im Cloudflare-Dashboard unter dem Worker („Edit code“).
-- Kosten: kostenloser Tarif reicht (100.000 Lese- und 1.000 Schreibvorgänge pro Tag).
+- Kosten: kostenloser Tarif reicht (D1: Millionen Lese- und 100.000 Schreibzugriffe pro Tag).
 
 ### 23.4 Testen
 
 - TEST-Fassung: `…/test/?reset=1`, Namen eingeben, Türchen lesen, Liebling setzen, ca. 5 s warten.
   Dann in einem privaten Fenster, auf einem anderen Gerät oder in der TEST-App denselben Namen eingeben → „Willkommen zurück“.
-- In Cloudflare unter KV → `advent-stand-kv` sind die Einträge `stand:…` (LIVE) bzw. `stand:…-t` (TEST) zu sehen.
-- Entwickelt und geprüft wurde mit dem echten Worker-Code, lokal in Node mit nachgebildetem KV-Speicher, und mehreren getrennten Browser-Kontexten als „Geräten“.
+- In Cloudflare unter D1 → `advent-stand-db` → Console mit `SELECT * FROM stand;` sind die Einträge `…` (LIVE) bzw. `…-t` (TEST) zu sehen.
+- Entwickelt und geprüft wurde mit dem echten Worker-Code, lokal in Node mit nachgebildeter D1-Datenbank, und mehreren getrennten Browser-Kontexten als „Geräten“ – inklusive eines absichtlich veralteten Abrufs.

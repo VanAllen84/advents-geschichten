@@ -1,0 +1,2345 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="robots" content="noindex, nofollow">
+    <meta property="og:title" content="Advent">
+    <meta property="og:description" content="Ein Adventskalender mit 24 Geschichten.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advent</title>
+    <link rel="icon" id="favicon" href="icon-192.png">
+    <link rel="apple-touch-icon" id="appleIcon" href="apple-touch-icon.png">
+    <meta name="theme-color" id="themeColorMeta" content="#07120e">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" id="appTitelMeta" content="Advent">
+    <script>
+        // TEST-Fassung (index.html?test=1) bekommt ein eigenes App-Manifest,
+        // damit ein Symbol auf dem Startbildschirm wieder in der TEST-Fassung startet,
+        // dazu ein eigenes Symbol mit rotem Band „TEST“ (auch für das iPhone).
+        (function () {
+            var test = /[?&]test=1(&|$)/.test(location.search);
+            var l = document.createElement("link");
+            l.rel = "manifest";
+            l.href = test ? "manifest-test.json" : "manifest.json";
+            document.head.appendChild(l);
+            if (test) {
+                var m = document.getElementById("appTitelMeta"); if (m) m.setAttribute("content", "Advent Test");
+                var ai = document.getElementById("appleIcon"); if (ai) ai.setAttribute("href", "apple-touch-icon-test.png");
+            }
+        })();
+    </script>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <script src="config.js"></script>
+    <style>
+        /* Eine Farbwelt für alles: Winterabend, Kerzenlicht, Tannengrün mit Gold und warmem Cremeweiß */
+        :root {
+            --bg-color: #07120e;
+            --card-bg: #0f241c;
+            --accent-color: #d9b45a;
+            --text-color: #e6e0cf;
+            --heading-color: #fff6dc;
+            --border-glow: rgba(217, 180, 90, 0.35);
+            --btn-text: #1a1405;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            border: 1px solid var(--border-glow);
+            padding: 30px;
+            box-sizing: border-box;
+        }
+
+        h1, h2, h3 {
+            color: var(--heading-color);
+            text-align: center;
+            font-weight: 400;
+            letter-spacing: 1px;
+            font-family: Georgia, 'Times New Roman', serif;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .landing-intro {
+            line-height: 1.7;
+            margin-bottom: 25px;
+            font-size: 1rem;
+        }
+
+        .landing-intro p {
+            margin-bottom: 15px;
+        }
+        .absender-zeile { text-align: center; color: var(--accent-color); margin-top: -10px; margin-bottom: 25px; font-style: italic; }
+
+        .rules-box .rules-kopf { cursor: default; }
+        .rules-box.zu .rules-kopf { cursor: pointer; }
+        .rules-box.zu .rules-kopf::after { content: " \25BE"; }
+        .rules-box.zu .rules-inhalt { display: none; }
+        .rules-box.zu.auf .rules-inhalt { display: block; }
+        .rules-box.zu.auf .rules-kopf::after { content: " \25B4"; }
+        .rules-box ol { margin: 10px 0 2px; padding-left: 22px; line-height: 1.6; }
+        .skip-hinweis { position: absolute; left: 0; right: 0; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); text-align: center; font-size: 0.78rem; letter-spacing: 1px; color: rgba(255,246,220,0.7); opacity: 0; transition: opacity 1.2s ease; pointer-events: none; }
+        .skip-hinweis.an { opacity: 1; }
+        .rules-box {
+            background: rgba(217, 180, 90, 0.08);
+            border-left: 3px solid var(--accent-color);
+            padding: 12px 15px;
+            margin: 20px 0;
+            font-size: 0.95rem;
+            color: var(--text-color);
+        }
+
+        .btn-option {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-glow);
+            color: var(--text-color);
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: var(--accent-color);
+            color: var(--btn-text);
+            border: none;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+            margin-top: 10px;
+        }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-primary.btn-zweit { background: transparent; border: 1px solid var(--accent-color); color: var(--heading-color); font-weight: 600; }
+
+        /* Geschichte */
+        .story-kicker { text-align: center; color: var(--accent-color); letter-spacing: 2px; text-transform: uppercase; font-size: 0.8rem; margin: 0 0 -8px; }
+        .story-text {
+            line-height: 1.8;
+            font-size: 1.05rem;
+            margin-bottom: 30px;
+        }
+        .story-text p { margin: 0 0 1.05em; }
+        .story-quelle { font-size: 0.85rem; opacity: 0.75; font-style: italic; margin: -14px 0 24px; }
+
+        /* Test-Modus Leiste */
+        .dev-bar {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.85);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            border: 1px solid #444;
+            z-index: 999;
+            color: #fff;
+        }
+        .dev-bar select {
+            background: #222;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+        .dev-bar.hidden-dev { display: none !important; }
+
+        /* Türchen-Übersicht */
+        #calendar-overview {
+            max-width: 900px;
+            text-align: center;
+        }
+
+        #calendar-overview h2 {
+            color: var(--accent-color);
+            margin-bottom: 30px;
+            font-size: 2rem;
+            letter-spacing: 2px;
+        }
+
+        .tueren-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+            padding: 6px;
+        }
+        @media (min-width: 600px) {
+            .tueren-grid { grid-template-columns: repeat(3, 1fr); gap: 18px; padding: 10px; }
+        }
+
+        .tuer-card {
+            background: linear-gradient(145deg, #12291f, #1a3529);
+            border: 1px solid #2c4a3c;
+            border-radius: 12px;
+            height: 118px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tuer-card:hover:not(.gesperrt) {
+            transform: translateY(-5px);
+            border-color: var(--accent-color);
+            box-shadow: 0 6px 20px rgba(217, 180, 90, 0.2);
+        }
+
+        .tuer-card .tag-nummer {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #fbf5e4;
+        }
+
+        /* Gesperrte Türchen */
+        .tuer-card.gesperrt {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #0b1a14;
+            border-color: #1b3026;
+        }
+
+        .tuer-card.gesperrt::after {
+            content: "🔒";
+            position: absolute;
+            top: 8px;
+            right: 10px;
+            font-size: 0.8rem;
+        }
+
+        /* Lese-Leiste unter dem Titel: Schriftgröße und Vorlesen */
+        .lese-leiste { display: flex; justify-content: center; gap: 8px; margin: -6px 0 22px; flex-wrap: wrap; }
+        .lese-leiste button { background: rgba(255,255,255,0.04); border: 1px solid rgba(217,180,90,0.45); color: var(--heading-color); border-radius: 18px; padding: 6px 13px; font-size: 0.85rem; cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent; }
+        .lese-leiste button:disabled { opacity: 0.35; cursor: default; }
+        .lese-leiste button.an { background: rgba(217,180,90,0.18); border-color: var(--accent-color); }
+        .story-text p.vorlesen-aktiv { background: rgba(217,180,90,0.10); box-shadow: -10px 0 0 rgba(217,180,90,0.10), 10px 0 0 rgba(217,180,90,0.10); border-radius: 4px; transition: background 0.4s ease; }
+        /* Lieblingsgeschichte */
+        .btn-liebling { display: block; margin: 22px auto 0; background: transparent; border: 1px solid rgba(217,180,90,0.45); color: var(--heading-color); border-radius: 20px; padding: 9px 18px; font-size: 0.92rem; cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent; transition: background 0.3s ease; }
+        .btn-liebling.an { background: rgba(217,180,90,0.16); border-color: var(--accent-color); }
+        .btn-liebling .stern { color: var(--accent-color); margin-right: 6px; }
+        .btn-liebling.puls .stern { display: inline-block; animation: sternPuls 0.6s ease; }
+        @keyframes sternPuls { 40% { transform: scale(1.7); } }
+        .tuer-card .tag-stern { position: absolute; top: 6px; left: 9px; color: #f2c14e; font-size: 0.95rem; text-shadow: 0 1px 4px #000; pointer-events: none; }
+        .lieblinge { position: relative; margin: 6px -6px 26px; padding: 20px 20px 14px; color: #3b2a18; border-radius: 3px; transform: rotate(0.7deg);
+            background: radial-gradient(ellipse at 80% 15%, rgba(160,110,40,0.14), transparent 50%), linear-gradient(176deg, #f1e3bf, #e3cfa1);
+            box-shadow: 0 10px 26px rgba(0,0,0,0.45), inset 0 0 30px rgba(120,80,25,0.3); }
+        .lieblinge h3 { color: #6a4618; margin: 0 0 10px; font-size: 1.1rem; }
+        .lieblinge ul { list-style: none; margin: 0; padding: 0; }
+        .lieblinge li { padding: 8px 2px; border-top: 1px solid rgba(120,85,35,0.2); font-family: Georgia, 'Times New Roman', serif; cursor: pointer; display: flex; gap: 8px; }
+        .lieblinge li:first-child { border-top: none; }
+        .lieblinge li .nr { color: #8a6424; min-width: 2.2em; }
+
+        /* Illustrationen */
+        .story-bild { margin: 25px 0 5px; text-align: center; opacity: 0; transition: opacity 4s ease-in-out; }
+        .story-bild.sichtbar { opacity: 1; }
+        .story-bild img { width: 100%; max-width: 560px; height: auto; border-radius: 8px; border: 1px solid var(--accent-color); background: #0f241c; display: block; margin: 0 auto; }
+        .tuer-card.wackel { animation: tuerWackel 0.5s ease both; }
+        @keyframes tuerWackel { 0%,100% { transform: translateX(0); } 15% { transform: translateX(-7px) rotate(-2deg); } 35% { transform: translateX(6px) rotate(1.6deg); } 55% { transform: translateX(-4px) rotate(-1deg); } 75% { transform: translateX(3px); } }
+        .tuer-card.wackel::after { animation: schlossPuls 0.5s ease both; }
+        @keyframes schlossPuls { 40% { transform: scale(1.9); filter: drop-shadow(0 0 4px #d9b45a); } }
+        @media (prefers-reduced-motion: reduce) { .tuer-card.wackel, .tuer-card.wackel::after { animation: none; } }
+        .tuer-card.ausgelassen { border-color: var(--accent-color); animation: heuteGlow 2.8s ease-in-out infinite; animation-delay: var(--sw, 0s); }
+        .tuer-card.heute { animation-delay: var(--sw, 0s); }
+        .tuer-card.heute::before, .tuer-card.ausgelassen::before { content: ""; position: absolute; top: -10%; bottom: -10%; left: 0; width: 55%; pointer-events: none; background: linear-gradient(105deg, rgba(255,236,170,0) 0%, rgba(255,236,170,0.55) 50%, rgba(255,236,170,0) 100%); transform: translateX(-130%) skewX(-12deg); animation: tuerWelle 3.4s ease-in-out infinite; animation-delay: var(--sw, 0s); }
+        @keyframes tuerWelle { 0% { transform: translateX(-130%) skewX(-12deg); } 55%, 100% { transform: translateX(260%) skewX(-12deg); } }
+        @media (prefers-reduced-motion: reduce) { .tuer-card.heute::before, .tuer-card.ausgelassen::before { display: none; } }
+        .tuer-card.heute::after { content: "Heute"; position: absolute; left: 0; right: 0; bottom: 6px; font-size: 0.66rem; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; color: #ffe9a8; text-shadow: 0 1px 4px #000; }
+        .tuer-card.ausgelassen::after { content: "Noch unge\0000f6ffnet"; position: absolute; left: 0; right: 0; bottom: 6px; font-size: 0.62rem; letter-spacing: 1px; text-transform: uppercase; color: #f0e2b0; text-shadow: 0 1px 4px #000; }
+        @media (prefers-reduced-motion: reduce) { .tuer-card.ausgelassen { animation: none; box-shadow: 0 0 10px rgba(217,180,90,0.4); } }
+        .landing-countdown { text-align: center; margin: -8px 0 22px; font-size: 1.05rem; color: var(--heading-color); letter-spacing: 0.5px; }
+        .begruessung { text-align: center; font-style: italic; color: var(--accent-color); margin: -6px 0 18px; min-height: 1.4em; line-height: 1.45; opacity: 0; transition: opacity 1.6s ease; }
+        .begruessung.an { opacity: 1; }
+        @media (prefers-reduced-motion: reduce) { .begruessung { transition: none; } }
+        .tuer-card.geoeffnet { background-size: cover; background-position: center; border: 2px solid var(--accent-color); }
+        .tuer-card.frei { background-size: cover; background-position: center; border-color: #5d6f62; }
+        .tuer-card.heute { border-color: var(--accent-color); animation: heuteGlow 2.8s ease-in-out infinite; }
+        @keyframes heuteGlow { 0%, 100% { box-shadow: 0 0 6px rgba(217,180,90,0.25); } 50% { box-shadow: 0 0 22px rgba(217,180,90,0.75); } }
+        @media (prefers-reduced-motion: reduce) { .tuer-card.heute { animation: none; box-shadow: 0 0 14px rgba(217,180,90,0.5); } }
+        .tuer-card.geoeffnet .tag-nummer, .tuer-card.frei .tag-nummer { text-shadow: 0 1px 6px #000, 0 0 3px #000; position: relative; }
+
+        .tuer-card.pix { background-size: cover; background-position: center; image-rendering: pixelated; }
+        .tuer-card.pix .tag-nummer { position: relative; text-shadow: 0 1px 6px #000, 0 0 3px #000; }
+        .tuer-card.geoeffnet { image-rendering: auto; }
+        .tuer-card .tag-titel { position: absolute; left: 6px; right: 6px; bottom: 7px; font-size: 0.68rem; line-height: 1.18; font-style: italic; color: #fbf1d0; text-align: center; text-shadow: 0 1px 4px #000, 0 0 2px #000; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; pointer-events: none; }
+        .tuer-card.mit-titel .tag-nummer { transform: translateY(-17px); }
+
+        /* Karte „Bevor es losgeht" */
+        /* Namenskarte (freiwillig) und Meldung */
+        .name-karte { margin: 4px 0 24px; border: 1px solid var(--accent-color); border-radius: 12px; padding: 16px; text-align: center; background: linear-gradient(180deg, rgba(217,180,90,0.12), rgba(217,180,90,0.04)); box-shadow: 0 0 18px rgba(217,180,90,0.18); }
+        .name-frage { font-family: Georgia, serif; font-size: 1.15rem; color: var(--heading-color); margin: 0 0 12px; }
+        .name-zeile { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+        .name-zeile input { flex: 1 1 150px; max-width: 220px; background: rgba(255,255,255,0.06); color: var(--heading-color); border: 1px solid var(--accent-color); border-radius: 8px; padding: 10px 12px; font-size: 1rem; font-family: inherit; }
+        .name-zeile .btn-option { width: auto; padding: 10px 16px; }
+        .name-info { font-size: 0.82rem; opacity: 0.8; margin: 12px 0 4px; line-height: 1.5; }
+        .name-ohne { background: none; border: none; color: var(--text-color); opacity: 0.7; text-decoration: underline; font-size: 0.85rem; cursor: pointer; padding: 6px; font-family: inherit; }
+        .name-meldung { text-align: center; color: var(--heading-color); font-family: Georgia, serif; font-size: 1.05rem; margin: 0 0 20px; transition: opacity 1s ease; }
+        .name-fuss { text-align: center; font-size: 0.82rem; opacity: 0.75; margin: 18px 0 0; }
+        .name-fuss button { background: none; border: none; color: var(--accent-color); text-decoration: underline; font-size: inherit; cursor: pointer; padding: 2px; font-family: inherit; }
+        .vorab-karte { margin: 26px 0 8px; border: 1px solid var(--accent-color); border-radius: 12px; padding: 16px 16px 6px; background: linear-gradient(180deg, rgba(217,180,90,0.10), rgba(217,180,90,0.03)); box-shadow: 0 0 18px rgba(217,180,90,0.18); }
+        .vorab-titel { text-align: center; font-family: Georgia, serif; font-size: 1.25rem; color: var(--accent-color); letter-spacing: 1px; margin-bottom: 4px; }
+        .vorab-karte.zu { padding: 12px 16px; }
+        .vorab-karte.zu .vorab-titel { cursor: pointer; margin-bottom: 0; }
+        .vorab-karte.zu.auf { padding: 16px 16px 6px; }
+        .vorab-karte.zu.auf .vorab-titel { margin-bottom: 4px; }
+        .vorab-karte.zu .vorab-titel::after { content: " \25BE"; }
+        .vorab-karte.zu.auf .vorab-titel::after { content: " \25B4"; }
+        .vorab-karte.zu .vorab-inhalt { display: none; }
+        .vorab-karte.zu.auf .vorab-inhalt { display: block; }
+        .vorab-schritt { margin: 14px 0 18px; font-size: 0.95rem; line-height: 1.6; }
+        .vorab-schritt h4 { margin: 0 0 6px; font-size: 1.02rem; color: var(--heading-color); }
+        .vorab-schritt h4 .nr { display: inline-block; width: 1.6em; height: 1.6em; line-height: 1.6em; text-align: center; border-radius: 50%; background: var(--accent-color); color: var(--btn-text); font-size: 0.85rem; margin-right: 8px; font-weight: 700; }
+        .vorab-schritt .tipp-block { margin-top: 12px; }
+        .vorab-schritt ol { margin: 6px 0 0; padding-left: 22px; }
+        .erinnerung-zeit { background: transparent; color: var(--heading-color); border: 1px solid var(--accent-color); border-radius: 8px; padding: 10px 12px; font-size: 1rem; }
+        .erinnerung-zeit option { background: #0f241c; color: #fff; }
+
+        /* Einstimmungsseite */
+        .ein-titel { text-align: center; font-family: Georgia, 'Times New Roman', serif; font-size: 1.35rem; color: var(--heading-color); margin: -6px 0 0; line-height: 1.4; min-height: 1.4em; }
+        .ein-trenner { border: 0; border-top: 1px solid var(--border-glow); margin: 22px 0; }
+        .ein-text { text-align: center; font-style: italic; line-height: 1.7; font-size: 1.05rem; margin: 0 0 26px; min-height: 1.7em; }
+
+        /* Portal (Tür, Entpixeln, Eintauchen) */
+        #portal { position: fixed; inset: 0; z-index: 3000; background: rgba(0,0,0,0); transition: background 0.5s ease; cursor: pointer; overflow: hidden; perspective: 900px; }
+        #portal.an { background: rgba(0,0,0,1); }
+        #portal.aus { opacity: 0; transition: opacity 0.6s ease; pointer-events: none; }
+        #portal .portal-wrap { position: fixed; transform-origin: 50% 50%; transform: scale(1); transform-style: preserve-3d; border-radius: 12px; }
+        #portal.an .portal-wrap { transform: scale(var(--pz, 14)); transition: transform 1.15s cubic-bezier(0.6, 0, 0.9, 0.5) var(--zd, 1.5s); }
+        #portal .portal-innen { position: absolute; inset: 0; border-radius: 12px; background: radial-gradient(circle at center, var(--p1, #fff6dc) 0%, var(--p2, #f5d078) 38%, var(--p3, #be8c28) 100%); box-shadow: 0 0 30px var(--pg, rgba(217,180,90,0.5)); }
+        #portal .portal-fluegel { position: absolute; top: 0; bottom: 0; width: 50%; background-size: 200% 100%; border: 2px solid var(--p2, #d9b45a); backface-visibility: hidden; transition: transform 1.2s cubic-bezier(0.4, 0, 0.4, 1) 0.25s; }
+        #portal .portal-fluegel.l { left: 0; transform-origin: 0 50%; background-position: 0 0; border-radius: 12px 0 0 12px; border-right-width: 1px; }
+        #portal .portal-fluegel.r { right: 0; transform-origin: 100% 50%; background-position: 100% 0; border-radius: 0 12px 12px 0; border-left-width: 1px; }
+        #portal.an .portal-fluegel.l { transform: rotateY(-105deg); }
+        #portal.an .portal-fluegel.r { transform: rotateY(105deg); }
+        #portal.bild.an .portal-wrap { transform: scale(var(--pzb, 6)); opacity: 0; transition: transform 0.95s cubic-bezier(0.55, 0, 0.85, 0.45) var(--zd, 1.6s), opacity 0.5s ease-in var(--fd, 2.05s); }
+        #portal .portal-bild { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 12px; display: block; }
+        /* Tür rückwärts (Zurück in die Übersicht): heraus aus dem Bild, Flügel schließen, an den Platz der Kachel */
+        #portal.zu { background: rgba(0,0,0,0); transition: background 0.25s ease; }
+        #portal.zu.an { background: rgba(0,0,0,1); }
+        #portal.zu.frei { background: rgba(0,0,0,0); transition: background 0.6s ease; }
+        #portal.zu .portal-wrap { transform: scale(var(--zs, 6)); opacity: 0; transition: none; }
+        #portal.zu.zoom .portal-wrap { transform: scale(1); opacity: 1; transition: transform 0.95s cubic-bezier(0.2, 0.6, 0.35, 1), opacity 0.3s ease-out; }
+        #portal.zu .portal-fluegel { transition: none; }
+        #portal.zu .portal-fluegel.l { transform: rotateY(-105deg); }
+        #portal.zu .portal-fluegel.r { transform: rotateY(105deg); }
+        #portal.zu.zu2 .portal-fluegel { transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        #portal.zu.zu2 .portal-fluegel.l, #portal.zu.zu2 .portal-fluegel.r { transform: none; }
+        #portal.zu .portal-bild { background-size: cover; background-position: center; }
+        .container { isolation: isolate; }
+        .wm-anker { position: relative; height: 0; }
+        .wm-img { position: absolute; left: -30px; right: -30px; top: -30px; height: 520px; z-index: -1; pointer-events: none; background-size: cover; background-position: center top; background-repeat: no-repeat; opacity: 0; filter: blur(1.5px); -webkit-mask-image: linear-gradient(#000 0%, rgba(0,0,0,0) 100%); mask-image: linear-gradient(#000 0%, rgba(0,0,0,0) 100%); border-radius: 12px 12px 0 0; transition: opacity 1.8s ease; }
+        .wm-anker.an .wm-img { opacity: var(--wm-op, 0.13); }
+        #leseBalken { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 900; pointer-events: none; }
+        #leseBalken i { display: block; height: 100%; width: 0; background: var(--accent-color); opacity: 0.65; transition: width 0.15s linear; }
+
+        .finale-text p { line-height: 1.8; text-align: center; margin: 0 0 16px; }
+        .finale-text .signatur { font-style: italic; margin-top: 22px; }
+        /* Finale als Brief auf altem Briefpapier */
+        .brief { position: relative; z-index: 1; margin: 6px -16px 0; padding: 28px 20px 14px; color: #3b2a18; border-radius: 4px;
+            background:
+                radial-gradient(ellipse at 16% 10%, rgba(160,110,40,0.16), transparent 45%),
+                radial-gradient(ellipse at 86% 90%, rgba(140,90,30,0.22), transparent 50%),
+                radial-gradient(circle at 72% 28%, rgba(255,255,255,0.28), transparent 42%),
+                linear-gradient(176deg, #f4e7c6 0%, #ecdcb2 55%, #e0ca98 100%);
+            box-shadow: 0 14px 34px rgba(0,0,0,0.5), inset 0 0 46px rgba(120,80,25,0.36), inset 0 0 6px rgba(90,60,20,0.45);
+            transform: rotate(-0.3deg); }
+        .brief::before { content: ""; position: absolute; inset: 9px; border: 1px solid rgba(140,100,40,0.35); border-radius: 2px; pointer-events: none; }
+        .brief::after { content: ""; position: absolute; left: 0; right: 0; top: 0; bottom: 0; pointer-events: none; border-radius: 4px;
+            background: linear-gradient(to bottom, transparent 49.4%, rgba(120,80,30,0.16) 50%, rgba(255,255,255,0.22) 50.5%, transparent 51.3%); }
+        .brief h2 { color: #6a4618; margin: 4px 0 18px; }
+        .brief .finale-text { margin-bottom: 0; }
+        /* zweiter Bogen: liegt leicht versetzt und anders gedreht unter dem ersten */
+        .briefe { margin-bottom: 26px; }
+        .brief.brief2 { z-index: 0; margin-top: -10px; padding-top: 30px; transform: rotate(0.45deg) translateX(3px); }
+        .brief .brief-seite { text-align: center; font-size: 0.78rem; letter-spacing: 1px; color: rgba(90,60,20,0.55); margin: 6px 0 0; font-family: Georgia, 'Times New Roman', serif; }
+        .brief p, .brief .signatur { color: #3b2a18; }
+        .brief .finale-text p { text-align: left; hyphens: auto; -webkit-hyphens: auto; font-family: Georgia, 'Times New Roman', serif; font-size: 1rem; line-height: 1.65; margin-bottom: 14px; }
+        .brief .finale-text .signatur { text-align: right; margin: 18px 6px 4px 0; font-size: 1.15rem; }
+        /* Umschlag nach der Finale-Animation (umschlagZeigen) */
+        #umschlag { position: fixed; inset: 0; z-index: 3400; background: #07120e; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: background 0.8s ease; -webkit-tap-highlight-color: transparent; }
+        #umschlag.frei { background: rgba(7,18,14,0); pointer-events: none; }
+        #umschlag .u-huelle { position: relative; width: min(82vw, 340px); aspect-ratio: 1.6; perspective: 900px; opacity: 0; transform: scale(0.9) translateY(14px); transition: opacity 0.8s ease 0.2s, transform 0.8s cubic-bezier(0.2, 0.7, 0.3, 1) 0.2s; }
+        #umschlag.da .u-huelle { opacity: 1; transform: none; }
+        #umschlag .u-rueck, #umschlag .u-front, #umschlag .u-lasche { position: absolute; left: 0; right: 0; top: 0; border-radius: 6px; transition: opacity 0.5s ease; }
+        #umschlag .u-rueck { bottom: 0; background: linear-gradient(180deg, #bda577, #cdb88c); box-shadow: 0 16px 40px rgba(0,0,0,0.55), 0 0 0 1px #d9b45a; }
+        #umschlag .u-brief { position: absolute; left: 7%; right: 7%; top: 7%; height: 86%; z-index: 2; border-radius: 3px; padding: 9% 8% 0; box-sizing: border-box; text-align: center; color: #6a4618; font-family: Georgia, 'Times New Roman', serif; font-size: 0.95rem; letter-spacing: 0.5px;
+            background: radial-gradient(ellipse at 20% 15%, rgba(160,110,40,0.16), transparent 50%), linear-gradient(176deg, #f4e7c6, #e6d3a6);
+            box-shadow: inset 0 0 18px rgba(120,80,25,0.3), 5px -4px 0 -1px #e8d6aa, 5px -4px 3px -1px rgba(60,40,10,0.25); transition: transform 0.9s cubic-bezier(0.3, 0.7, 0.3, 1), opacity 0.7s ease; }
+        #umschlag .u-brief i { display: block; height: 2px; margin: 9px 6% 0; background: rgba(120,85,35,0.22); border-radius: 1px; }
+        #umschlag .u-front { bottom: 0; z-index: 3; background: linear-gradient(170deg, #ead8ad, #dcc594); clip-path: polygon(0 0, 50% 54%, 100% 0, 100% 100%, 0 100%); }
+        #umschlag .u-lasche { height: 58%; z-index: 4; transform-origin: 50% 0; background: linear-gradient(180deg, #e3cf9f, #d3bb87); clip-path: polygon(0 0, 100% 0, 50% 100%); transition: transform 0.65s cubic-bezier(0.4, 0, 0.3, 1); }
+        #umschlag .u-siegel { position: absolute; left: 50%; top: 58%; z-index: 5; width: 50px; height: 50px; margin: -25px 0 0 -25px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #7a5416;
+            background: radial-gradient(circle at 35% 30%, #ffe9a8, #e2b14c 45%, #a8771f 100%); box-shadow: 0 2px 6px rgba(0,0,0,0.45), inset 0 0 0 3px rgba(122,84,22,0.35); transition: opacity 0.35s ease, transform 0.35s ease; }
+        #umschlag .u-hinweis { margin-top: 34px; font-size: 0.85rem; letter-spacing: 1px; color: rgba(255,246,220,0.75); opacity: 0; transition: opacity 1s ease; }
+        #umschlag.da .u-hinweis { opacity: 1; animation: uPuls 2.4s ease-in-out 1.2s infinite; }
+        @keyframes uPuls { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+        #umschlag.auf .u-siegel { opacity: 0; transform: scale(0.6); }
+        #umschlag.auf .u-lasche { transform: rotateX(180deg); }
+        #umschlag.auf2 .u-lasche { z-index: 1; }
+        #umschlag.auf .u-hinweis { opacity: 0; animation: none; }
+        #umschlag.raus .u-brief { transform: translateY(-64%); }
+        #umschlag.gross .u-brief { transform: translateY(-64%) scale(1.9); opacity: 0; }
+        #umschlag.gross .u-rueck, #umschlag.gross .u-front, #umschlag.gross .u-lasche { opacity: 0; }
+
+        /* Fenster für gesperrte Türchen */
+        #lock-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .lock-content {
+            background: var(--card-bg);
+            border: 1px solid var(--accent-color);
+            padding: 30px;
+            margin: 20px;
+            border-radius: 10px;
+            max-width: 400px;
+            text-align: center;
+            color: var(--heading-color);
+            line-height: 1.6;
+            box-shadow: 0 0 25px rgba(217,180,90,0.3);
+        }
+
+        .lock-content button {
+            margin-top: 20px;
+            padding: 8px 20px;
+            background: var(--accent-color);
+            border: none;
+            color: var(--btn-text);
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="leseBalken" style="display:none;"><i></i></div>
+
+    <!-- Test-Modus / Entwickler-Leiste (wird per JS ausgeblendet, wenn testModus = false) -->
+    <div class="dev-bar" id="devBarElement">
+        🧪 Test-Modus: <select id="devDaySelect" onchange="changeDevDay()"></select>
+    </div>
+
+    <div class="container" id="appContainer">
+        <div class="wm-anker" id="wmAnker"><div class="wm-img"></div></div>
+
+        <!-- STARTSEITE -->
+        <div id="landingScreen">
+            <h1 id="kalenderTitel">Dein Adventskalender</h1>
+            <p class="absender-zeile" id="absenderZeile"></p>
+
+            <div class="name-karte" id="nameKarte" style="display:none;">
+                <p class="name-frage">Schön, dass du da bist! Wie heißt du?</p>
+                <div class="name-zeile">
+                    <input id="nameFeld" type="text" maxlength="30" autocomplete="given-name" autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="done" placeholder="Dein Vorname" onkeydown="if (event.key === 'Enter') nameSpeichern()">
+                    <button class="btn-option" onclick="nameSpeichern()">Los geht’s</button>
+                </div>
+                <p class="name-info" id="nameInfo">Mit deinem Vornamen wird dein Fortschritt online gesichert. Gib ihn in der App oder auf einem anderen Gerät genauso ein, dann findest du deine Geschichten dort wieder.</p>
+                <button class="name-ohne" onclick="nameUeberspringen()">Ohne Namen weiter</button>
+            </div>
+            <p class="name-meldung" id="nameMeldung" style="display:none;"></p>
+
+            <p class="landing-countdown" id="landingCountdown" style="display:none;"></p>
+
+            <div class="story-bild" id="landingBild" style="display:none; margin-top: 0;"><img id="landingBildImg" alt="" src=""></div>
+
+            <div class="landing-intro">
+                <p>Willkommen in deinem Adventskalender. Vom 1. bis zum 24. Dezember öffnet sich jeden Tag ein Türchen, und hinter jedem wartet eine weihnachtliche Geschichte. Nimm dir dafür einen ruhigen Moment, vielleicht mit einer Kerze und etwas Warmem zu trinken, und lies sie in deinem eigenen Tempo.</p>
+
+                <div class="vorab-karte" id="vorabKarte">
+                    <div class="vorab-titel" onclick="vorabUmschalten()">Bevor es losgeht</div>
+                    <div class="vorab-inhalt">
+                        <div class="vorab-schritt" id="appTipp">
+                            <h4><span class="nr">1</span>&#128241; Lege den Kalender auf deinen Startbildschirm</h4>
+                            <p style="margin: 12px 0 0;">Dann hast du ihn mit einem eigenen Symbol direkt auf deinem Startbildschirm und musst keine Adresse mehr eintippen.</p>
+                            <div class="tipp-block" id="tippIphone">
+                                <strong>iPhone (Safari):</strong>
+                                <ol>
+                                    <li>Tippe für diese Seite auf „Teilen“ (je nach iOS-Version an unterschiedlichen Stellen).</li>
+                                    <li>Scrolle ein Stück nach unten und tippe auf „Zum Home-Bildschirm“.</li>
+                                    <li>Passe den Namen an, wenn du möchtest.</li>
+                                    <li>Tippe oben rechts auf „Hinzufügen“.</li>
+                                </ol>
+                            </div>
+                            <div class="tipp-block" id="tippAndroid">
+                                <strong>Android (Chrome):</strong>
+                                <ol>
+                                    <li>Tippe oben rechts auf die drei Punkte.</li>
+                                    <li>Wähle „Zum Startbildschirm hinzufügen“ (oder „App installieren“).</li>
+                                    <li>Bestätige mit „Hinzufügen“.</li>
+                                </ol>
+                            </div>
+                        </div>
+                        <div class="vorab-schritt" id="erinnerungTipp">
+                            <h4><span class="nr" id="erNr">2</span>&#128276; Lass dich jeden Tag erinnern</h4>
+                            <p style="margin: 12px 0 8px;">Wähle eine Uhrzeit. Du bekommst dann für jeden Tag vom 1. bis 24. Dezember einen Termin „Türchen 1“ bis „Türchen 24“ mit Erinnerung und Link in deinen Kalender.</p>
+                            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                <select id="erinnerungZeit" class="erinnerung-zeit"><option value="1700">17:00 Uhr</option><option value="1730">17:30 Uhr</option><option value="1800">18:00 Uhr</option><option value="1830">18:30 Uhr</option><option value="1900">19:00 Uhr</option><option value="1930">19:30 Uhr</option><option value="2000" selected>20:00 Uhr</option><option value="2030">20:30 Uhr</option><option value="2100">21:00 Uhr</option></select>
+                                <button class="btn-option" style="width: auto; padding: 10px 16px;" onclick="ladeErinnerung()">Termine hinzufügen</button>
+                            </div>
+                            <p style="margin: 10px 0 0; font-size: 0.85rem; opacity: 0.8;">Dein Handy fragt dann, ob die Termine in den Kalender übernommen werden sollen. Bestätige mit „Alle hinzufügen“ bzw. „Speichern“.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rules-box" id="rulesBox">
+                    <strong class="rules-kopf" id="rulesKopf" onclick="rulesUmschalten()">So funktioniert’s</strong><div class="rules-inhalt">
+                    <ol>
+                        <li>Ab dem 1. Dezember öffnet sich jeden Tag ein neues Türchen.</li>
+                        <li>Tippe auf das Türchen und lies die Geschichte, die dahinter wartet.</li>
+                        <li>Am nächsten Tag ist das nächste Türchen an der Reihe.</li>
+                    </ol>
+                </div></div>
+            </div>
+
+            <p style="text-align: center; font-size: 0.88rem; opacity: 0.8;">Lässt sich ein Türchen nicht öffnen, obwohl sein Tag schon da ist? Dann stimmt vermutlich das Datum auf deinem Handy nicht. Sonst sag mir einfach Bescheid.</p>
+            <p style="text-align: center; font-style: italic; color: var(--text-color);">Mach es dir gemütlich. Die Geschichten warten schon.</p>
+            <button class="btn-primary" onclick="zeigeTuerenUebersicht()">Zu den Türchen</button>
+            <p class="name-fuss" id="nameFuss"></p>
+            <p class="name-fuss" id="syncStatus" style="display:none; opacity: 0.6;"></p>
+        </div>
+
+        <!-- TÜRCHEN-ÜBERSICHT -->
+        <div id="calendar-overview" class="hidden">
+            <h2>Wähle das heutige Türchen</h2>
+            <p class="begruessung" id="begruessung"></p>
+            <div class="tueren-grid" id="tuerenGridContainer">
+                <!-- wird per JavaScript mit 24 Türchen befüllt -->
+            </div>
+            <button class="btn-primary btn-zweit" id="btnFinale" style="margin-top: 25px; display: none;" onclick="finaleDurch(zeigeFinale)">Zum Finale</button>
+            <button class="btn-primary btn-zweit" style="margin-top: 25px;" onclick="resetToLanding()">Zurück zur Startseite</button>
+        </div>
+
+        <!-- Fenster für gesperrte Tage -->
+        <div id="lock-modal">
+            <div class="lock-content">
+                <p id="lock-message">Geduld … Dieses Türchen öffnet sich erst an seinem Tag.</p>
+                <button onclick="schliesseModal()">Bis bald</button>
+            </div>
+        </div>
+
+        <!-- EINSTIMMUNG (vor dem ersten Lesen) -->
+        <div id="einstimmungScreen" class="hidden">
+            <h2>Türchen <span id="einDayNum">1</span></h2>
+            <p class="ein-titel" id="einTitel"></p>
+            <hr class="ein-trenner">
+            <p class="ein-text" id="einText"></p>
+            <div id="einFehler"></div>
+            <button class="btn-primary" id="btnBeginnen" onclick="startStory()">Geschichte beginnen</button>
+            <button class="btn-primary btn-zweit" onclick="portalZurueck()">Zurück zur Türchen-Auswahl</button>
+        </div>
+
+        <!-- GESCHICHTE -->
+        <div id="storyScreen" class="hidden">
+            <p class="story-kicker">Türchen <span id="storyDayNum">1</span></p>
+            <h2 id="storyTitle"></h2>
+            <div class="lese-leiste" id="leseLeiste">
+                <button id="btnKleiner" onclick="schriftAendern(-1)" aria-label="Schrift kleiner">A−</button>
+                <button id="btnGroesser" onclick="schriftAendern(1)" aria-label="Schrift größer">A+</button>
+                <button id="btnVorlesen" onclick="VORLESEN.umschalten()" style="display:none;">🔈 Vorlesen</button>
+            </div>
+            <div class="story-text" id="storyContent"></div>
+            <p class="story-quelle" id="storyQuelle" style="display:none;"></p>
+
+            <div class="story-bild" id="storyBild" style="display:none;"><img id="storyBildImg" alt="" src=""></div>
+
+            <button class="btn-liebling" id="btnLiebling" onclick="lieblingUmschalten()" style="display:none;"></button>
+            <button class="btn-primary" id="btnWeiter" style="margin-top: 25px;" onclick="nextDaySetup()">Weiter durch das nächste Türchen …</button>
+            <button class="btn-primary btn-zweit" style="margin-top: 10px;" onclick="portalZurueck()">Zurück zur Türchen-Auswahl</button>
+        </div>
+
+        <!-- FINALE (nach Türchen 24) -->
+        <div id="finaleScreen" class="hidden">
+            <div class="briefe" id="finaleBrief">
+                <div class="brief">
+                    <h2 id="finaleGruss">Frohe Weihnachten!</h2>
+                    <div class="story-text finale-text">
+                        <p>Vierundzwanzig Türchen, vierundzwanzig Geschichten, und jetzt ist es so weit: Heiligabend ist da.</p>
+                        <p>Als ich angefangen habe, diesen Kalender zusammenzustellen, hatte ich vor allem einen Wunsch: jeden Tag im Dezember einen kleinen Moment zu schenken. Einen Moment zum Innehalten, mit einer Tasse Tee oder Kakao, vielleicht mit Kerzenlicht, vielleicht auch nur kurz zwischendurch in all dem Trubel. Manche Geschichten waren kurz, manche länger, manche zum Schmunzeln und andere zum Nachdenken. Ich hoffe, dass die eine oder andere ein bisschen im Herzen geblieben ist.</p>
+                    </div>
+                    <p class="brief-seite">– 1 –</p>
+                </div>
+                <div class="brief brief2">
+                    <div class="story-text finale-text">
+                        <p>Es hat mir große Freude gemacht, diesen Kalender zu füllen. Bei jeder Geschichte habe ich mir vorgestellt, wie sie gerade irgendwo gelesen wird, und dieser Gedanke hat meine eigene Adventszeit ein Stück heller gemacht.</p>
+                        <p>Jetzt sind alle Türchen offen. Das Schönste an Weihnachten liegt aber ohnehin nicht hinter Türchen, sondern in den Menschen um uns herum, in gemeinsamen Stunden, in Wärme und kleinen Gesten.</p>
+                        <p>Von Herzen frohe Weihnachten, ruhige und friedliche Feiertage und alles Gute für das neue Jahr!</p>
+                        <p class="signatur" id="finaleSignatur"></p>
+                    </div>
+                    <p class="brief-seite">– 2 –</p>
+                </div>
+            </div>
+            <div class="lieblinge" id="lieblingeBox" style="display:none;">
+                <h3>Deine Lieblingsgeschichten</h3>
+                <ul id="lieblingeListe"></ul>
+            </div>
+            <div class="story-bild" id="finaleBild" style="display:none;"><img id="finaleBildImg" alt="" src=""></div>
+            <button class="btn-primary btn-zweit" style="margin-top: 25px;" onclick="finaleDurch(function () {}, null, true)">&#x2728; Die Animation noch einmal ansehen</button>
+            <button class="btn-primary" style="margin-top: 12px;" onclick="zeigeTuerenUebersicht()">Zurück zur Türchen-Auswahl</button>
+        </div>
+
+    </div>
+
+    <script>
+        // ==========================================
+        // EINSTELLUNGEN (aus config.js, mit sicheren Standardwerten)
+        // ==========================================
+        const CFG = Object.assign({ EMPFAENGER_NAME: "", ABSENDER: "", JAHR: 2026, SEITEN_URL: "", KALENDER_TITEL: "Dein Adventskalender", VORTEST_NOVEMBER: false }, window.ADVENT_CONFIG || {});
+        const JAHR = Number(CFG.JAHR) || 2026;
+        // TEST-Fassung: Aufruf über .../test/ (leitet auf index.html?test=1 weiter).
+        // Dort wird der November wie der Dezember behandelt, und der Speicher ist getrennt vom echten Stand.
+        const TEST_FASSUNG = /[?&]test=1(&|$)/.test(location.search);
+        const VORTEST_NOVEMBER = !!CFG.VORTEST_NOVEMBER || TEST_FASSUNG;
+
+        // ==========================================
+        // GLOBALER TESTMODUS-SCHALTER
+        // true  = alle Türchen offen, Test-Leiste sichtbar
+        // false = nur echte Tage bis heute offen, Test-Leiste weg
+        // ==========================================
+        const testModus = false;
+
+        document.addEventListener("DOMContentLoaded", function() {
+            if (!testModus) {
+                const devBar = document.querySelector(".dev-bar");
+                if (devBar) devBar.classList.add("hidden-dev");
+            }
+            // In der TEST-Fassung ein kleines Schild oben links
+            if (TEST_FASSUNG) {
+                const s = document.createElement("div");
+                s.textContent = "TEST";
+                s.style.cssText = "position:fixed;top:8px;left:8px;z-index:999;font-size:0.7rem;letter-spacing:1px;padding:3px 7px;border-radius:4px;background:rgba(0,0,0,0.6);color:#d9b45a;border:1px solid #d9b45a;pointer-events:none;";
+                document.body.appendChild(s);
+            }
+        });
+
+        // ==========================================
+        // SPEICHER (eigenes Präfix, alles in try/catch, ohne localStorage im Arbeitsspeicher)
+        // ==========================================
+        const PFX = "weihnacht" + JAHR + "_" + (TEST_FASSUNG ? "test_" : "");
+        const speicherMem = {};
+        function speicherLesen(k, standard) {
+            try { const v = localStorage.getItem(PFX + k); if (v !== null) return JSON.parse(v); } catch (e) {}
+            try { if (Object.prototype.hasOwnProperty.call(speicherMem, k)) return JSON.parse(speicherMem[k]); } catch (e) {}
+            return standard;
+        }
+        function speicherSchreiben(k, wert) {
+            const s = JSON.stringify(wert);
+            speicherMem[k] = s;
+            try { localStorage.setItem(PFX + k, s); } catch (e) {}
+            // Änderungen am Fortschritt werden einige Sekunden später online gesichert (siehe SYNC)
+            if (SYNC_FELDER.indexOf(k) >= 0) { try { SYNC.spaeter(); } catch (e) {} }
+        }
+        const SYNC_FELDER = ["geoeffnet", "titel", "lieblinge", "finaleAn"];
+        function speicherLoeschen(k) {
+            delete speicherMem[k];
+            try { localStorage.removeItem(PFX + k); } catch (e) {}
+        }
+
+        // ==========================================
+        // Reset für Tests: index.html?reset=1 löscht den gespeicherten Stand
+        // ==========================================
+        try {
+            // ?reset=1     setzt nur dieses Gerät zurück (der Online-Stand bleibt, mit demselben Namen kommt er wieder)
+            // ?reset=alles löscht zusätzlich den Online-Stand des hier zuletzt eingegebenen Namens (nur diese Fassung)
+            if (/[?&]reset=(1|alles)(&|$)/.test(location.search)) {
+                if (/[?&]reset=alles(&|$)/.test(location.search)) window.__resetName = speicherLesen("name", "");
+                ["geoeffnet", "lese", "gruss", "finaleAn", "besucht", "titel", "lieblinge", "lieblingeTs", "schrift", "name", "nameOhne"].forEach(speicherLoeschen);
+                history.replaceState(null, "", location.pathname + (TEST_FASSUNG ? "?test=1" : ""));
+            }
+        } catch (e) {}
+
+        // ==========================================
+        // DATUM UND FREISCHALTUNG
+        // ==========================================
+        // Aktuelles Datum. In der TEST-Fassung wird der November wie der Dezember behandelt.
+        function jetzt() {
+            const d = new Date();
+            if (VORTEST_NOVEMBER && d.getFullYear() === JAHR && d.getMonth() === 10) d.setMonth(11);
+            return d;
+        }
+        // Türchen N ist ab dem N. Dezember um 0 Uhr (Gerätedatum) frei
+        function tagOffen(i) {
+            const h = jetzt();
+            const j = h.getFullYear();
+            if (j > JAHR) return true;
+            return j === JAHR && h.getMonth() === 11 && i <= h.getDate();
+        }
+        function alleFreigegeben() {
+            if (testModus) return true;
+            return ab25();
+        }
+        function ab25() {
+            const h = jetzt();
+            return h.getFullYear() > JAHR || (h.getFullYear() === JAHR && h.getMonth() === 11 && h.getDate() >= 25);
+        }
+        function heuteTag() {
+            const h = jetzt();
+            return (h.getFullYear() === JAHR && h.getMonth() === 11 && h.getDate() >= 1 && h.getDate() <= 24) ? h.getDate() : 0;
+        }
+        function istTagErreicht(tag) {
+            if (testModus) return true;
+            return tagOffen(tag);
+        }
+
+        let currentDay = 1;
+
+        const devSelect = document.getElementById("devDaySelect");
+        if (devSelect) {
+            for (let i = 1; i <= 24; i++) {
+                let opt = document.createElement("option");
+                opt.value = i;
+                opt.innerText = `Tag ${i}`;
+                devSelect.appendChild(opt);
+            }
+        }
+
+        function determineActiveDay() {
+            const h = heuteTag();
+            if (h) currentDay = h;
+            else if (ab25()) currentDay = 24;
+            if (devSelect) devSelect.value = currentDay;
+            updateDayUI();
+        }
+
+        function changeDevDay() {
+            if (!devSelect) return;
+            currentDay = parseInt(devSelect.value);
+            updateDayUI();
+            if (!document.getElementById("storyScreen").classList.contains("hidden")) loadStoryContent(currentDay);
+        }
+
+        function updateDayUI() {
+            document.getElementById("einDayNum").innerText = currentDay;
+            document.getElementById("storyDayNum").innerText = currentDay;
+        }
+
+        // Texte mit optionalem Namen: {name} wird ersetzt oder samt Komma entfernt
+        // Name der lesenden Person: selbst eingegeben (Startseite), sonst EMPFAENGER_NAME aus config.js
+        function leserName() {
+            const n = speicherLesen("name", "");
+            return (typeof n === "string" && n.trim()) ? n.trim() : String(CFG.EMPFAENGER_NAME || "").trim();
+        }
+        function mitName(t) {
+            const name = leserName();
+            if (name) return String(t).replace(/\{name\}/g, name);
+            return String(t).replace(/,\s*\{name\}/g, "").replace(/\{name\},?\s*/g, "").replace(/\s{2,}/g, " ").trim();
+        }
+        function esc(t) { return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+        // Texte aus der Konfiguration auf der Seite setzen
+        // Persönliche Stellen: Überschrift der Startseite und Gruß im Brief (Begrüßung in der Übersicht über mitName)
+        function personalisieren() {
+            const name = leserName();
+            const t = document.getElementById("kalenderTitel");
+            if (t) t.textContent = name ? name + (/[sßxz]$/i.test(name) ? "’" : "s") + " Adventskalender" : (CFG.KALENDER_TITEL || "Dein Adventskalender");
+            const g = document.getElementById("finaleGruss");
+            if (g) g.textContent = name ? "Frohe Weihnachten, " + name + "!" : "Frohe Weihnachten!";
+        }
+        (function () {
+            personalisieren();
+            const a = document.getElementById("absenderZeile");
+            if (a) a.textContent = "Von mir, nur für dich!";
+            const s = document.getElementById("finaleSignatur");
+            // Der Brief endet mit den Wünschen; darunter steht nur noch der Name als Unterschrift
+            if (s) { s.textContent = CFG.ABSENDER || ""; s.style.display = CFG.ABSENDER ? "" : "none"; }
+        })();
+
+        let landingBildFlag = false;
+        function resetToLanding() {
+            alleScreensAus();
+            document.getElementById("landingScreen").classList.remove("hidden");
+            rulesAktualisieren();
+            // Bild der Startseite blendet bei jedem Besuch neu ein
+            if (landingBildFlag) { requestAnimationFrame(function () { bildEinblenden(document.getElementById("landingBild")); }); }
+        }
+
+
+        // ==========================================
+        // TÖNE: ton/knarren.mp3 (Tür geht auf), ton/zuklappen.mp3 (Tür schließt sich),
+        //       ton/wirbel.mp3 (Buchstaben-Wirbel), ton/finale.mp3 (Finale „Die 24 Lichter“),
+        //       ton/umschlag.mp3 (Umschlag wird geöffnet)
+        // Die Lautstärke steckt in den Dateien selbst (alle auf ca. −18 LUFS angeglichen),
+        // weil das iPhone eine Lautstärke per Skript ignoriert.
+        // Gespielt wird nur zusammen mit der jeweiligen Animation. Fehlt eine Datei
+        // oder blockiert das Gerät den Ton, passiert einfach nichts.
+        // ==========================================
+        const TON = (function () {
+            const DATEIEN = { knarren: "ton/knarren.mp3", zuklappen: "ton/zuklappen.mp3", wirbel: "ton/wirbel.mp3", finale: "ton/finale.mp3", umschlag: "ton/umschlag.mp3" };
+            const el = {}, fade = {};
+            function hole(n) {
+                if (!(n in el)) {
+                    try { const a = new Audio(DATEIEN[n]); a.preload = "auto"; el[n] = a; } catch (e) { el[n] = null; }
+                }
+                return el[n];
+            }
+            function spielen(n) {
+                if (window.TON_AUS) return;
+                const a = hole(n); if (!a) return;
+                try {
+                    clearInterval(fade[n]);
+                    a.pause(); a.currentTime = 0; a.volume = 1;
+                    const pr = a.play(); if (pr && pr.catch) pr.catch(function () {});
+                } catch (e) {}
+            }
+            // leise ausblenden und anhalten (auf dem iPhone lässt sich die Lautstärke
+            // per Skript nicht ändern, dort wird nach der Zeit einfach angehalten)
+            function ausblenden(n, ms) {
+                const a = el[n]; if (!a || a.paused) return;
+                clearInterval(fade[n]);
+                const schritte = Math.max(1, Math.round((ms || 400) / 40)); let k = 0;
+                fade[n] = setInterval(function () {
+                    k++;
+                    try { a.volume = Math.max(0, 1 - k / schritte); } catch (e) {}
+                    if (k >= schritte) { clearInterval(fade[n]); try { a.pause(); a.currentTime = 0; a.volume = 1; } catch (e) {} }
+                }, 40);
+            }
+            // vorab laden, damit der Ton beim ersten Tippen schnell da ist
+            window.addEventListener("load", function () { Object.keys(DATEIEN).forEach(hole); });
+            return { spielen: spielen, ausblenden: ausblenden };
+        })();
+
+        // ==========================================
+        // UEBERGANG Einstimmung -> Geschichte: Die Buchstaben der Seite wirbeln und formen den Anfang der Geschichte
+        // ==========================================
+        let wirbelLaeuft = false;
+        function wirbelUebergang(zeigen, kurz) {
+            const reduziert = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            if (window.PORTAL_AUS || reduziert || wirbelLaeuft) { zeigen(); return; }
+            wirbelLaeuft = true;
+            const W = window.innerWidth, H = window.innerHeight;
+            const lerp = (a, b, f) => a + (b - a) * f;
+            const clamp = x => Math.max(0, Math.min(1, x));
+            const eIO = x => { x = clamp(x); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+            function buchstaben(wurzeln, max, nurSichtbar) {
+                const out = [];
+                for (const w of wurzeln) {
+                    if (!w) continue;
+                    const tw = document.createTreeWalker(w, NodeFilter.SHOW_TEXT);
+                    let n;
+                    while ((n = tw.nextNode())) {
+                        const el = n.parentElement; if (!el) continue;
+                        const cs = getComputedStyle(el);
+                        if (cs.display === "none" || cs.visibility === "hidden") continue;
+                        const txt = n.nodeValue;
+                        for (let i = 0; i < txt.length; i++) {
+                            if (/\s/.test(txt[i])) continue;
+                            const rg = document.createRange(); rg.setStart(n, i); rg.setEnd(n, i + 1);
+                            const r = rg.getBoundingClientRect();
+                            if (r.width < 1 || r.height < 1) continue;
+                            if (nurSichtbar && (r.top > H * 0.96 || r.bottom < 0)) continue;
+                            out.push({ ch: txt[i], x: r.left, y: r.top, w: r.width, h: r.height, size: parseFloat(cs.fontSize), fam: cs.fontFamily, wt: cs.fontWeight, st: cs.fontStyle, col: cs.color });
+                            if (out.length >= max) return out;
+                        }
+                    }
+                }
+                return out;
+            }
+            window.scrollTo(0, 0);
+            const quelle = document.getElementById("einstimmungScreen");
+            const quellen = buchstaben([quelle], 640, true);
+            if (quellen.length < 20) { wirbelLaeuft = false; zeigen(); return; }
+            TON.spielen("wirbel");
+            const story = document.getElementById("storyScreen"), inhalt = document.getElementById("storyContent");
+            const accent = (getComputedStyle(document.documentElement).getPropertyValue("--accent-color") || "#d9b45a").trim();
+            inhalt.innerHTML = "";
+            story.style.opacity = "0"; story.style.transition = "none";
+            zeigen();
+            window.scrollTo(0, 0);
+            document.documentElement.style.overflow = "hidden";
+            const ov = document.createElement("div");
+            ov.id = "wirbel";
+            ov.style.cssText = "position:fixed;inset:0;z-index:3200;cursor:pointer;overflow:hidden;";
+            const st = document.createElement("style");
+            st.textContent = "#wirbel span{position:fixed;left:0;top:0;display:block;white-space:pre;pointer-events:none;will-change:transform,opacity;transition:color .9s ease,text-shadow .9s ease,opacity .6s ease;transform-origin:50% 50%;} #wirbel span.glut{color:" + accent + " !important;text-shadow:0 0 8px " + accent + ",0 0 18px " + accent + ";}";
+            ov.appendChild(st);
+            // Zufallsbahnen
+            let sd = 1234567; const rnd = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+            const L = quellen.map(function (q, i) {
+                const el = document.createElement("span");
+                el.textContent = q.ch;
+                el.style.cssText = "width:" + q.w + "px;height:" + q.h + "px;line-height:" + q.h + "px;font-size:" + q.size + "px;font-family:" + q.fam + ";font-weight:" + q.wt + ";font-style:" + q.st + ";color:" + q.col + ";";
+                ov.appendChild(el);
+                return { el: el, q: q, th: rnd() * 6.2832, rho: (0.12 + rnd() * 0.42) * Math.min(W, H), om: (0.6 + rnd() * 1.1) * (rnd() < 0.5 ? -1 : 1), wob: (rnd() - 0.5) * 2.2, ph: rnd() * 6.2832, ziel: null, stag: 0 };
+            });
+            document.body.appendChild(ov);
+            let beendet = false, t0 = null, ziele = null, tZiel = 0;
+            const CX = W / 2, CY = H * 0.48;
+            function orbit(l, t) {
+                const a = l.th + l.om * (t / 1000) * (1 + 0.25 * Math.sin(t / 900 + l.ph));
+                return [CX + l.rho * Math.cos(a) - l.q.w / 2, CY + l.rho * 0.78 * Math.sin(a) - l.q.h / 2, Math.sin(t / 380 + l.ph) * l.wob];
+            }
+            function fertig() {
+                if (beendet) return; beendet = true;
+                TON.ausblenden("wirbel", 700);
+                story.style.transition = "opacity 0.7s ease"; story.style.opacity = "1";
+                ov.style.transition = "opacity 0.7s ease"; ov.style.opacity = "0"; ov.style.pointerEvents = "none";
+                document.documentElement.style.overflow = "";
+                setTimeout(function () { story.style.transition = ""; story.style.opacity = ""; if (ov.parentNode) ov.parentNode.removeChild(ov); wirbelLaeuft = false; }, 850);
+            }
+            ov.addEventListener("click", fertig);
+            if (!kurz) {
+                const sh = document.createElement("div"); sh.className = "skip-hinweis"; sh.textContent = "Tippen zum Überspringen";
+                ov.appendChild(sh); setTimeout(function () { sh.classList.add("an"); }, 1800);
+            }
+            const T_GLUT = kurz ? 80 : 150, T_AUS = kurz ? 350 : 800, T_ZIEL = kurz ? 1300 : 2500, D_ZIEL = kurz ? 1100 : 1300, T_ENDE_PAD = kurz ? 300 : 400, STAG = kurz ? 250 : 450;
+            function frame(ts) {
+                if (beendet) return;
+                if (t0 === null) t0 = ts;
+                const t = ts - t0;
+                if (t > T_GLUT && !L[0].glut) { L.forEach(l => { l.glut = true; l.el.classList.add("glut"); }); }
+                // Ziele sobald Text geladen und Phase erreicht
+                if (!ziele && t >= T_ZIEL - 300) {
+                    if (inhalt.textContent.trim().length > 40) {
+                        window.scrollTo(0, 0);
+                        ziele = buchstaben([document.getElementById("storyTitle"), inhalt], L.length, true);
+                        const n = Math.min(L.length, ziele.length);
+                        const frei = {}, rest = [];
+                        L.map((_, i) => i).sort(() => rnd() - 0.5).forEach(i => { const c = L[i].q.ch; (frei[c] = frei[c] || []).push(i); rest.push(i); });
+                        const benutzt = {};
+                        for (let k = 0; k < n; k++) {
+                            let i = -1; const g = frei[ziele[k].ch];
+                            if (g) { while (g.length && benutzt[g[g.length - 1]]) g.pop(); if (g.length) i = g.pop(); }
+                            if (i < 0) { while (rest.length && benutzt[rest[rest.length - 1]]) rest.pop(); if (rest.length) i = rest.pop(); }
+                            if (i < 0) break;
+                            benutzt[i] = true; L[i].ziel = ziele[k]; L[i].stag = STAG * k / Math.max(1, n);
+                        }
+                        tZiel = Math.max(t, T_ZIEL);
+                    } else if (t > T_ZIEL + 3000) { fertig(); return; }
+                }
+                const tStart = ziele ? tZiel : Infinity;
+                let letzte = 0;
+                for (let i = 0; i < L.length; i++) {
+                    const l = L[i], q = l.q;
+                    let x, y, rot = 0, sc = 1;
+                    const sAus = eIO((t - T_AUS) / 800);
+                    const o = orbit(l, t);
+                    if (sAus <= 0) { x = q.x; y = q.y; }
+                    else { x = lerp(q.x, o[0], sAus); y = lerp(q.y, o[1], sAus); rot = o[2] * sAus; sc = 1 + 0.15 * sAus; }
+                    if (l.ziel) {
+                        const u = eIO((t - tStart - l.stag) / D_ZIEL);
+                        if (u > 0) {
+                            x = lerp(x, l.ziel.x, u); y = lerp(y, l.ziel.y, u); rot = rot * (1 - u);
+                            sc = lerp(sc, l.ziel.size / q.size, u);
+                            if (u > 0.55 && l.el.textContent !== l.ziel.ch) l.el.textContent = l.ziel.ch;
+                            if (u > 0.8 && l.glut) { l.glut = false; l.el.classList.remove("glut"); l.el.style.color = l.ziel.col; }
+                        }
+                        letzte = Math.max(letzte, tStart + l.stag + D_ZIEL);
+                    } else if (ziele !== null && !l.aus && t > tStart) { l.aus = true; l.el.style.opacity = "0"; }
+                    l.el.style.transform = "translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px) rotate(" + rot.toFixed(3) + "rad) scale(" + sc.toFixed(3) + ")";
+                }
+                if (ziele && t >= letzte + T_ENDE_PAD) { fertig(); return; }
+                requestAnimationFrame(frame);
+            }
+            requestAnimationFrame(frame);
+            setTimeout(fertig, 14000);
+        }
+
+        // "Geschichte beginnen" auf der Einstimmungsseite
+        function startStory() {
+            const einSichtbar = !document.getElementById("einstimmungScreen").classList.contains("hidden");
+            if (einSichtbar && typeof wirbelUebergang === "function") wirbelUebergang(zeigeStory, false);
+            else zeigeStory();
+        }
+
+        // Beim Öffnen eines Türchens: Die Tür klappt auf (Bild auf der Außenseite), das Bild entpixelt sich, man taucht ein
+        let portalLaeuft = false;
+        function portalDurch(tag, el, weiter) {
+            const reduziert = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            if (window.PORTAL_AUS || portalLaeuft || reduziert) { weiter(); return; }
+            portalLaeuft = true;
+            TON.spielen("knarren");
+            const n = String(tag).padStart(2, "0");
+            // gleiches Bild wie die Kachel in der Uebersicht: geoeffnet = volles Bild, sonst verpixelt
+            let bereitsOffen = false;
+            try { bereitsOffen = geoeffnetListe().indexOf(tag) >= 0; } catch (e) {}
+            let r;
+            if (el) r = el.getBoundingClientRect();
+            else {
+                // ohne Tuer-Kachel: dieselbe Groesse wie ein Tuerchen der Uebersicht, mittig auf dem Bildschirm
+                const cont = document.getElementById("appContainer"), cs = cont ? getComputedStyle(cont) : null;
+                const cw = cont ? cont.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0) : window.innerWidth;
+                const breit = window.innerWidth >= 600, cols = breit ? 3 : 2, gap = breit ? 18 : 14, pad = breit ? 10 : 6;
+                const tw = Math.max(90, (cw - 2 * pad - gap * (cols - 1)) / cols);
+                r = { left: window.innerWidth / 2 - tw / 2, top: window.innerHeight / 2 - 61, width: tw, height: 122 };
+            }
+            const ov = document.createElement("div");
+            ov.id = "portal";
+            const wrap = document.createElement("div");
+            wrap.className = "portal-wrap";
+            wrap.style.left = r.left + "px"; wrap.style.top = r.top + "px"; wrap.style.width = r.width + "px"; wrap.style.height = r.height + "px";
+            // Das Portal leuchtet immer in Gold
+            const PF = ["#fff6dc", "#f5d078", "#be8c28"];
+            ov.style.setProperty("--p1", PF[0]); ov.style.setProperty("--p2", PF[1]); ov.style.setProperty("--p3", PF[2]); ov.style.setProperty("--pg", PF[1] + "99");
+            ov.style.setProperty("--pz", String(Math.ceil(Math.max(window.innerWidth / r.width, window.innerHeight / r.height) * 2.2)));
+            const innen = document.createElement("div");
+            innen.className = "portal-innen";
+            wrap.appendChild(innen);
+            if (!window.PORTAL_FARBE) {
+                try {
+                    ov.classList.add("bild");
+                    ov.style.setProperty("--pzb", String(Math.max(window.innerWidth / r.width, window.innerHeight / r.height) * 1.08));
+                    const cv = document.createElement("canvas");
+                    cv.className = "portal-bild";
+                    const CH = 450, CW = Math.max(200, Math.round(CH * r.width / r.height));
+                    cv.width = CW; cv.height = CH;
+                    wrap.appendChild(cv);
+                    const bild = new Image();
+                    let geladen = false, stufe = bereitsOffen ? 9 : 0;
+                    const SP = [32, 42, 56, 76, 104, 144, 200, 280, 400, 99999];
+                    const zeichne = function () {
+                        if (!geladen) return;
+                        const iw = bild.naturalWidth, ih = bild.naturalHeight;
+                        const cols = Math.min(iw, SP[Math.min(stufe, SP.length - 1)]);
+                        const tw = Math.max(2, cols), th = Math.max(2, Math.round(cols * ih / iw));
+                        const tmp = document.createElement("canvas");
+                        tmp.width = tw; tmp.height = th;
+                        const tg = tmp.getContext("2d");
+                        tg.imageSmoothingEnabled = true; tg.imageSmoothingQuality = "high";
+                        tg.drawImage(bild, 0, 0, tw, th);
+                        const ca = CW / CH, ia = tw / th;
+                        let sw = tw, sh = th, sx = 0, sy = 0;
+                        if (ia > ca) { sw = th * ca; sx = (tw - sw) / 2; } else { sh = tw / ca; sy = (th - sh) / 2; }
+                        const g = cv.getContext("2d");
+                        g.imageSmoothingEnabled = false;
+                        g.clearRect(0, 0, CW, CH);
+                        g.drawImage(tmp, sx, sy, sw, sh, 0, 0, CW, CH);
+                    };
+                    bild.onload = function () { geladen = true; zeichne(); };
+                    bild.onerror = function () { if (cv.parentNode) cv.remove(); ov.classList.remove("bild"); };
+                    bild.src = bildUrl(tag);
+                    // erst wenn die Tür offen ist (ca. 1,45 s), in rund 2 Sekunden entpixeln
+                    if (!bereitsOffen) for (let i = 1; i < SP.length; i++) (function (i) { setTimeout(function () { stufe = i; zeichne(); }, 1500 + i * 225); })(i);
+                } catch (e) { ov.classList.remove("bild"); }
+            }
+            ["l", "r"].forEach(function (seite) {
+                const f = document.createElement("div");
+                f.className = "portal-fluegel " + seite;
+                f.style.backgroundImage = "linear-gradient(rgba(5,14,10,0.3), rgba(5,14,10,0.3)), url('" + (bereitsOffen ? bildUrl(tag) : "bilder/pix-mid-" + n + ".png") + "')";
+                wrap.appendChild(f);
+            });
+            // Zeitplan: Tür auf (bis ca. 1,45 s) – ggf. 2 s entpixeln – dann Zoom
+            const zd = bereitsOffen || !ov.classList.contains("bild") ? 1.5 : 3.65;
+            ov.style.setProperty("--zd", zd + "s");
+            ov.style.setProperty("--fd", (zd + 0.45) + "s");
+            const tEnde = Math.round((zd + 0.95) * 1000);
+            ov.appendChild(wrap);
+            document.body.appendChild(ov);
+            let gewechselt = false, beendet = false;
+            function wechseln() { if (gewechselt) return; gewechselt = true; try { weiter(); } catch (e) {} }
+            function beenden() {
+                if (beendet) return; beendet = true;
+                wechseln();
+                TON.ausblenden("knarren", 500);
+                ov.classList.add("aus");
+                setTimeout(function () { ov.remove(); portalLaeuft = false; }, 700);
+            }
+            ov.addEventListener("click", beenden);   // Tippen = überspringen
+            requestAnimationFrame(function () { requestAnimationFrame(function () { ov.classList.add("an"); }); });
+            setTimeout(wechseln, tEnde);
+            setTimeout(beenden, tEnde + 150);
+            setTimeout(function () { if (document.body.contains(ov)) { ov.remove(); portalLaeuft = false; } }, tEnde + 1500);
+        }
+        // Beim Zurück aus Einstimmung/Geschichte: Die Tür schließt sich wieder auf ihrer Kachel in der Übersicht.
+        // Nur über die Knöpfe „Zurück zur Türchen-Auswahl“ – die Zurück-Wischgeste bleibt sofort.
+        function portalZurueck() {
+            const tag = currentDay;
+            const reduziert = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            if (window.PORTAL_AUS || portalLaeuft || wirbelLaeuft || reduziert || !(tag >= 1 && tag <= 24)) { zeigeTuerenUebersicht(); return; }
+            portalLaeuft = true;
+            TON.spielen("zuklappen");   // gleich beim Tippen starten (iPhone); die Datei beginnt mit 0,33 s Stille
+            const ov = document.createElement("div");
+            ov.id = "portal"; ov.className = "zu";
+            document.body.appendChild(ov);
+            let fertig = false; const ts = [];
+            const spaeter = function (f, ms) { ts.push(setTimeout(f, ms)); };
+            function ende() {
+                if (fertig) return; fertig = true;
+                ts.forEach(clearTimeout);
+                TON.ausblenden("zuklappen", 400);
+                window.__zuKeinScroll = false;
+                if (document.getElementById("calendar-overview").classList.contains("hidden")) { try { zeigeTuerenUebersicht(); } catch (e) {} }
+                ov.classList.add("aus");
+                setTimeout(function () { ov.remove(); portalLaeuft = false; }, 700);
+            }
+            ov.addEventListener("click", ende);   // Tippen = überspringen
+            requestAnimationFrame(function () { requestAnimationFrame(function () { ov.classList.add("an"); }); });
+            spaeter(function () {
+                window.__zuKeinScroll = true;
+                try { zeigeTuerenUebersicht(); } catch (e) {}
+                const kachel = document.querySelectorAll("#tuerenGridContainer .tuer-card")[tag - 1];
+                if (!kachel) { ende(); return; }
+                // erst nach dem automatischen Hochscrollen beim Seitenwechsel (MutationObserver) die Kachel in die Mitte holen
+                requestAnimationFrame(function () {
+                    if (fertig) return;
+                    const r0 = kachel.getBoundingClientRect();
+                    window.scrollTo({ top: Math.max(0, window.scrollY + r0.top + r0.height / 2 - window.innerHeight / 2), behavior: "instant" });
+                    const r = kachel.getBoundingClientRect();
+                    let offen = false;
+                    try { offen = geoeffnetListe().indexOf(tag) >= 0; } catch (e) {}
+                    const n = String(tag).padStart(2, "0");
+                    const PF = ["#fff6dc", "#f5d078", "#be8c28"];
+                    ov.style.setProperty("--p1", PF[0]); ov.style.setProperty("--p2", PF[1]); ov.style.setProperty("--p3", PF[2]); ov.style.setProperty("--pg", PF[1] + "99");
+                    ov.style.setProperty("--zs", String(Math.max(window.innerWidth / r.width, window.innerHeight / r.height) * 1.08));
+                    const wrap = document.createElement("div");
+                    wrap.className = "portal-wrap";
+                    wrap.style.left = r.left + "px"; wrap.style.top = r.top + "px"; wrap.style.width = r.width + "px"; wrap.style.height = r.height + "px";
+                    const innen = document.createElement("div"); innen.className = "portal-innen"; wrap.appendChild(innen);
+                    if (!window.PORTAL_FARBE) {
+                        const bild = document.createElement("div"); bild.className = "portal-bild"; bild.style.backgroundImage = "url('" + bildUrl(tag) + "')"; wrap.appendChild(bild);
+                    }
+                    // Türflügel zeigen das, was die Kachel jetzt zeigt: geöffnet = scharf, sonst leicht verpixelt
+                    ["l", "r"].forEach(function (seite) {
+                        const f = document.createElement("div");
+                        f.className = "portal-fluegel " + seite;
+                        f.style.backgroundImage = "linear-gradient(rgba(5,14,10,0.3), rgba(5,14,10,0.3)), url('" + (offen ? bildUrl(tag) : "bilder/pix-mid-" + n + ".png") + "')";
+                        wrap.appendChild(f);
+                    });
+                    ov.appendChild(wrap);
+                    void ov.offsetWidth;
+                    spaeter(function () { ov.classList.add("zoom"); }, 80);
+                    spaeter(function () { ov.classList.add("zu2"); }, 730);
+                    spaeter(function () { ov.classList.add("frei"); }, 1380);
+                    spaeter(ende, 1900);
+                });
+            }, 260);
+            spaeter(function () { if (!fertig) ende(); }, 4000);
+        }
+        function istErstesMal(tag) { return geoeffnetListe().indexOf(tag) < 0; }
+
+        function nextDaySetup() {
+            if (currentDay < 24) {
+                const naechster = currentDay + 1;
+                if (!istTagErreicht(naechster)) { zeigeGesperrt(naechster); return; }
+                portalDurch(naechster, null, function () { oeffneTag(naechster); });
+            } else {
+                finaleDurch(zeigeFinale);
+            }
+        }
+
+
+        // --- Bilder: Tagesbild, verpixelte Kacheln, Wasserzeichen ---
+
+        function pixelSetzen(card, i, gesperrt) {
+            const n = String(i).padStart(2, "0");
+            const art = gesperrt ? "lock" : "mid";
+            const dunkel = gesperrt ? 0.55 : 0.3;
+            card.classList.add("pix");
+            card.style.backgroundImage = "linear-gradient(rgba(5,14,10," + dunkel + "), rgba(5,14,10," + dunkel + ")), url('bilder/pix-" + art + "-" + n + ".png')";
+        }
+        function wmAn(day) { try { const a = document.getElementById("wmAnker"); if (!a) return; a.firstElementChild.style.backgroundImage = "url('" + bildUrl(day) + "')"; a.classList.add("an"); } catch (e) {} }
+        function wmAus() { try { const a = document.getElementById("wmAnker"); if (a) a.classList.remove("an"); } catch (e) {} }
+        function bildUrl(day) { return "bilder/tag-" + String(day).padStart(2, "0") + ".jpg"; }
+        function geoeffnetListe() { const l = speicherLesen("geoeffnet", []); return Array.isArray(l) ? l : []; }
+        function merkeGeoeffnet(day) {
+            const l = geoeffnetListe();
+            if (l.indexOf(day) < 0) { l.push(day); speicherSchreiben("geoeffnet", l); }
+            tuerStilAktualisieren();
+        }
+        // Stil der Kacheln: gesperrt = stark verpixelt; heute (ungeöffnet) = leicht verpixelt + Glühen;
+        // ausgelassen = leicht verpixelt + Lichtwelle; geöffnet = Bild + goldener Rahmen
+        function tuerStilAktualisieren() {
+            const karten = document.querySelectorAll("#tuerenGridContainer .tuer-card");
+            const alle = ab25(), offen = geoeffnetListe(), heute = heuteTag();
+            let wz = 0; const fehlend = [];
+            karten.forEach((el, idx) => {
+                const i = idx + 1;
+                el.classList.remove("pix", "geoeffnet", "heute", "frei", "ausgelassen", "mit-titel");
+                el.style.backgroundImage = "";
+                const alt = el.querySelector(".tag-titel"); if (alt) alt.remove();
+                const altStern = el.querySelector(".tag-stern"); if (altStern) altStern.remove();
+                const bild = "linear-gradient(rgba(5,14,10,0.15) 0%, rgba(5,14,10,0.2) 45%, rgba(5,14,10,0.85) 100%), url('" + bildUrl(i) + "')";
+                if (alle && offen.indexOf(i) >= 0) { el.classList.add("frei"); el.style.backgroundImage = bild; }
+                else if (alle) { pixelSetzen(el, i, false); el.classList.add("ausgelassen"); }
+                else if (el.classList.contains("gesperrt")) pixelSetzen(el, i, true);
+                else if (offen.indexOf(i) >= 0) { el.classList.add("geoeffnet"); el.style.backgroundImage = bild; }
+                else { pixelSetzen(el, i, false); if (i === heute) el.classList.add("heute"); else if (heute && i < heute) el.classList.add("ausgelassen"); }
+                if (el.classList.contains("geoeffnet") || el.classList.contains("frei")) {
+                    const t = titelMap()[i];
+                    if (t) { const sp = document.createElement("span"); sp.className = "tag-titel"; sp.textContent = t; el.appendChild(sp); el.classList.add("mit-titel"); }
+                    else fehlend.push(i);
+                    if (istLiebling(i)) { const st = document.createElement("span"); st.className = "tag-stern"; st.textContent = "★"; el.appendChild(st); }
+                }
+                el.style.removeProperty("--sw");
+                if (el.classList.contains("heute") || el.classList.contains("ausgelassen")) el.style.setProperty("--sw", (wz++ * 0.35) + "s");
+            });
+            if (fehlend.length) titelNachladen(fehlend);
+        }
+        // Titel der geöffneten Geschichten (für die Kacheln der Übersicht)
+        function titelMap() { const m = speicherLesen("titel", {}); return (m && typeof m === "object") ? m : {}; }
+        function merkeTitel(day, t) {
+            if (!t) return;
+            const m = titelMap();
+            if (m[day] === t) return;
+            m[day] = t; speicherSchreiben("titel", m);
+        }
+        const titelVersucht = {};
+        function titelNachladen(tage) {
+            const offen = tage.filter(function (d) { return !titelVersucht[d]; });
+            if (!offen.length || !window.fetch) return;
+            let n = offen.length, neu = false;
+            offen.forEach(function (d) {
+                titelVersucht[d] = true;
+                fetch("story-day" + d + ".js").then(function (r) { return r.ok ? r.text() : ""; }).then(function (txt) {
+                    const m = /titel:\s*("(?:[^"\\]|\\.)*")/.exec(txt || "");
+                    if (m) { try { merkeTitel(d, JSON.parse(m[1])); neu = true; } catch (e) {} }
+                }).catch(function () {}).then(function () { if (--n === 0 && neu) { try { tuerStilAktualisieren(); } catch (e) {} } });
+            });
+        }
+        // Bild erst einblenden, wenn es im sichtbaren Bereich ankommt
+        let bildBeobachter = null;
+        function bildEinblenden(box) {
+            // Zurücksetzen ohne Animation, damit jedes Mal gleich von 0 gestartet wird
+            box.style.transition = "none";
+            box.classList.remove("sichtbar");
+            void box.offsetWidth;
+            box.style.transition = "";
+            if (bildBeobachter) { bildBeobachter.disconnect(); bildBeobachter = null; }
+            if (!("IntersectionObserver" in window)) { void box.offsetWidth; box.classList.add("sichtbar"); return; }
+            bildBeobachter = new IntersectionObserver(function (eintraege, obs) {
+                if (eintraege.some(e => e.isIntersecting)) { box.classList.add("sichtbar"); obs.disconnect(); }
+            }, { threshold: 0.3 });
+            bildBeobachter.observe(box);
+        }
+        // Das Bild wird erst beobachtet, wenn Bild UND Text geladen sind (sonst wäre es kurz im Sichtfeld)
+        const storyBildStatus = { bild: false, text: false };
+        function storyBildStart() {
+            if (!storyBildStatus.bild || !storyBildStatus.text) return;
+            const box = document.getElementById("storyBild");
+            requestAnimationFrame(function () { requestAnimationFrame(function () { bildEinblenden(box); }); });
+        }
+        function zeigeStoryBild(day) {
+            const box = document.getElementById("storyBild");
+            if (!box) return;
+            box.classList.remove("sichtbar");
+            const img = document.getElementById("storyBildImg");
+            storyBildStatus.bild = false; storyBildStatus.text = false;
+            img.onload = function () { box.style.display = ""; storyBildStatus.bild = true; storyBildStart(); };
+            img.onerror = function () { box.style.display = "none"; };
+            box.style.display = "none";
+            img.src = bildUrl(day);
+        }
+
+        // ==========================================
+        // GESCHICHTEN LADEN (story-dayN.js setzt window.STORY = { titel, einstimmung, text, quelle })
+        // ==========================================
+        const storyCache = {};
+        let ladeNr = 0, nochmalNr = 0;
+        function ladeGeschichte(day, ok, fehler) {
+            if (storyCache[day]) { ok(storyCache[day]); return; }
+            const nr = ++ladeNr;
+            const alt = document.getElementById("dynamicStoryScript");
+            if (alt) alt.remove();
+            window.STORY = undefined;
+            const script = document.createElement("script");
+            script.id = "dynamicStoryScript";
+            script.src = "story-day" + day + ".js" + (nochmalNr ? "?n=" + nochmalNr : "");
+            script.onload = function () {
+                if (nr !== ladeNr) return;
+                const st = window.STORY;
+                if (st && typeof st.text === "string" && st.text.trim()) { storyCache[day] = st; ok(st); }
+                else fehler();
+            };
+            script.onerror = function () { if (nr === ladeNr) fehler(); };
+            document.head.appendChild(script);
+        }
+        // Text: Absätze sind durch Leerzeilen getrennt
+        function absaetzeHtml(text) {
+            return String(text).replace(/\r\n?/g, "\n").split(/\n[ \t]*\n/)
+                .map(a => a.trim()).filter(Boolean)
+                .map(a => "<p>" + esc(a).replace(/\n/g, "<br>") + "</p>").join("");
+        }
+
+        function alleScreensAus() {
+            wmAus();
+            try { VORLESEN.stop(); } catch (e) {}
+            ["landingScreen", "calendar-overview", "einstimmungScreen", "storyScreen", "finaleScreen"].forEach(id => {
+                document.getElementById(id).classList.add("hidden");
+            });
+        }
+        // Einstimmungsseite: beim ersten Öffnen eines Türchens
+        function zeigeEinstimmung() {
+            const day = currentDay;
+            alleScreensAus();
+            const titel = document.getElementById("einTitel"), text = document.getElementById("einText");
+            const fehlerBox = document.getElementById("einFehler"), btn = document.getElementById("btnBeginnen");
+            document.getElementById("einDayNum").textContent = day;
+            titel.textContent = ""; text.textContent = ""; fehlerBox.innerHTML = ""; btn.style.display = "none";
+            document.getElementById("einstimmungScreen").classList.remove("hidden");
+            wmAn(day);
+            ladeGeschichte(day, function (st) {
+                if (currentDay !== day) return;
+                titel.textContent = st.titel || "";
+                text.textContent = st.einstimmung || "";
+                btn.style.display = "";
+            }, function () {
+                if (currentDay !== day) return;
+                geschichteFehler(fehlerBox);
+            });
+        }
+        function zeigeStory() {
+            leseBereit = false;
+            const day = currentDay;
+            alleScreensAus();
+            document.getElementById("storyScreen").classList.remove("hidden");
+            wmAn(day);
+            const w = document.getElementById("btnWeiter");
+            if (day === 24) { w.innerText = "Zum Finale …"; w.style.display = ""; }
+            else if (istTagErreicht(day + 1)) { w.innerText = "Weiter durch das nächste Türchen …"; w.style.display = ""; }
+            else w.style.display = "none";
+            loadStoryContent(day);
+        }
+        function oeffneTag(day) {
+            currentDay = day;
+            if (devSelect) devSelect.value = day;
+            updateDayUI();
+            if (istErstesMal(day)) zeigeEinstimmung();
+            else zeigeStory();
+        }
+
+        function ladeErinnerung() {
+            const sel = document.getElementById("erinnerungZeit");
+            window.location.href = "erinnerung/" + sel.value + ".ics";
+        }
+
+        function finaleKnopfAktualisieren() {
+            const bf = document.getElementById("btnFinale");
+            if (bf) bf.style.display = (alleFreigegeben() || geoeffnetListe().indexOf(24) >= 0) ? "" : "none";
+        }
+
+        // --- Finale ---
+        // Nach der Finale-Animation: Ein Umschlag mit Stern-Siegel liegt bereit. Tippen öffnet ihn,
+        // der Brief gleitet heraus und wird zur Finale-Seite (die darunter schon bereitliegt).
+        // Kommt nur zusammen mit der Animation, also beim ersten Mal und bei „Die Animation noch einmal ansehen“.
+        function umschlagZeigen() {
+            const alt = document.getElementById("umschlag"); if (alt) alt.remove();
+            const ov = document.createElement("div");
+            ov.id = "umschlag";
+            ov.innerHTML = '<div class="u-huelle"><div class="u-rueck"></div>' +
+                '<div class="u-brief">Frohe Weihnachten<i></i><i></i><i></i><i></i></div>' +
+                '<div class="u-front"></div><div class="u-lasche"></div><div class="u-siegel">&#9733;</div></div>' +
+                '<div class="u-hinweis">Tippen zum Öffnen</div>';
+            document.body.appendChild(ov);
+            document.documentElement.style.overflow = "hidden";
+            requestAnimationFrame(function () { requestAnimationFrame(function () { ov.classList.add("da"); }); });
+            let phase = 0; const ts = [];
+            function ende() {
+                if (phase === 3) return; phase = 3;
+                ts.forEach(clearTimeout);
+                document.documentElement.style.overflow = "";
+                ov.classList.add("auf", "auf2", "raus", "gross", "frei");
+                setTimeout(function () { ov.remove(); }, 900);
+            }
+            ov.addEventListener("click", function () {
+                if (phase === 0) {
+                    phase = 1;
+                    TON.spielen("umschlag");
+                    ov.classList.add("auf");
+                    ts.push(setTimeout(function () { ov.classList.add("auf2"); }, 330));
+                    ts.push(setTimeout(function () { ov.classList.add("raus"); }, 650));
+                    ts.push(setTimeout(function () { phase = 2; ov.classList.add("gross", "frei"); document.documentElement.style.overflow = ""; }, 1700));
+                    ts.push(setTimeout(function () { phase = 3; ov.remove(); }, 2600));
+                } else ende();   // Tippen während des Öffnens = überspringen
+            });
+        }
+
+        function zeigeFinale() {
+            alleScreensAus();
+            document.getElementById("finaleScreen").classList.remove("hidden");
+            const box = document.getElementById("finaleBild");
+            const img = document.getElementById("finaleBildImg");
+            box.classList.remove("sichtbar");
+            img.onload = function () { box.style.display = ""; void box.offsetWidth; bildEinblenden(box); };
+            img.onerror = function () { box.style.display = "none"; };
+            img.src = "bilder/finale.jpg";
+            try { lieblingeZeigen(); } catch (e) {}
+        }
+
+        // ---------- Name (freiwillig, nur auf dem Gerät gespeichert) ----------
+        function nameAnzeigen() {
+            const name = speicherLesen("name", ""), ohne = speicherLesen("nameOhne", false) === true;
+            const karte = document.getElementById("nameKarte"), fuss = document.getElementById("nameFuss");
+            document.getElementById("nameInfo").style.display = SYNC.moeglich ? "" : "none";
+            karte.style.display = (!name && !ohne) ? "" : "none";
+            fuss.innerHTML = "";
+            if (name) {
+                fuss.appendChild(document.createTextNode("Nicht " + name + "? "));
+            }
+            if (name || ohne) {
+                const b = document.createElement("button");
+                b.textContent = name ? "Namen ändern" : "Namen eingeben";
+                b.onclick = function () { karte.style.display = ""; const f = document.getElementById("nameFeld"); f.value = ""; f.focus(); karte.scrollIntoView({ block: "center", behavior: "smooth" }); };
+                fuss.appendChild(b);
+            }
+        }
+        let meldungTimer = null;
+        function nameMeldung(text) {
+            const m = document.getElementById("nameMeldung");
+            clearTimeout(meldungTimer);
+            m.textContent = text; m.style.display = ""; m.style.opacity = "1";
+            meldungTimer = setTimeout(function () { m.style.opacity = "0"; setTimeout(function () { m.style.display = "none"; }, 1000); }, 6000);
+        }
+        window.nameSpeichern = function () {
+            const f = document.getElementById("nameFeld");
+            let v = f.value.replace(/\s+/g, " ").trim();
+            if (!v) { f.focus(); return; }
+            // nur GROSS oder nur klein getippt? Dann schön schreiben: „anna-lena“ → „Anna-Lena“ (sonst wie eingegeben, z. B. „McKenzie“)
+            if (v === v.toUpperCase() || v === v.toLowerCase()) v = v.toLowerCase().replace(/(^|[\s-])(\S)/g, function (m, a, b) { return a + b.toUpperCase(); });
+            else v = v.charAt(0).toUpperCase() + v.slice(1);
+            speicherSchreiben("name", v);
+            speicherLoeschen("nameOhne");
+            f.blur();
+            personalisieren(); nameAnzeigen(); SYNC.statusZeigen();
+            nameMeldung("Schön, dass du da bist, " + v + "!");
+            SYNC.abgleichen().then(function (r) {
+                if (r && r.hatteStand && speicherLesen("name", "") === v) nameMeldung("Willkommen zurück, " + v + "! Dein Fortschritt ist wieder da.");
+            });
+        };
+        window.nameUeberspringen = function () {
+            speicherSchreiben("nameOhne", true);
+            nameAnzeigen();
+        };
+
+        // ---------- Online-Sicherung (SYNC) ----------
+        // Der Schlüssel wird aus Jahr, SYNC_ZUSATZ und Vornamen berechnet (SHA-256, 40 Zeichen; TEST-Fassung mit „-t“).
+        // Durch das Jahr beginnt jeder neue Kalender-Jahrgang automatisch mit einem leeren Online-Stand.
+        // Gesichert werden: geöffnete Türchen, Titel, Lieblingsgeschichten (mit Zeitstempel), „Finale gesehen“, „schon besucht“.
+        // Nicht gesichert: Name, Schriftgröße, Lesepositionen, Begrüßungen (das bleibt auf dem Gerät).
+        // Zusammenführen: Türchen und Titel werden vereinigt; bei den Lieblingen gewinnt die zuletzt geänderte Liste;
+        // „Finale gesehen“/„besucht“: einmal gesehen = überall gesehen.
+        const SYNC = (function () {
+            const url = String(CFG.SYNC_URL || "").trim().replace(/\/+$/, "");
+            const moeglich = !!(url && window.fetch && window.crypto && crypto.subtle && window.TextEncoder);
+            let schl = { name: null, p: null }, timer = null, laeuft = false, nochmal = false, unterdrueckt = false, offen = false, zuletzt = 0;
+            function norm(n) { return String(n || "").normalize("NFC").replace(/\s+/g, " ").trim().toLowerCase(); }
+            function schluesselAus(name) {
+                return crypto.subtle.digest("SHA-256", new TextEncoder().encode("adventsgeschichten|" + JAHR + "|" + (CFG.SYNC_ZUSATZ || "") + "|" + norm(name)))
+                    .then(function (d) { return Array.prototype.map.call(new Uint8Array(d), function (b) { return b.toString(16).padStart(2, "0"); }).join("").slice(0, 40) + (TEST_FASSUNG ? "-t" : ""); });
+            }
+            function schluessel() {
+                const n = speicherLesen("name", "");
+                if (!moeglich || !n) return Promise.resolve(null);
+                if (schl.name !== n) schl = { name: n, p: schluesselAus(n) };
+                return schl.p;
+            }
+            const gueltig = n => Number.isInteger(n) && n >= 1 && n <= 24;
+            function sauber(d) {
+                d = d && typeof d === "object" ? d : {};
+                const titel = {};
+                const t = d.titel && typeof d.titel === "object" ? d.titel : {};
+                Object.keys(t).map(Number).filter(gueltig).sort((a, b) => a - b).forEach(function (k) { if (typeof t[k] === "string") titel[k] = t[k].slice(0, 200); });
+                return {
+                    v: 1,
+                    geoeffnet: (Array.isArray(d.geoeffnet) ? d.geoeffnet : []).filter(gueltig).filter((x, i, a) => a.indexOf(x) === i).sort((a, b) => a - b),
+                    titel: titel,
+                    lieblinge: (Array.isArray(d.lieblinge) ? d.lieblinge : []).filter(gueltig).filter((x, i, a) => a.indexOf(x) === i).sort((a, b) => a - b),
+                    lieblingeTs: Number(d.lieblingeTs) || 0,
+                    finaleAn: d.finaleAn === true,
+                    besucht: d.besucht === true
+                };
+            }
+            function lokal() {
+                return sauber({ geoeffnet: geoeffnetListe(), titel: titelMap(), lieblinge: lieblingeListe(), lieblingeTs: speicherLesen("lieblingeTs", 0),
+                    finaleAn: speicherLesen("finaleAn", false) === true, besucht: speicherLesen("besucht", false) === true });
+            }
+            function zusammen(a, b) {
+                const neuer = b.lieblingeTs > a.lieblingeTs;
+                return sauber({
+                    geoeffnet: a.geoeffnet.concat(b.geoeffnet),
+                    titel: Object.assign({}, b.titel, a.titel),
+                    lieblinge: neuer ? b.lieblinge : a.lieblinge,
+                    lieblingeTs: neuer ? b.lieblingeTs : a.lieblingeTs,
+                    finaleAn: a.finaleAn || b.finaleAn,
+                    besucht: a.besucht || b.besucht
+                });
+            }
+            const gleich = (x, y) => JSON.stringify(x) === JSON.stringify(y);
+            function anwenden(z) {
+                unterdrueckt = true;
+                try {
+                    speicherSchreiben("geoeffnet", z.geoeffnet);
+                    speicherSchreiben("titel", z.titel);
+                    speicherSchreiben("lieblingeTs", z.lieblingeTs);
+                    speicherSchreiben("lieblinge", z.lieblinge);
+                    if (z.finaleAn) speicherSchreiben("finaleAn", true);
+                    if (z.besucht) speicherSchreiben("besucht", true);
+                } finally { unterdrueckt = false; }
+                try { tuerStilAktualisieren(); } catch (e) {}
+                try { finaleKnopfAktualisieren(); } catch (e) {}
+                try { rulesAktualisieren(); } catch (e) {}
+                try { if (!document.getElementById("storyScreen").classList.contains("hidden")) lieblingKnopf(); } catch (e) {}
+                try { if (!document.getElementById("finaleScreen").classList.contains("hidden")) lieblingeZeigen(); } catch (e) {}
+            }
+            const leer = z => !z.geoeffnet.length && !z.lieblinge.length && !z.lieblingeTs && !z.finaleAn;
+            function ablegen(k, z) {
+                return fetch(url + "/stand/" + k, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(z) })
+                    .then(function (r) {
+                        if (!r.ok) throw new Error("HTTP " + r.status);
+                        return r.json().then(function (j) { return j && j.daten ? sauber(j.daten) : null; });
+                    });
+            }
+            // nur in der TEST-Fassung: kleine Statuszeile unten auf der Startseite
+            let status = { zeit: 0, tueren: 0, lieblinge: 0, fehler: false };
+            function statusZeigen() {
+                if (!TEST_FASSUNG) return;
+                const el = document.getElementById("syncStatus"); if (!el) return;
+                const z = status.zeit ? new Date(status.zeit).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
+                el.textContent = !moeglich ? "TEST · Online-Sicherung aus (SYNC_URL leer)"
+                    : !speicherLesen("name", "") ? "TEST · Online-Sicherung: erst nach Namenseingabe"
+                    : status.fehler ? "TEST · Online-Sicherung nicht erreichbar" + (z ? " (zuletzt ok " + z + ")" : "")
+                    : z ? "TEST · Online abgeglichen " + z + " · " + status.tueren + " Türchen, " + status.lieblinge + " Lieblinge" : "TEST · Online-Sicherung: noch kein Abgleich";
+                el.style.display = "";
+            }
+            // holen, zusammenführen, lokal übernehmen und (wenn nötig) wieder ablegen
+            function abgleichen() {
+                clearTimeout(timer); offen = false;
+                return schluessel().then(function (k) {
+                    if (!k) return null;
+                    if (laeuft) { nochmal = true; return null; }
+                    laeuft = true; zuletzt = Date.now();
+                    return fetch(url + "/stand/" + k, { cache: "no-store" }).then(function (r) {
+                        if (!r.ok) throw new Error("HTTP " + r.status);
+                        return r.json().then(function (j) { return j && j.daten ? sauber(j.daten) : null; });
+                    }).then(function (server) {
+                        const lok = lokal(), z = zusammen(lok, server || sauber({}));
+                        if (!gleich(z, lok)) anwenden(z);
+                        const ergebnis = { hatteStand: !!(server && (server.geoeffnet.length || server.lieblinge.length)) };
+                        status = { zeit: Date.now(), tueren: z.geoeffnet.length, lieblinge: z.lieblinge.length, fehler: false }; statusZeigen();
+                        // nur ablegen, wenn dieses Gerät etwas Neues beizutragen hat (ein leerer Stand wird nie abgelegt)
+                        if (leer(z) || (server && gleich(z, server))) return ergebnis;
+                        return ablegen(k, z).then(function (gesamt) {
+                            // Der Worker führt selbst zusammen und schickt den Gesamtstand zurück – den übernehmen
+                            if (gesamt && !gleich(gesamt, lokal())) anwenden(zusammen(lokal(), gesamt));
+                            if (gesamt) { status = { zeit: Date.now(), tueren: gesamt.geoeffnet.length, lieblinge: gesamt.lieblinge.length, fehler: false }; statusZeigen(); }
+                            return ergebnis;
+                        });
+                    }).catch(function () { offen = true; status.fehler = true; statusZeigen(); return null; })   // ohne Netz: später nachholen
+                      .then(function (e) { laeuft = false; if (nochmal) { nochmal = false; spaeter(); } return e; });
+                });
+            }
+            function spaeter() {
+                if (!moeglich || unterdrueckt || !speicherLesen("name", "")) return;
+                offen = true;
+                clearTimeout(timer); timer = setTimeout(abgleichen, 3000);
+            }
+            // App geht in den Hintergrund: noch nicht gesicherte Änderungen sofort senden
+            document.addEventListener("visibilitychange", function () {
+                if (document.hidden) {
+                    if (offen) schluessel().then(function (k) {
+                        if (!k || leer(lokal())) return;
+                        clearTimeout(timer); offen = false;
+                        try { fetch(url + "/stand/" + k, { method: "PUT", keepalive: true, headers: { "Content-Type": "application/json" }, body: JSON.stringify(lokal()) }).catch(function () {}); } catch (e) {}
+                    });
+                } else if (Date.now() - zuletzt > 20000) abgleichen();   // zurück im Vordergrund: Stand der anderen Geräte holen
+            });
+            function loeschen(name) {
+                if (!moeglich || !name) return Promise.resolve();
+                return schluesselAus(name).then(function (k) { return fetch(url + "/stand/" + k, { method: "DELETE" }); }).catch(function () {});
+            }
+            return { moeglich: moeglich, abgleichen: abgleichen, spaeter: spaeter, loeschen: loeschen, statusZeigen: statusZeigen };
+        })();
+        window.SYNC = SYNC;
+        document.addEventListener("DOMContentLoaded", function () {
+            try { nameAnzeigen(); } catch (e) {}
+            try { SYNC.statusZeigen(); } catch (e) {}
+            if (window.__resetName) SYNC.loeschen(window.__resetName);
+            else SYNC.abgleichen();
+        });
+
+        // ---------- Schriftgröße der Geschichten (pro Gerät gemerkt) ----------
+        const SCHRIFT_STUFEN = [0.9, 1, 1.12, 1.25, 1.4];
+        function schriftStufe() { const n = speicherLesen("schrift", 1); return (typeof n === "number" && n >= 0 && n < SCHRIFT_STUFEN.length) ? n : 1; }
+        function schriftAnwenden() {
+            const n = schriftStufe();
+            document.getElementById("storyContent").style.fontSize = (1.05 * SCHRIFT_STUFEN[n]).toFixed(3) + "rem";
+            document.getElementById("btnKleiner").disabled = n <= 0;
+            document.getElementById("btnGroesser").disabled = n >= SCHRIFT_STUFEN.length - 1;
+        }
+        window.schriftAendern = function (d) {
+            const n = Math.max(0, Math.min(SCHRIFT_STUFEN.length - 1, schriftStufe() + d));
+            // Leseposition halten: den Absatz, der gerade oben steht, nach der Änderung wieder oben zeigen
+            const ps = document.querySelectorAll("#storyContent p");
+            let anker = null, abstand = 0;
+            for (const p of ps) { const r = p.getBoundingClientRect(); if (r.bottom > 80) { anker = p; abstand = r.top; break; } }
+            speicherSchreiben("schrift", n);
+            schriftAnwenden();
+            if (anker && window.scrollY > 50) window.scrollTo(0, window.scrollY + anker.getBoundingClientRect().top - abstand);
+        };
+
+        // ---------- Lieblingsgeschichten (pro Gerät gemerkt) ----------
+        function lieblingeListe() { const l = speicherLesen("lieblinge", []); return Array.isArray(l) ? l.filter(n => Number.isInteger(n) && n >= 1 && n <= 24) : []; }
+        function istLiebling(n) { return lieblingeListe().indexOf(n) >= 0; }
+        function lieblingKnopf() {
+            const b = document.getElementById("btnLiebling"), an = istLiebling(currentDay);
+            b.innerHTML = '<span class="stern">' + (an ? "★" : "☆") + "</span>" + (an ? "Lieblingsgeschichte" : "Zu den Lieblingen");
+            b.classList.toggle("an", an);
+            b.style.display = "";
+        }
+        window.lieblingUmschalten = function () {
+            const l = lieblingeListe(), i = l.indexOf(currentDay);
+            if (i >= 0) l.splice(i, 1); else { l.push(currentDay); l.sort((a, b) => a - b); }
+            speicherSchreiben("lieblingeTs", Date.now());   // für den Abgleich: die zuletzt geänderte Liste gewinnt
+            speicherSchreiben("lieblinge", l);
+            lieblingKnopf();
+            const b = document.getElementById("btnLiebling");
+            b.classList.remove("puls"); void b.offsetWidth; if (i < 0) b.classList.add("puls");
+        };
+        function lieblingeZeigen() {
+            const box = document.getElementById("lieblingeBox"), ul = document.getElementById("lieblingeListe");
+            const l = lieblingeListe(), t = titelMap();
+            ul.innerHTML = "";
+            l.forEach(function (n) {
+                const li = document.createElement("li");
+                li.innerHTML = '<span class="nr">' + n + '.</span><span></span>';
+                li.lastChild.textContent = t[n] || ("Türchen " + n);
+                li.addEventListener("click", function () { portalDurch(n, null, function () { oeffneTag(n); }); });
+                ul.appendChild(li);
+            });
+            box.style.display = l.length ? "" : "none";
+        }
+
+        // ---------- Vorlesen mit der Sprachausgabe des Geräts ----------
+        // Liest Titel und Absätze in kurzen Stücken vor (lange Texte brechen in manchen Browsern sonst ab).
+        // Beginnt bei dem Absatz, der gerade oben auf dem Bildschirm steht. Der vorgelesene Absatz wird leicht markiert.
+        const VORLESEN = (function () {
+            const ok = "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+            let aktiv = false, schlange = [], stimme = null, markiert = null, fort = null;   // fort = {tag, absatz}: hier geht „Weiter vorlesen“ weiter
+            function stimmeWaehlen() {
+                try {
+                    const v = speechSynthesis.getVoices().filter(x => /^de([-_]|$)/i.test(x.lang));
+                    if (!v.length) return null;
+                    return v.find(x => /premium|enhanced|verbessert|neural|natural/i.test(x.name) && /de[-_]DE/i.test(x.lang))
+                        || v.find(x => /de[-_]DE/i.test(x.lang) && x.localService) || v.find(x => /de[-_]DE/i.test(x.lang)) || v[0];
+                } catch (e) { return null; }
+            }
+            if (ok) {
+                stimme = stimmeWaehlen();
+                try { speechSynthesis.addEventListener("voiceschanged", function () { stimme = stimmeWaehlen(); }); } catch (e) {}
+            }
+            function knopf() {
+                const b = document.getElementById("btnVorlesen"); if (!b) return;
+                b.style.display = ok ? "" : "none";
+                b.textContent = aktiv ? "■ Vorlesen anhalten" : (fort && fort.tag === currentDay ? "🔈 Weiter vorlesen" : "🔈 Vorlesen");
+                b.classList.toggle("an", aktiv);
+            }
+            function markieren(el) {
+                if (markiert) markiert.classList.remove("vorlesen-aktiv");
+                markiert = el;
+                if (!el) return;
+                if (el.tagName === "P") el.classList.add("vorlesen-aktiv");
+                const r = el.getBoundingClientRect();
+                if (r.top < 60 || r.top > window.innerHeight * 0.65) window.scrollTo({ top: window.scrollY + r.top - window.innerHeight * 0.25, behavior: "smooth" });
+            }
+            function stuecke(text) {
+                const saetze = String(text).replace(/\s+/g, " ").match(/[^.!?…]+[.!?…]+["“”»«'’)]*\s*|[^.!?…]+$/g) || [text];
+                const out = []; let akt = "";
+                saetze.forEach(function (x) { if ((akt + x).length > 220 && akt) { out.push(akt.trim()); akt = ""; } akt += x; });
+                if (akt.trim()) out.push(akt.trim());
+                return out;
+            }
+            function weiter() {
+                if (!aktiv) return;
+                const st = schlange.shift();
+                if (!st) { stop(false); return; }   // zu Ende gelesen: nächstes Mal wieder von vorn
+                if (st.el !== markiert) markieren(st.el);
+                const u = new SpeechSynthesisUtterance(st.t);
+                u.lang = "de-DE"; if (stimme) u.voice = stimme; u.rate = 0.95;
+                u.onend = weiter;
+                u.onerror = function (e) { if (aktiv && e.error !== "interrupted" && e.error !== "canceled") stop(); };
+                speechSynthesis.speak(u);
+            }
+            function stop(merken) {
+                const war = aktiv; aktiv = false; schlange = [];
+                const ps = Array.prototype.slice.call(document.querySelectorAll("#storyContent p"));
+                fort = (merken && markiert && ps.indexOf(markiert) >= 0) ? { tag: currentDay, absatz: ps.indexOf(markiert) } : null;
+                if (ok && war) { try { speechSynthesis.cancel(); } catch (e) {} }
+                markieren(null); knopf();
+            }
+            function start() {
+                const titel = document.getElementById("storyTitle");
+                const ps = Array.prototype.slice.call(document.querySelectorAll("#storyContent p"));
+                if (!ps.length) return;
+                // angehalten? dann dort weiter; sonst ab dem Absatz, der gerade oben auf dem Bildschirm steht
+                let ab = (fort && fort.tag === currentDay && fort.absatz < ps.length) ? fort.absatz : ps.findIndex(p => p.getBoundingClientRect().bottom > 80);
+                if (ab < 0) ab = 0;
+                fort = null;
+                schlange = [];
+                if (ab === 0 && titel.textContent) schlange.push({ el: titel, t: titel.textContent + "." });
+                ps.slice(ab).forEach(function (p) { stuecke(p.innerText || p.textContent).forEach(function (t) { schlange.push({ el: p, t: t }); }); });
+                aktiv = true; knopf();
+                try { speechSynthesis.cancel(); } catch (e) {}
+                weiter();   // direkt im Tippen starten (iPhone)
+            }
+            document.addEventListener("visibilitychange", function () { if (document.hidden && aktiv) stop(true); });
+            document.addEventListener("DOMContentLoaded", knopf);
+            return { ok: ok, stop: function () { stop(false); }, knopf: knopf, umschalten: function () { if (aktiv) stop(true); else start(); } };
+        })();
+        window.VORLESEN = VORLESEN;
+
+        // --- Seitentitel, Symbol im Tab, Browserleisten-Farbe, nach oben scrollen ---
+        function svgUri(svg) { return "data:image/svg+xml," + encodeURIComponent(svg); }
+        const ICON_INTRO = svgUri('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#0f241c"/><rect x="25" y="28" width="14" height="28" rx="2" fill="#f4f1ea"/><path d="M32 7c6 8 8 12 8 16a8 8 0 0 1-16 0c0-4 2-8 8-16z" fill="#f2b134"/></svg>');
+        const ICON_TUEREN = svgUri('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#0f241c"/><rect x="9" y="9" width="21" height="21" rx="4" fill="#d9b45a"/><rect x="34" y="9" width="21" height="21" rx="4" fill="#2f6b4f"/><rect x="9" y="34" width="21" height="21" rx="4" fill="#2f6b4f"/><rect x="34" y="34" width="21" height="21" rx="4" fill="#d9b45a"/></svg>');
+        const ICON_FINALE = svgUri('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#0f241c"/><polygon points="32,8 38.5,25 57,25.5 42.5,37 47.5,55 32,44.5 16.5,55 21.5,37 7,25.5 25.5,25" fill="#d9b45a"/></svg>');
+        function iconKalender(tag, farbe) {
+            const fs = tag > 9 ? 30 : 36;
+            return svgUri('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="4" y="9" width="56" height="51" rx="8" fill="#f4f1ea"/><path d="M4 17a8 8 0 0 1 8-8h40a8 8 0 0 1 8 8v9H4z" fill="' + farbe + '"/><rect x="16" y="2" width="6" height="13" rx="3" fill="#0f241c"/><rect x="42" y="2" width="6" height="13" rx="3" fill="#0f241c"/><text x="32" y="54" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="' + fs + '" fill="#222">' + tag + '</text></svg>');
+        }
+        function seiteAktualisieren() {
+            const sichtbar = id => { const e = document.getElementById(id); return e && !e.classList.contains("hidden"); };
+            const cs = getComputedStyle(document.documentElement);
+            let titel = "Advent", icon = ICON_INTRO;
+            if (sichtbar("finaleScreen")) {
+                titel = "Frohe Weihnachten"; icon = ICON_FINALE;
+            } else if (sichtbar("einstimmungScreen") || sichtbar("storyScreen")) {
+                titel = currentDay + ". Dezember";
+                icon = iconKalender(currentDay, (cs.getPropertyValue("--accent-color") || "#d9b45a").trim());
+            } else if (sichtbar("calendar-overview")) {
+                titel = "Die Türchen"; icon = ICON_TUEREN;
+            }
+            document.title = titel;
+            const fav = document.getElementById("favicon");
+            if (fav) { fav.type = "image/svg+xml"; fav.href = icon; }
+            const tc = document.getElementById("themeColorMeta");
+            const bg = (cs.getPropertyValue("--bg-color") || "").trim();
+            if (tc && bg) tc.setAttribute("content", bg);
+        }
+        document.addEventListener("DOMContentLoaded", function() {
+            const obs = new MutationObserver(function() {
+                seiteAktualisieren();
+                finaleKnopfAktualisieren();
+                window.scrollTo(0, 0);
+                if (window.leseZeichnen) window.leseZeichnen();
+            });
+            ["landingScreen", "calendar-overview", "einstimmungScreen", "storyScreen", "finaleScreen"].forEach(id => {
+                obs.observe(document.getElementById(id), { attributes: true, attributeFilter: ["class"] });
+            });
+            seiteAktualisieren();
+            finaleKnopfAktualisieren();
+
+            // Bild der Startseite (bilder/landing.jpg)
+            (function () {
+                const box = document.getElementById("landingBild");
+                const img = document.getElementById("landingBildImg");
+                if (!box || !img) return;
+                img.onload = function () { box.style.display = ""; landingBildFlag = true; bildEinblenden(box); };
+                img.onerror = function () { box.style.display = "none"; };
+                img.src = "bilder/landing.jpg";
+            })();
+
+            // App-Tipp: nur die passende Anleitung zeigen, in der installierten App gar nicht
+            const ua = navigator.userAgent || "";
+            const ios = /iPhone|iPad|iPod/.test(ua);
+            const android = /Android/.test(ua);
+            const standalone = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone;
+            const tipp = document.getElementById("appTipp");
+            if (standalone && tipp) { tipp.style.display = "none"; const nr = document.getElementById("erNr"); if (nr) nr.textContent = "1"; }
+            if (ios) { const a = document.getElementById("tippAndroid"); if (a) a.style.display = "none"; }
+            if (android) { const a = document.getElementById("tippIphone"); if (a) a.style.display = "none"; }
+        });
+
+        // --- Lesefortschritt (dünner Balken) und Leseposition (12 Stunden) ---
+        let leseBereit = false;
+        (function () {
+            const bar = document.getElementById("leseBalken");
+            const fill = bar.firstElementChild;
+            let timer = null;
+            function storyOffen() { return !document.getElementById("storyScreen").classList.contains("hidden"); }
+            function verhaeltnis() {
+                const max = document.documentElement.scrollHeight - window.innerHeight;
+                return max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+            }
+            function zeichnen() {
+                if (!storyOffen()) { bar.style.display = "none"; return; }
+                bar.style.display = "";
+                fill.style.width = (verhaeltnis() * 100) + "%";
+            }
+            function speichern() {
+                if (!storyOffen() || !leseBereit) return;
+                const r = verhaeltnis();
+                const o = speicherLesen("lese", {}) || {};
+                if (r > 0.97 || r < 0.02) delete o[currentDay]; else o[currentDay] = { r: r, t: Date.now() };
+                speicherSchreiben("lese", o);
+            }
+            window.addEventListener("scroll", function () { zeichnen(); clearTimeout(timer); timer = setTimeout(speichern, 400); }, { passive: true });
+            window.addEventListener("resize", zeichnen);
+            window.leseZeichnen = zeichnen;
+            window.lesePositionHerstellen = function (day) {
+                const o = speicherLesen("lese", {}) || {};
+                const p = o[day];
+                setTimeout(function () {
+                    if (p && p.r > 0.02 && p.r < 0.97 && Date.now() - p.t < 12 * 3600 * 1000) {
+                        window.scrollTo(0, p.r * (document.documentElement.scrollHeight - window.innerHeight));
+                    }
+                    zeichnen();
+                    setTimeout(function () { leseBereit = true; }, 400);
+                }, 150);
+            };
+        })();
+
+        function loadStoryContent(day) {
+            try { zeigeStoryBild(day); } catch (e) {}
+            const box = document.getElementById("storyContent");
+            const titel = document.getElementById("storyTitle");
+            const quelle = document.getElementById("storyQuelle");
+            quelle.style.display = "none";
+            document.getElementById("btnLiebling").style.display = "none";
+            try { schriftAnwenden(); } catch (e) {}
+            try { VORLESEN.knopf(); } catch (e) {}
+            ladeGeschichte(day, function (st) {
+                if (currentDay !== day) return;
+                titel.textContent = st.titel || ("Türchen " + day);
+                box.innerHTML = absaetzeHtml(st.text);
+                const q = String(st.quelle || "").trim();
+                if (q) { quelle.textContent = "Quelle: " + q; quelle.style.display = ""; }
+                try { merkeTitel(day, st.titel); } catch (e) {}
+                try { merkeGeoeffnet(day); } catch (e) {}
+                try { lieblingKnopf(); } catch (e) {}
+                storyBildStatus.text = true; storyBildStart();
+                lesePositionHerstellen(day);
+            }, function () {
+                if (currentDay !== day) return;
+                titel.textContent = "Türchen " + day;
+                geschichteFehler(box);
+            });
+        }
+
+        // --- Datumswechsel: Kommt die Seite aus dem Hintergrund zurück und es ist ein neuer Tag, wird neu geladen ---
+        (function () {
+            function tagKey() { const d = new Date(); return d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate(); }
+            const geladenAm = tagKey();
+            function pruefen() { if (tagKey() !== geladenAm) location.reload(); }
+            document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") pruefen(); });
+            window.addEventListener("pageshow", function (e) { if (e.persisted) pruefen(); });
+            window.addEventListener("focus", pruefen);
+        })();
+
+        window.onload = function() {
+            determineActiveDay();
+        };
+
+        // --- Türchen-Übersicht: 24 Kacheln ---
+        document.addEventListener("DOMContentLoaded", function() {
+            const grid = document.getElementById("tuerenGridContainer");
+            if (!grid) return;
+
+            for (let i = 1; i <= 24; i++) {
+                const card = document.createElement("div");
+                card.className = "tuer-card";
+                const istGesperrt = !testModus && !tagOffen(i);
+                if (istGesperrt) card.classList.add("gesperrt");
+                card.innerHTML = `<span class="tag-nummer">${i}</span>`;
+                try { pixelSetzen(card, i, istGesperrt); } catch (e) {}
+                card.onclick = () => waehleTag(i, card);
+                grid.appendChild(card);
+            }
+            try { tuerStilAktualisieren(); } catch (e) {}
+        });
+
+        function zeigeGesperrt(tag) {
+            const m = document.getElementById("lock-message");
+            if (m) m.textContent = "Geduld … Dieses Türchen öffnet sich am " + tag + ". Dezember. Bis dahin darf die Vorfreude noch ein wenig wachsen.";
+            document.getElementById("lock-modal").style.display = "flex";
+        }
+        function waehleTag(tagNummer, el) {
+            if (istTagErreicht(tagNummer)) {
+                portalDurch(tagNummer, el || null, function () { oeffneTag(tagNummer); });
+            } else {
+                const zeigen = function () { zeigeGesperrt(tagNummer); };
+                if (el && el.classList && !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)) {
+                    el.classList.remove("wackel"); void el.offsetWidth; el.classList.add("wackel");
+                    setTimeout(function () { el.classList.remove("wackel"); zeigen(); }, 520);
+                } else zeigen();
+            }
+        }
+
+        // Countdown auf der Startseite (nur vor dem 1. Dezember)
+        (function () {
+            const el = document.getElementById("landingCountdown");
+            if (!el) return;
+            const heute = new Date(); heute.setHours(0, 0, 0, 0);
+            const start = VORTEST_NOVEMBER ? new Date(JAHR, 10, 1) : new Date(JAHR, 11, 1);
+            const tage = Math.round((start - heute) / 86400000);
+            if (tage <= 0 || tage > 60) return;
+            el.textContent = tage === 1 ? "Morgen öffnet sich das erste Türchen." : "Noch " + tage + " Tage, dann öffnet sich das erste Türchen.";
+            el.style.display = "";
+        })();
+
+        // Zurück-Wischgeste: aus Einstimmung/Geschichte/Finale geht es zurück in die Übersicht, statt die Seite zu verlassen
+        (function () {
+            let gepusht = false;
+            const tief = ["einstimmungScreen", "storyScreen", "finaleScreen"];
+            function tiefOffen() { return tief.some(function (id) { return !document.getElementById(id).classList.contains("hidden"); }); }
+            function sync() {
+                if (tiefOffen()) { if (!gepusht) { try { history.pushState({ adv: 1 }, ""); gepusht = true; } catch (e) {} } }
+                else gepusht = false;
+            }
+            const obs2 = new MutationObserver(sync);
+            tief.forEach(function (id) { obs2.observe(document.getElementById(id), { attributes: true, attributeFilter: ["class"] }); });
+            window.addEventListener("popstate", function () {
+                gepusht = false;
+                if (portalLaeuft || wirbelLaeuft) { try { history.pushState({ adv: 1 }, ""); gepusht = true; } catch (e) {} return; }
+                if (tiefOffen()) zeigeTuerenUebersicht();
+            });
+        })();
+
+        // Offline-Speicher (nur über https)
+        if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+            window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
+        }
+
+        // Begrüßung auf der Übersicht: pro Tag und Tageszeit ein fester Satz, jeder Satz max. 3x, nie an zwei Tagen hintereinander
+        // {name} wird durch EMPFAENGER_NAME ersetzt oder entfällt
+        const BEGRUESSUNG = {
+            "morgens": [
+                "Guten Morgen, {name}. Schön, dass du schon reinschaust.",
+                "Ein neuer Adventsmorgen. Das Türchen von heute ist bereit.",
+                "Draußen ist es noch dunkel, aber hier brennt schon ein Licht für dich.",
+                "Guten Morgen. Erst etwas Warmes zu trinken, dann ein Türchen?",
+                "Ein Tag fängt gut an, wenn er mit einer Geschichte beginnt.",
+                "Guten Morgen. Heute wartet wieder ein Stück Advent auf dich.",
+                "Wer früh aufsteht, bekommt die Geschichte zuerst.",
+                "Ein ruhiger Moment am Morgen, nur für dich."
+            ],
+            "mittags": [
+                "Schön, dass du dir eine kleine Pause gönnst, {name}.",
+                "Mitten am Tag ein Türchen öffnen? Warum nicht.",
+                "Eine Geschichte passt auch gut zwischen zwei Termine.",
+                "Kurz durchatmen. Das Türchen läuft dir nicht weg.",
+                "Ein bisschen Advent für zwischendurch.",
+                "Draußen wird es schon früh dunkel. Hier drinnen ist es gemütlich.",
+                "Hallo. Das heutige Türchen wartet schon auf dich.",
+                "Ein Blick in den Kalender macht den Nachmittag ein wenig heller."
+            ],
+            "abends": [
+                "Guten Abend, {name}. Mach es dir gemütlich.",
+                "Der Tag ist geschafft. Zeit für eine Geschichte.",
+                "Kerze an, Decke bereit, und dann das Türchen öffnen.",
+                "Guten Abend. Schön, dass du da bist.",
+                "Draußen ist es kalt, hier drinnen wartet eine Geschichte.",
+                "Jetzt beginnt der gemütlichste Teil des Tages.",
+                "Ein Tee, ein Sessel, ein Türchen. Mehr braucht es heute nicht.",
+                "Komm zur Ruhe. Die Geschichte von heute ist für dich da."
+            ],
+            "nachts": [
+                "Noch wach, {name}? Eine kurze Geschichte geht immer.",
+                "Schon spät. Umso schöner, dass du noch vorbeischaust.",
+                "Die Welt ist still geworden. Zeit für ein Türchen.",
+                "Noch eine Geschichte vor dem Einschlafen?",
+                "Leise jetzt. Nur du und die Geschichte von heute.",
+                "Die Nächte im Dezember sind lang. Gut, dass es Geschichten gibt.",
+                "Draußen sind die meisten Lichter schon aus. Hier brennt noch eins.",
+                "Gleich ist Schlafenszeit. Vorher noch ein Türchen."
+            ]
+        };
+        function begruessungWaehlen() {
+            const d = jetzt(), h = d.getHours();
+            const slot = h >= 5 && h < 11 ? "morgens" : h >= 11 && h < 17 ? "mittags" : h >= 17 && h < 22 ? "abends" : "nachts";
+            const ds = function (x) { return x.getFullYear() + "-" + (x.getMonth() + 1) + "-" + x.getDate(); };
+            const heute = ds(d);
+            const liste = BEGRUESSUNG[slot];
+            let st = speicherLesen("gruss", {}) || {};
+            if (Array.isArray(st[slot])) st[slot] = {};
+            const sl = st[slot] || (st[slot] = { bag: [], log: [] });
+            let eintrag = sl.log.filter(function (e) { return e.d === heute; })[0];
+            if (!eintrag) {
+                if (!sl.bag.length || sl.log.length >= sl.bag.length) {
+                    // Beutel mit jedem Satz 3x, so gemischt, dass nie derselbe Satz direkt hintereinander kommt
+                    let b = [], ok = false;
+                    for (let v = 0; v < 500 && !ok; v++) {
+                        b = []; liste.forEach(function (t, i) { b.push(i, i, i); });
+                        for (let k = b.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); const x = b[k]; b[k] = b[j]; b[j] = x; }
+                        ok = b.every(function (x, k) { return k === 0 || x !== b[k - 1]; });
+                    }
+                    sl.bag = b; sl.log = [];
+                }
+                eintrag = { d: heute, i: sl.bag[sl.log.length] };
+                sl.log.push(eintrag);
+                speicherSchreiben("gruss", st);
+            }
+            return mitName(liste[eintrag.i]);
+        }
+        function begruessungZeigen() {
+            const el = document.getElementById("begruessung");
+            if (!el) return;
+            try { el.textContent = begruessungWaehlen(); } catch (e) { return; }
+            el.classList.remove("an"); void el.offsetWidth;
+            setTimeout(function () { el.classList.add("an"); }, 150);
+        }
+
+        // Bildschirm bleibt an, solange eine Geschichte offen ist (wo vom Gerät unterstützt)
+        (function () {
+            if (!("wakeLock" in navigator)) return;
+            let sperre = null;
+            const st = document.getElementById("storyScreen");
+            function offen() { return !st.classList.contains("hidden") && document.visibilityState === "visible"; }
+            function sync() {
+                if (offen()) {
+                    if (!sperre) {
+                        navigator.wakeLock.request("screen").then(function (l) {
+                            sperre = l;
+                            l.addEventListener("release", function () { if (sperre === l) sperre = null; });
+                            if (!offen()) { l.release().catch(function () {}); }
+                        }).catch(function () {});
+                    }
+                } else if (sperre) { const l = sperre; sperre = null; l.release().catch(function () {}); }
+            }
+            new MutationObserver(sync).observe(st, { attributes: true, attributeFilter: ["class"] });
+            document.addEventListener("visibilitychange", sync);
+            sync();
+        })();
+
+        // Startseite: „So funktioniert's" wird nach dem ersten geöffneten Türchen eingeklappt,
+        // die Karte „Bevor es losgeht" ab dem zweiten Besuch der Seite (antippen klappt sie auf)
+        const ERSTER_BESUCH = !speicherLesen("besucht", false);
+        speicherSchreiben("besucht", true);
+        function rulesAktualisieren() {
+            const b = document.getElementById("rulesBox");
+            if (!b) return;
+            let n = 0; try { n = geoeffnetListe().length; } catch (e) {}
+            b.classList.toggle("zu", n > 0);
+            if (n === 0) b.classList.remove("auf");
+            const v = document.getElementById("vorabKarte");
+            if (v) { v.classList.toggle("zu", !ERSTER_BESUCH); if (ERSTER_BESUCH) v.classList.remove("auf"); }
+        }
+        try { rulesAktualisieren(); } catch (e) {}
+        function vorabUmschalten() {
+            const b = document.getElementById("vorabKarte");
+            if (b && b.classList.contains("zu")) b.classList.toggle("auf");
+        }
+        function rulesUmschalten() {
+            const b = document.getElementById("rulesBox");
+            if (b && b.classList.contains("zu")) b.classList.toggle("auf");
+        }
+
+        // Fehler beim Laden einer Geschichte
+        function geschichteNochmal() {
+            nochmalNr++;
+            if (!document.getElementById("einstimmungScreen").classList.contains("hidden")) zeigeEinstimmung();
+            else loadStoryContent(currentDay);
+        }
+        function geschichteFehler(box) {
+            box.innerHTML = '<div style="text-align:center; padding: 30px 6px;"><p style="font-size:1.1rem;">Dieses Türchen lässt sich gerade nicht laden.</p><p style="opacity:0.85; line-height:1.6;">Vielleicht ist die Verbindung gerade schwach. Versuch es gleich noch einmal. Wenn es dann immer noch hakt, sag mir einfach Bescheid.</p><button class="btn-primary" style="margin-top:14px;" onclick="geschichteNochmal()">Nochmal versuchen</button></div>';
+        }
+        function schliesseModal() {
+            document.getElementById("lock-modal").style.display = "none";
+        }
+
+        function zeigeTuerenUebersicht() {
+            try { TON.ausblenden("finale", 800); } catch (e) {}
+            const um = document.getElementById("umschlag"); if (um) { um.remove(); document.documentElement.style.overflow = ""; }
+            alleScreensAus();
+            document.getElementById("calendar-overview").classList.remove("hidden");
+            begruessungZeigen();
+            try { tuerStilAktualisieren(); } catch (e) {}
+            // zum heutigen Türchen scrollen (nach dem automatischen Scrollen nach oben)
+            setTimeout(function () {
+                const h = heuteTag();
+                const el = h ? document.querySelectorAll("#tuerenGridContainer .tuer-card")[h - 1] : null;
+                if (window.__zuKeinScroll) return;   // beim Zuklappen bleibt die Kachel der Geschichte in der Mitte
+                if (el && !ab25() && !document.getElementById("calendar-overview").classList.contains("hidden")) el.scrollIntoView({ block: "center", behavior: "smooth" });
+            }, 160);
+        }
+
+        // ==========================================
+        // FINALE-ANIMATION (Übergang von Türchen 24 zur Abschlussseite)
+        // Variante A = "Vier Kerzen", Variante B = "Die 24 Lichter"
+        // Die Lichter leuchten jetzt in Gold- und Kerzentönen statt in Kategorie-Farben.
+        // ==========================================
+        window.FINALE_VAR = "B";
+        (function () {
+            const LICHT = ["#f2c14e", "#e8b65a", "#ffd98a", "#d9a441"];
+            const clamp = x => Math.max(0, Math.min(1, x));
+            const eIO = x => { x = clamp(x); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+            const eO = x => { x = clamp(x); return 1 - Math.pow(1 - x, 3); };
+            const eI = x => { x = clamp(x); return x * x * x; };
+            const lerp = (a, b, f) => a + (b - a) * f;
+            function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+            function hex(c) { return [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)]; }
+            function rgba(c, a) { const h = hex(c); return "rgba(" + h[0] + "," + h[1] + "," + h[2] + "," + a + ")"; }
+            function mix(c1, c2, f) { const a = hex(c1), b = hex(c2); return "#" + [0, 1, 2].map(i => Math.round(lerp(a[i], b[i], f)).toString(16).padStart(2, "0")).join(""); }
+            function glow(ctx, x, y, r, c, a) {
+                const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+                g.addColorStop(0, rgba(c, a)); g.addColorStop(0.4, rgba(c, a * 0.35)); g.addColorStop(1, rgba(c, 0));
+                ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+            }
+            // ---------- Variante B: Die 24 Lichter ----------
+            // Fünfzackiger Stern (Spitze oben), 24 Lichter gleichmäßig auf dem Umriss
+            let sternForm = null;
+            function sternPunkte() {
+                if (sternForm) return sternForm;
+                const poly = [];
+                for (let i = 0; i <= 10; i++) { const r = i % 2 ? 0.42 : 1, a = i * Math.PI / 5; poly.push([r * Math.sin(a), -r * Math.cos(a)]); }
+                const cum = [0];
+                for (let i = 1; i < poly.length; i++) cum.push(cum[i - 1] + Math.hypot(poly[i][0] - poly[i - 1][0], poly[i][1] - poly[i - 1][1]));
+                const L = cum[cum.length - 1], out = [];
+                for (let k = 0; k < 24; k++) {
+                    const want = L * k / 24; let j = 1; while (j < cum.length - 1 && cum[j] < want) j++;
+                    const f = (want - cum[j - 1]) / (cum[j] - cum[j - 1]);
+                    out.push([lerp(poly[j - 1][0], poly[j][0], f), lerp(poly[j - 1][1], poly[j][1], f)]);
+                }
+                sternForm = { aus: out, voll: poly };
+                return sternForm;
+            }
+            let baum = null;
+            function baumPunkte() {
+                if (baum) return baum;
+                const poly = [[0, -1], [0.38, -0.45], [0.2, -0.45], [0.58, 0.05], [0.34, 0.05], [0.8, 0.62], [0.14, 0.62], [0.14, 0.95], [-0.14, 0.95], [-0.14, 0.62], [-0.8, 0.62], [-0.34, 0.05], [-0.58, 0.05], [-0.2, -0.45], [-0.38, -0.45], [0, -1]];
+                const cum = [0];
+                for (let i = 1; i < poly.length; i++) cum.push(cum[i - 1] + Math.hypot(poly[i][0] - poly[i - 1][0], poly[i][1] - poly[i - 1][1]));
+                const L = cum[cum.length - 1], out = [];
+                for (let k = 0; k < 24; k++) {
+                    const want = L * (k + 0.5) / 24; let j = 1; while (j < cum.length - 1 && cum[j] < want) j++;
+                    const f = (want - cum[j - 1]) / (cum[j] - cum[j - 1]);
+                    out.push([lerp(poly[j - 1][0], poly[j][0], f), lerp(poly[j - 1][1], poly[j][1], f)]);
+                }
+                baum = { aus: out, voll: poly };
+                return baum;
+            }
+            function funkeln(ctx, x, y, r, a) {
+                ctx.save(); ctx.globalCompositeOperation = "lighter";
+                ctx.strokeStyle = "rgba(255,240,190," + a + ")"; ctx.lineWidth = Math.max(1, r * 0.08);
+                ctx.beginPath(); ctx.moveTo(x - r, y); ctx.lineTo(x + r, y); ctx.moveTo(x, y - r); ctx.lineTo(x, y + r); ctx.stroke();
+                ctx.lineWidth = Math.max(1, r * 0.05); ctx.beginPath(); ctx.moveTo(x - r * 0.6, y - r * 0.6); ctx.lineTo(x + r * 0.6, y + r * 0.6); ctx.moveTo(x - r * 0.6, y + r * 0.6); ctx.lineTo(x + r * 0.6, y - r * 0.6); ctx.stroke();
+                ctx.restore();
+            }
+            let sternB = null;
+            function bildB(ctx, W, H, t) {
+                const k = Math.min(W, H) / 390, R = rng(24);
+                if (!sternB || sternB.W !== W) {
+                    sternB = { W: W, hint: [], start: [] };
+                    for (let i = 0; i < 80; i++) sternB.hint.push([R() * W, R() * H, R() * 1.2 + 0.4, R() * 6.28]);
+                    for (let i = 0; i < 24; i++) sternB.start.push([W * (0.1 + 0.8 * R()), H * (0.12 + 0.76 * R()), R() * 6.28, 4 + R() * 6]);
+                }
+                ctx.fillStyle = "#07120e"; ctx.fillRect(0, 0, W, H);
+                ctx.globalCompositeOperation = "lighter";
+                sternB.hint.forEach(s => { ctx.fillStyle = "rgba(255,244,214," + (0.10 + 0.14 * Math.sin(t * 0.002 + s[3])) * clamp(t / 1500) + ")"; ctx.beginPath(); ctx.arc(s[0], s[1], s[2] * k, 0, 7); ctx.fill(); });
+                const hp = sternPunkte(), bp = baumPunkte(), m = Math.min(W, H);
+                const scH = m * 0.36, cx = W / 2, cyH = H * 0.46;
+                const scB = m * 0.40, cyB = H * 0.49;
+                const zumBaum = eIO((t - 5400) / 2600);
+                const zumHerz = eIO((t - 10200) / 2300);   // Baum -> Stern
+                const puls = t > 12500 && t < 13400 ? 1 + 0.07 * Math.sin(Math.PI * (t - 12500) / 900) : 1;
+                const zoom = 1;
+                const schrumpf = eI((t - 13200) / 650);     // Stern zieht sich zu einem Lichtpunkt zusammen
+                const flug = eIO((t - 13750) / 1050);       // ... und fliegt als Sternschnuppe davon
+                const bx = i => cx + bp.aus[i][0] * scB, by = i => cyB + bp.aus[i][1] * scB;
+                const hx = i => cx + hp.aus[i][0] * scH, hy = i => cyH + hp.aus[i][1] * scH;
+                const pos = [];
+                for (let i = 0; i < 24; i++) {
+                    const st = sternB.start[i];
+                    const sx = st[0] + Math.sin(t * 0.0006 + st[2]) * 7 * k, sy = st[1] + Math.cos(t * 0.0005 + st[2]) * 7 * k;
+                    const dir = i % 2 ? 1 : -1;
+                    let x, y;
+                    if (t < 10200) {
+                        const sw = Math.sin(zumBaum * Math.PI) * 55 * k * dir, d = Math.hypot(bx(i) - sx, by(i) - sy) + 1;
+                        x = lerp(sx, bx(i), zumBaum) + sw * (by(i) - sy) / d * 0.6; y = lerp(sy, by(i), zumBaum) - sw * (bx(i) - sx) / d * 0.6;
+                        if (zumBaum >= 1) { x += Math.sin(t * 0.003 + i) * 1.2 * k; y += Math.cos(t * 0.0027 + i) * 1.2 * k; }
+                    } else {
+                        const sw = Math.sin(zumHerz * Math.PI) * 28 * k * dir, d = Math.hypot(hx(i) - bx(i), hy(i) - by(i)) + 1;
+                        x = lerp(bx(i), hx(i), zumHerz) + sw * (hy(i) - by(i)) / d * 0.6; y = lerp(by(i), hy(i), zumHerz) - sw * (hx(i) - bx(i)) / d * 0.6;
+                    }
+                    x = cx + (x - cx) * puls * zoom; y = cyH + (y - cyH) * puls * zoom;
+                    x = lerp(x, cx, schrumpf); y = lerp(y, cyH, schrumpf);
+                    pos.push([x, y]);
+                }
+                // Umriss Baum (blendet aus) und Stern (blendet ein)
+                const baumKontur = clamp((t - 7400) / 1100) * (1 - clamp((t - 10300) / 900));
+                if (baumKontur > 0) {
+                    ctx.strokeStyle = "rgba(255,226,150," + (0.5 * baumKontur) + ")"; ctx.lineWidth = 1.5 * k; ctx.shadowColor = "rgba(255,210,110,0.9)"; ctx.shadowBlur = 12 * k;
+                    ctx.beginPath(); bp.voll.forEach((q, i) => { const x = cx + q[0] * scB, y = cyB + q[1] * scB; if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); }); ctx.stroke(); ctx.shadowBlur = 0;
+                }
+                const kontur = clamp((t - 11400) / 1100) * (1 - clamp((t - 13150) / 350));
+                if (kontur > 0) {
+                    const ks = puls * zoom * (1 - schrumpf);
+                    ctx.strokeStyle = "rgba(255,226,150," + (0.55 * kontur) + ")"; ctx.lineWidth = 1.6 * k; ctx.shadowColor = "rgba(255,210,110,0.9)"; ctx.shadowBlur = 14 * k;
+                    ctx.beginPath(); hp.voll.forEach((q, i) => { const x = cx + (q[0] * scH) * ks, y = cyH + (q[1] * scH) * ks; if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); });
+                    ctx.stroke(); ctx.shadowBlur = 0;
+                }
+                const lichterWeg = 1 - clamp((t - 13750) / 150);   // die Lichter werden zum Kopf der Sternschnuppe
+                for (let i = 0; i < 24; i++) {
+                    const a = eO((t - (600 + i * 170)) / 700) * lichterWeg; if (a <= 0) continue;
+                    const col = LICHT[i % LICHT.length], tw = 0.82 + 0.18 * Math.sin(t * 0.004 + i * 1.7);
+                    const r = (5 + (i % 3)) * k * (1 + 0.45 * zumBaum + 0.15 * zumHerz) * Math.min(3, Math.sqrt(zoom));
+                    glow(ctx, pos[i][0], pos[i][1], r * 4.4, col, 0.8 * a * tw);
+                    ctx.fillStyle = "rgba(255,250,235," + (0.95 * a) + ")"; ctx.beginPath(); ctx.arc(pos[i][0], pos[i][1], r * 0.42, 0, 7); ctx.fill();
+                }
+                // goldener Stern auf dem Baum
+                const stern = eO((t - 8200) / 900) * (1 - clamp((t - 10300) / 1000));
+                if (stern > 0) {
+                    const sxp = cx, syp = cyB - scB * 1.0 - 4 * k, pr = 9 * k * (1 + 0.12 * Math.sin(t * 0.006));
+                    glow(ctx, sxp, syp, pr * 5.5, "#f2c14e", 0.95 * stern);
+                    ctx.fillStyle = "rgba(255,248,220," + stern + ")"; ctx.beginPath(); ctx.arc(sxp, syp, pr * 0.45, 0, 7); ctx.fill();
+                    funkeln(ctx, sxp, syp, pr * 2.6 * stern, 0.8 * stern);
+                }
+                // Baum funkelt kurz
+                const bf = clamp((t - 8800) / 700) * (1 - clamp((t - 10200) / 600));
+                if (bf > 0) for (let i = 0; i < 24; i += 3) funkeln(ctx, pos[(i + Math.floor(t / 350)) % 24][0], pos[(i + Math.floor(t / 350)) % 24][1], 12 * k * bf, 0.5 * bf);
+                // goldenes Leuchten hinter dem Stern
+                const hg = clamp((t - 11800) / 1500) * (1 - clamp((t - 13600) / 500));
+                if (hg > 0) glow(ctx, cx, cyH, m * (0.55 + zoom * 0.08), "#f2c14e", 0.35 * hg);
+                // Sternschnuppe: Lichtpunkt in der Mitte, dann Flug nach rechts oben mit funkelndem Schweif
+                if (t > 13300) {
+                    const zx = W * 1.15, zy = -H * 0.12;
+                    const kx = lerp(cx, zx, flug), ky = lerp(cyH, zy, flug);
+                    const lang = Math.hypot(zx - cx, zy - cyH) * 0.42 * Math.sin(Math.min(1, flug * 1.25) * Math.PI / 2);
+                    const dx = (zx - cx), dy = (zy - cyH), dl = Math.hypot(dx, dy), ux = dx / dl, uy = dy / dl;
+                    const sx = kx - ux * lang, sy = ky - uy * lang;
+                    if (lang > 1) {
+                        const g = ctx.createLinearGradient(sx, sy, kx, ky);
+                        g.addColorStop(0, "rgba(242,193,78,0)"); g.addColorStop(0.7, "rgba(255,226,150,0.55)"); g.addColorStop(1, "rgba(255,248,225,0.95)");
+                        ctx.strokeStyle = g; ctx.lineCap = "round";
+                        ctx.lineWidth = 5 * k; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(kx, ky); ctx.stroke();
+                        ctx.lineWidth = 1.6 * k; ctx.stroke();
+                        const R2 = rng(Math.floor(t / 90));
+                        for (let s = 0; s < 9; s++) { const f = R2(), px = lerp(sx, kx, f) + (R2() - 0.5) * 10 * k, py = lerp(sy, ky, f) + (R2() - 0.5) * 10 * k; funkeln(ctx, px, py, (2 + 5 * f) * k, 0.6 * f); }
+                    }
+                    const kopf = clamp((t - 13300) / 450);
+                    glow(ctx, kx, ky, 34 * k, "#f2c14e", 0.95 * kopf);
+                    ctx.fillStyle = "rgba(255,250,235," + kopf + ")"; ctx.beginPath(); ctx.arc(kx, ky, 4.5 * k, 0, 7); ctx.fill();
+                    funkeln(ctx, kx, ky, 16 * k * kopf, 0.8 * kopf);
+                }
+                const fl = Math.pow(clamp((t - 14300) / 900), 1.6);
+                if (fl > 0) { ctx.globalCompositeOperation = "source-over"; ctx.fillStyle = "rgba(255,236,176," + fl + ")"; ctx.fillRect(0, 0, W, H); }
+                ctx.globalCompositeOperation = "source-over";
+            }
+            // ---------- Variante A: Vier Kerzen ----------
+            let kranz = null;
+            function kranzRendern(W, H) {
+                const k = Math.min(W, H) / 390, c = document.createElement("canvas");
+                c.width = W; c.height = H; const x = c.getContext("2d"), R = rng(7);
+                const cx = W / 2, cy = H * 0.62, rx = Math.min(W * 0.42, 190 * k), ry = rx * 0.36;
+                for (let i = 0; i < 900; i++) {
+                    const a = R() * 6.2832, off = (R() - 0.5) * 30 * k;
+                    const px = cx + (rx + off * 0.9) * Math.cos(a), py = cy + (ry + off * 0.3) * Math.sin(a);
+                    x.strokeStyle = ["#1f4d2e", "#2a6a3c", "#16391f", "#357a47"][i % 4]; x.lineWidth = (1.6 + R() * 1.4) * k;
+                    const d = a + 1.57 + (R() - 0.5) * 1.4, l = (9 + R() * 12) * k;
+                    x.beginPath(); x.moveTo(px, py); x.lineTo(px + Math.cos(d) * l, py + Math.sin(d) * l * 0.5); x.stroke();
+                }
+                for (let i = 0; i < 14; i++) { const a = R() * 6.2832; x.fillStyle = "#b3262f"; x.beginPath(); x.arc(cx + rx * Math.cos(a), cy + ry * Math.sin(a), (2.4 + R() * 1.2) * k, 0, 7); x.fill(); }
+                kranz = { c: c, W: W, H: H, cx: cx, cy: cy, rx: rx, ry: ry, k: k };
+            }
+            function flamme(ctx, x, y, h, w, col, a, t, i) {
+                const fl = 1 + 0.07 * Math.sin(t * 0.021 + i * 3), dx = Math.sin(t * 0.013 + i * 2) * w * 0.12;
+                h *= fl;
+                ctx.save(); ctx.globalCompositeOperation = "lighter";
+                glow(ctx, x, y - h * 0.15, h * 3.6, col, 0.55 * a);
+                ctx.restore();
+                const g = ctx.createLinearGradient(0, y - h, 0, y + h * 0.5);
+                g.addColorStop(0, rgba(col, 0.95 * a)); g.addColorStop(0.55, rgba("#ffd98a", 0.95 * a)); g.addColorStop(1, rgba("#fffbe8", a));
+                ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x + dx, y - h);
+                ctx.bezierCurveTo(x + w * 1.3, y - h * 0.2, x + w, y + h * 0.5, x, y + h * 0.5);
+                ctx.bezierCurveTo(x - w, y + h * 0.5, x - w * 1.3, y - h * 0.2, x + dx, y - h); ctx.fill();
+            }
+            function bildA(ctx, W, H, t) {
+                if (!kranz || kranz.W !== W || kranz.H !== H) kranzRendern(W, H);
+                const K = kranz, k = K.k;
+                ctx.fillStyle = "#07120e"; ctx.fillRect(0, 0, W, H);
+                const ein = eO((t - 300) / 1200);
+                const zahl = [1800, 3500, 5200, 6900].map(s => eO((t - s) / 900));
+                const lit = zahl.reduce((a, b) => a + b, 0);
+                ctx.save(); ctx.globalCompositeOperation = "lighter";
+                glow(ctx, K.cx, K.cy - 60 * k, Math.max(W, H) * 0.6, "#f2c14e", 0.07 * lit * ein); ctx.restore();
+                ctx.globalAlpha = ein * (0.55 + 0.1 * lit); ctx.drawImage(K.c, 0, 0); ctx.globalAlpha = 1;
+                const u = [-0.8, -0.32, 0.32, 0.8], ch = H * 0.14, cw = Math.min(W * 0.066, 28 * k);
+                const merge = eIO((t - 8200) / 2300), mx = K.cx, my = K.cy - ch * 2.15;
+                for (let i = 0; i < 4; i++) {
+                    const bx = K.cx + K.rx * u[i], by = K.cy - K.ry * Math.sqrt(1 - u[i] * u[i]) * 0.7 + 8 * k;
+                    const col = LICHT[i], cand = 1 - 0.45 * merge;
+                    ctx.globalAlpha = ein * cand;
+                    ctx.fillStyle = mix("#1a1a1f", "#efe6cf", 0.7); ctx.fillRect(bx - cw / 2, by - ch, cw, ch);
+                    ctx.fillStyle = mix("#1a1a1f", "#efe6cf", 1); ctx.beginPath(); ctx.ellipse(bx, by - ch, cw / 2, cw * 0.18, 0, 0, 7); ctx.fill();
+                    ctx.fillStyle = "rgba(255,255,255,0.08)"; ctx.fillRect(bx - cw / 2 + 2 * k, by - ch, 2 * k, ch);
+                    ctx.fillStyle = "#222"; ctx.fillRect(bx - 0.6 * k, by - ch - 6 * k, 1.2 * k, 6 * k);
+                    ctx.globalAlpha = 1;
+                    const a = zahl[i]; if (a <= 0) continue;
+                    const fx = lerp(bx, mx, merge), fy = lerp(by - ch - 7 * k, my, merge);
+                    const fh = 15 * k * a * (1 + 0.7 * merge), fw = 6.2 * k * a * (1 + 0.5 * merge);
+                    flamme(ctx, fx, fy, fh, fw, mix(col, "#f2c14e", merge), 1 - 0.55 * eO((merge - 0.6) / 0.4), t, i);
+                }
+                const m2 = clamp((merge - 0.75) / 0.25);
+                const gross = eI((t - 10500) / 1900);
+                if (m2 > 0) flamme(ctx, mx, my, 26 * k * (1 + gross * 3), 11 * k * (1 + gross * 3), "#f2c14e", m2, t, 9);
+                if (gross > 0) {
+                    ctx.save(); ctx.globalCompositeOperation = "lighter";
+                    glow(ctx, mx, my, lerp(30 * k, Math.hypot(W, H) * 1.2, gross), "#ffe8a8", Math.min(1, 0.4 + gross));
+                    ctx.restore();
+                }
+                const fl = Math.pow(clamp((t - 11500) / 900), 1.5);
+                if (fl > 0) { ctx.fillStyle = "rgba(255,236,176," + fl + ")"; ctx.fillRect(0, 0, W, H); }
+            }
+            window.__finaleBild = function (v, ctx, W, H, t) { (v === "A" ? bildA : bildB)(ctx, W, H, t); };
+            window.finaleDurch = function (weiter, variante, erzwingen) {
+                variante = String(variante || window.FINALE_VAR || "B").toUpperCase();
+                const gesehen = speicherLesen("finaleAn", false) === true;
+                const reduziert = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+                if ((gesehen && !testModus && !erzwingen) || reduziert || window.PORTAL_AUS || document.getElementById("finaleAn")) { weiter(); return; }
+                speicherSchreiben("finaleAn", true);
+                const W = window.innerWidth, H = window.innerHeight, dpr = Math.min(window.devicePixelRatio || 1, 2);
+                const ov = document.createElement("div");
+                ov.id = "finaleAn";
+                ov.style.cssText = "position:fixed;inset:0;z-index:3500;background:#07120e;opacity:0;transition:opacity 0.7s ease;cursor:pointer;";
+                const cv = document.createElement("canvas");
+                cv.width = W * dpr; cv.height = H * dpr; cv.style.cssText = "width:100%;height:100%;display:block;";
+                const ctx = cv.getContext("2d"); ctx.scale(dpr, dpr);
+                ov.appendChild(cv); document.body.appendChild(ov);
+                requestAnimationFrame(function () { ov.style.opacity = "1"; });
+                const dauer = variante === "A" ? 12800 : 15300, wechsel = dauer - 500;
+                let t0 = null, gewechselt = false, beendet = false;
+                TON.spielen("finale");
+                function wechselnJetzt() { if (!gewechselt) { gewechselt = true; try { weiter(); } catch (e) {} try { umschlagZeigen(); } catch (e) {} } }
+                function beenden() {
+                    if (beendet) return; beendet = true; wechselnJetzt();
+                    ov.style.transition = "opacity 0.9s ease"; ov.style.opacity = "0"; ov.style.pointerEvents = "none";
+                    setTimeout(function () { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 1100);
+                }
+                function frame(ts) {
+                    if (beendet) return;
+                    if (t0 === null) t0 = ts;
+                    const t = ts - t0;
+                    (variante === "A" ? bildA : bildB)(ctx, W, H, t);
+                    if (t >= wechsel) wechselnJetzt();
+                    if (t >= dauer) { beenden(); return; }
+                    requestAnimationFrame(frame);
+                }
+                // Tippen = überspringen, dann wird auch der Ton ausgeblendet.
+                // Läuft die Animation bis zum Ende, klingt der Ton auf der Finale-Seite aus.
+                ov.addEventListener("click", function () { if (!beendet) TON.ausblenden("finale", 1000); beenden(); });
+                requestAnimationFrame(frame);
+                setTimeout(beenden, dauer + 3000);
+            };
+        })();
+    </script>
+</body>
+</html>
