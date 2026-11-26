@@ -328,20 +328,26 @@
         .finale-text p { line-height: 1.8; text-align: center; margin: 0 0 16px; }
         .finale-text .signatur { font-style: italic; margin-top: 22px; }
         /* Finale als Brief auf altem Briefpapier */
-        .brief { position: relative; margin: 6px -2px 26px; padding: 30px 24px 22px; color: #3b2a18; border-radius: 4px;
+        .brief { position: relative; z-index: 1; margin: 6px -16px 0; padding: 28px 20px 14px; color: #3b2a18; border-radius: 4px;
             background:
                 radial-gradient(ellipse at 16% 10%, rgba(160,110,40,0.16), transparent 45%),
                 radial-gradient(ellipse at 86% 90%, rgba(140,90,30,0.22), transparent 50%),
                 radial-gradient(circle at 72% 28%, rgba(255,255,255,0.28), transparent 42%),
                 linear-gradient(176deg, #f4e7c6 0%, #ecdcb2 55%, #e0ca98 100%);
             box-shadow: 0 14px 34px rgba(0,0,0,0.5), inset 0 0 46px rgba(120,80,25,0.36), inset 0 0 6px rgba(90,60,20,0.45);
-            transform: rotate(-0.6deg); }
+            transform: rotate(-0.3deg); }
         .brief::before { content: ""; position: absolute; inset: 9px; border: 1px solid rgba(140,100,40,0.35); border-radius: 2px; pointer-events: none; }
         .brief::after { content: ""; position: absolute; left: 0; right: 0; top: 0; bottom: 0; pointer-events: none; border-radius: 4px;
             background: linear-gradient(to bottom, transparent 49.4%, rgba(120,80,30,0.16) 50%, rgba(255,255,255,0.22) 50.5%, transparent 51.3%); }
         .brief h2 { color: #6a4618; margin: 4px 0 18px; }
         .brief .finale-text { margin-bottom: 0; }
+        /* zweiter Bogen: liegt leicht versetzt und anders gedreht unter dem ersten */
+        .briefe { margin-bottom: 26px; }
+        .brief.brief2 { z-index: 0; margin-top: -10px; padding-top: 30px; transform: rotate(0.45deg) translateX(3px); }
+        .brief .brief-seite { text-align: center; font-size: 0.78rem; letter-spacing: 1px; color: rgba(90,60,20,0.55); margin: 6px 0 0; font-family: Georgia, 'Times New Roman', serif; }
         .brief p, .brief .signatur { color: #3b2a18; }
+        .brief .finale-text p { text-align: left; hyphens: auto; -webkit-hyphens: auto; font-size: 0.98rem; line-height: 1.65; margin-bottom: 14px; }
+        .brief .finale-text .signatur { text-align: right; margin: 18px 6px 4px 0; font-size: 1.15rem; }
         /* Umschlag nach der Finale-Animation (umschlagZeigen) */
         #umschlag { position: fixed; inset: 0; z-index: 3400; background: #07120e; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: background 0.8s ease; -webkit-tap-highlight-color: transparent; }
         #umschlag.frei { background: rgba(7,18,14,0); pointer-events: none; }
@@ -351,7 +357,7 @@
         #umschlag .u-rueck { bottom: 0; background: linear-gradient(180deg, #bda577, #cdb88c); box-shadow: 0 16px 40px rgba(0,0,0,0.55), 0 0 0 1px #d9b45a; }
         #umschlag .u-brief { position: absolute; left: 7%; right: 7%; top: 7%; height: 86%; z-index: 2; border-radius: 3px; padding: 9% 8% 0; box-sizing: border-box; text-align: center; color: #6a4618; font-family: Georgia, 'Times New Roman', serif; font-size: 0.95rem; letter-spacing: 0.5px;
             background: radial-gradient(ellipse at 20% 15%, rgba(160,110,40,0.16), transparent 50%), linear-gradient(176deg, #f4e7c6, #e6d3a6);
-            box-shadow: inset 0 0 18px rgba(120,80,25,0.3); transition: transform 0.9s cubic-bezier(0.3, 0.7, 0.3, 1), opacity 0.7s ease; }
+            box-shadow: inset 0 0 18px rgba(120,80,25,0.3), 5px -4px 0 -1px #e8d6aa, 5px -4px 3px -1px rgba(60,40,10,0.25); transition: transform 0.9s cubic-bezier(0.3, 0.7, 0.3, 1), opacity 0.7s ease; }
         #umschlag .u-brief i { display: block; height: 2px; margin: 9px 6% 0; background: rgba(120,85,35,0.22); border-radius: 1px; }
         #umschlag .u-front { bottom: 0; z-index: 3; background: linear-gradient(170deg, #ead8ad, #dcc594); clip-path: polygon(0 0, 50% 54%, 100% 0, 100% 100%, 0 100%); }
         #umschlag .u-lasche { height: 58%; z-index: 4; transform-origin: 50% 0; background: linear-gradient(180deg, #e3cf9f, #d3bb87); clip-path: polygon(0 0, 100% 0, 50% 100%); transition: transform 0.65s cubic-bezier(0.4, 0, 0.3, 1); }
@@ -524,12 +530,23 @@
 
         <!-- FINALE (nach Türchen 24) -->
         <div id="finaleScreen" class="hidden">
-            <div class="brief" id="finaleBrief">
-                <h2>Frohe Weihnachten</h2>
-                <div class="story-text finale-text">
-                    <p>Vierundzwanzig Türchen, vierundzwanzig Geschichten. Schön, dass du dir im Advent immer wieder einen Moment dafür genommen hast.</p>
-                    <p>Ich wünsche dir ein ruhiges, warmes Weihnachtsfest mit Menschen, die dir guttun, und ein bisschen Zeit nur für dich.</p>
-                    <p class="signatur" id="finaleSignatur"></p>
+            <div class="briefe" id="finaleBrief">
+                <div class="brief">
+                    <h2>Frohe Weihnachten!</h2>
+                    <div class="story-text finale-text">
+                        <p>Vierundzwanzig Türchen, vierundzwanzig Geschichten, und jetzt ist es so weit: Heiligabend ist da.</p>
+                        <p>Als ich angefangen habe, diesen Kalender zusammenzustellen, hatte ich vor allem einen Wunsch: jeden Tag im Dezember einen kleinen Moment zu schenken. Einen Moment zum Innehalten, mit einer Tasse Tee oder Kakao, vielleicht mit Kerzenlicht, vielleicht auch nur kurz zwischendurch in all dem Trubel. Manche Geschichten waren kurz, manche länger, manche zum Schmunzeln und andere zum Nachdenken. Ich hoffe, dass die eine oder andere ein bisschen im Herzen geblieben ist.</p>
+                    </div>
+                    <p class="brief-seite">– 1 –</p>
+                </div>
+                <div class="brief brief2">
+                    <div class="story-text finale-text">
+                        <p>Es hat mir große Freude gemacht, diesen Kalender zu füllen. Bei jeder Geschichte habe ich mir vorgestellt, wie sie gerade irgendwo gelesen wird, und dieser Gedanke hat meine eigene Adventszeit ein Stück heller gemacht.</p>
+                        <p>Jetzt sind alle Türchen offen. Das Schönste an Weihnachten liegt aber ohnehin nicht hinter Türchen, sondern in den Menschen um uns herum, in gemeinsamen Stunden, in Wärme und kleinen Gesten.</p>
+                        <p>Von Herzen frohe Weihnachten, ruhige und friedliche Feiertage und alles Gute für das neue Jahr!</p>
+                        <p class="signatur" id="finaleSignatur"></p>
+                    </div>
+                    <p class="brief-seite">– 2 –</p>
                 </div>
             </div>
             <div class="story-bild" id="finaleBild" style="display:none;"><img id="finaleBildImg" alt="" src=""></div>
@@ -681,7 +698,8 @@
             const a = document.getElementById("absenderZeile");
             if (a) a.textContent = "Von mir, nur für dich!";
             const s = document.getElementById("finaleSignatur");
-            if (s) s.textContent = CFG.ABSENDER ? "Frohe Weihnachten, " + CFG.ABSENDER : "Frohe Weihnachten";
+            // Der Brief endet mit den Wünschen; darunter steht nur noch der Name als Unterschrift
+            if (s) { s.textContent = CFG.ABSENDER || ""; s.style.display = CFG.ABSENDER ? "" : "none"; }
         })();
 
         let landingBildFlag = false;

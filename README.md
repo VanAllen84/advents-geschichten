@@ -14,7 +14,7 @@ Der Absender steht in `config.js` (`ABSENDER`) und erscheint nur in der Signatur
 | GitHub-Repository | `vanallen84/advents-geschichten` |
 | Alte GitHub-Adresse (leitet weiter) | https://vanallen84.github.io/advents-geschichten/ |
 
-Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v15`.
+Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v17`.
 
 ---
 
@@ -137,7 +137,7 @@ window.ADVENT_CONFIG = {
   - Ist das Feld leer, verschwindet `{name}` samt Komma (Funktion `mitName`).
   - Aus „Guten Morgen, {name}. …“ wird dann „Guten Morgen. …“.
 - **ABSENDER:**
-  - Erscheint als Signatur „Frohe Weihnachten, <ABSENDER>“ auf der Finale-Seite.
+  - Erscheint als Unterschrift unter dem Brief auf der Finale-Seite.
   - Die Zeile unter der Überschrift der Startseite ist **fest** „Von mir, nur für dich!“ und hängt nicht von `ABSENDER` ab.
 - **JAHR:** Steuert die Freischaltung, den Speicher-Präfix und die .ics-Termine (über `tools/erinnerung.py`).
 - **SEITEN_URL:** Wird nur von `tools/erinnerung.py` gelesen und in die Termine geschrieben. Nach einer Änderung die .ics-Dateien neu erzeugen.
@@ -306,8 +306,11 @@ Alle Seiten liegen als `<div>`-Bereiche in `index.html` und werden über die Kla
 ### 7.5 Finale
 
 - Erscheint nach Türchen 24 („Zum Finale …“) oder über den Knopf in der Übersicht.
-- Gestaltet als **Brief auf altem Briefpapier** (`.brief` / `#finaleBrief`): vergilbter Papierton mit Flecken, dunkle Ränder, feiner Innenrahmen, Faltkante in der Mitte, leicht schräg gelegt.
-- Darin: Überschrift „Frohe Weihnachten“, zwei Absätze Dank und Wünsche (Eigenformulierung), Signatur „Frohe Weihnachten, <ABSENDER>“.
+- Gestaltet als **Brief auf altem Briefpapier** aus **zwei Briefbögen** (`#finaleBrief` mit zwei `.brief`): vergilbter Papierton mit Flecken, dunkle Ränder, feiner Innenrahmen, Faltkante in der Mitte, Seitenzahl „– 1 –“/„– 2 –“.
+  - Die Bögen liegen **untereinander**, leicht überlappend und gegeneinander verdreht (Bogen 1 −0,3°, Bogen 2 +0,45°); man liest sie durch normales Scrollen.
+  - Aufteilung nach Absätzen, damit kein Satz über zwei Bögen läuft: Bogen 1 = Überschrift und Absätze 1–2, Bogen 2 = Absätze 3–5 und Unterschrift.
+  - Ein einzelnes, sehr langes Blatt wirkte unnatürlich; eine Schriftrolle passte nicht zum Umschlag.
+- Darin: Überschrift „Frohe Weihnachten!“, fünf Absätze Brieftext (vom Absender selbst geschrieben, November 2026), linksbündig mit Silbentrennung, darunter rechts der Name aus `ABSENDER` als Unterschrift. Ist `ABSENDER` leer, entfällt die Unterschrift.
 - Bild `bilder/finale.jpg`.
 - Knopf **„✨ Die Animation noch einmal ansehen“**.
 
@@ -627,7 +630,7 @@ Es gibt **keine Übertragung an einen Server**. Jedes Gerät und jeder Browser h
 
 ### Updates
 
-> **Bei jeder Änderung `VERSION` in `sw.js` hochzählen** (`advent-v15` → `advent-v16` …).
+> **Bei jeder Änderung `VERSION` in `sw.js` hochzählen** (`advent-v17` → `advent-v18` …).
 
 - Eine neue Version löscht beim Aktivieren den alten Speicher und lädt alles neu.
 - Ohne neue Version kommen **geänderte Bilder und Töne** auf Handys, die die Seite schon kennen, nicht an. Beide werden zuerst aus dem Speicher geholt.
@@ -859,12 +862,14 @@ Grob in der Reihenfolge der Entstehung (Herbst 2026):
     - Service Worker speichert die Töne und beantwortet Range-Anfragen (206), damit sie auch offline spielen.
     - Übernommen und angepasst aus einer Schwesterversion des Kalenders; Push-Erinnerungen bewusst nicht.
 19. **Umschlag und Brief** (v15): Nach der Finale-Animation liegt ein Umschlag mit Stern-Siegel bereit; Tippen öffnet ihn (`ton/umschlag.mp3`), der Brief wird zur Finale-Seite. Die Finale-Seite sieht aus wie ein Brief auf altem Briefpapier.
+20. **Neuer Brieftext** (v16): fünf Absätze, Unterschrift nur noch mit dem Namen.
+21. **Zwei Briefbögen** (v17): Der Brief steht auf zwei leicht versetzten Bögen untereinander statt auf einem langen Blatt; im Umschlag gleitet ein kleiner Stapel heraus.
 
 ---
 
 ## 22. Rechtliches zu Texten und Bildern
 
 - **Texte:** Alle 24 Geschichten sind gemeinfrei. Die Bearbeitung (Modernisierung) ist bei jeder Geschichte in der Quellenzeile vermerkt.
-- **Eigenformulierungen:** Einstimmungssätze, Begrüßungssätze, Texte der Startseite und des Finales.
+- **Eigenformulierungen:** Einstimmungssätze, Begrüßungssätze, Texte der Startseite, „Tippen zum Öffnen“. Der Brief auf der Finale-Seite stammt vom Absender selbst.
 - **Bilder:** Mit Google Gemini erzeugt, für die private Nutzung in diesem Kalender. Keine Fotos realer Personen.
 - Die Seite ist privat, nicht in Suchmaschinen gelistet und sammelt keine Daten. Alles bleibt im Browser des Lesers.
