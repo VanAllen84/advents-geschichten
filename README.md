@@ -14,7 +14,7 @@ Der Absender steht in `config.js` (`ABSENDER`) und erscheint nur in der Signatur
 | GitHub-Repository | `vanallen84/advents-geschichten` |
 | Alte GitHub-Adresse (leitet weiter) | https://vanallen84.github.io/advents-geschichten/ |
 
-Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v21`.
+Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v22`.
 
 ---
 
@@ -299,7 +299,9 @@ Alle Seiten liegen als `<div>`-Bereiche in `index.html` und werden über die Kla
 ### 7.3 Einstimmungsseite
 
 - Erscheint **nur beim ersten Öffnen** eines Türchens.
-- Zeigt „Türchen N“, den Titel und einen kurzen Einstimmungssatz (`einstimmung` aus der Geschichten-Datei).
+- Zeigt „Türchen N“, den Titel, die **ungefähre Lesezeit** und einen kurzen Einstimmungssatz (`einstimmung` aus der Geschichten-Datei).
+  - Lesezeit (`lesezeitText`): Wörter des Textes ÷ 230 pro Minute (zügiges Lesen, Konstante `WOERTER_PRO_MINUTE`), auf ganze Minuten gerundet, mindestens 1 Minute, z. B. „Lesezeit: etwa 5 Minuten“ (Eigenformulierung). Sie wird beim Öffnen aus dem Text berechnet und stimmt daher auch nach dem Austausch einer Geschichte.
+  - Stand 2026: von etwa 1 Minute (17 „Die Sterntaler“) bis etwa 33 Minuten (13 „Unter dem Tannenbaum“).
 - Der Knopf **„Geschichte beginnen“** erscheint erst, wenn die Geschichte geladen ist; dann folgt der Buchstaben-Wirbel.
 - Im Hintergrund liegt schwach und unscharf das Tagesbild als Wasserzeichen (`wmAnker`).
 
@@ -904,6 +906,7 @@ Grob in der Reihenfolge der Entstehung (Herbst 2026):
 23. **Name und Online-Sicherung** (v19): freiwillige Namenseingabe auf der Startseite, persönliche Überschrift, Begrüßung und Brief-Gruß; Abgleich von Türchen, Titeln, Lieblingen und „Finale gesehen“ über einen eigenen Cloudflare-Worker „advent-stand“.
 24. **Online-Sicherung robuster** (v20): D1 statt KV, Worker führt beim Ablegen zusammen, leere Stände werden nie abgelegt, `?reset=1` nur noch lokal (`?reset=alles` auch online), Statuszeile in TEST.
 25. **Töne robuster** (v21): gescheiterte Ton-Abspieler werden automatisch neu angelegt.
+26. **Lesezeit** (v22): ungefähre Lesezeit (230 Wörter pro Minute) auf der Einstimmungsseite.
 
 ---
 

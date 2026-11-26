@@ -234,6 +234,7 @@
             font-size: 0.8rem;
         }
 
+        .ein-lesezeit { text-align: center; font-size: 0.85rem; letter-spacing: 0.5px; color: var(--accent-color); opacity: 0.85; margin: -6px 0 4px; min-height: 1.2em; }
         /* Lese-Leiste unter dem Titel: Schriftgröße und Vorlesen */
         .lese-leiste { display: flex; justify-content: center; gap: 8px; margin: -6px 0 22px; flex-wrap: wrap; }
         .lese-leiste button { background: rgba(255,255,255,0.04); border: 1px solid rgba(217,180,90,0.45); color: var(--heading-color); border-radius: 18px; padding: 6px 13px; font-size: 0.85rem; cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent; }
@@ -554,6 +555,7 @@
         <div id="einstimmungScreen" class="hidden">
             <h2>Türchen <span id="einDayNum">1</span></h2>
             <p class="ein-titel" id="einTitel"></p>
+            <p class="ein-lesezeit" id="einLesezeit"></p>
             <hr class="ein-trenner">
             <p class="ein-text" id="einText"></p>
             <div id="einFehler"></div>
@@ -1307,17 +1309,27 @@
             const fehlerBox = document.getElementById("einFehler"), btn = document.getElementById("btnBeginnen");
             document.getElementById("einDayNum").textContent = day;
             titel.textContent = ""; text.textContent = ""; fehlerBox.innerHTML = ""; btn.style.display = "none";
+            const lz = document.getElementById("einLesezeit"); lz.textContent = "";
             document.getElementById("einstimmungScreen").classList.remove("hidden");
             wmAn(day);
             ladeGeschichte(day, function (st) {
                 if (currentDay !== day) return;
                 titel.textContent = st.titel || "";
+                lz.textContent = lesezeitText(st.text);
                 text.textContent = st.einstimmung || "";
                 btn.style.display = "";
             }, function () {
                 if (currentDay !== day) return;
                 geschichteFehler(fehlerBox);
             });
+        }
+        // Ungefähre Lesezeit für zügige Leser (230 Wörter pro Minute), auf ganze Minuten gerundet
+        const WOERTER_PRO_MINUTE = 230;
+        function lesezeitText(text) {
+            const w = (String(text || "").match(/\S+/g) || []).length;
+            if (!w) return "";
+            const m = Math.max(1, Math.round(w / WOERTER_PRO_MINUTE));
+            return "Lesezeit: etwa " + m + (m === 1 ? " Minute" : " Minuten");
         }
         function zeigeStory() {
             leseBereit = false;
