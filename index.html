@@ -528,6 +528,7 @@
             <p style="text-align: center; font-style: italic; color: var(--text-color);">Mach es dir gemütlich. Die Geschichten warten schon.</p>
             <button class="btn-primary" onclick="zeigeTuerenUebersicht()">Zu den Türchen</button>
             <p class="name-fuss" id="nameFuss"></p>
+            <p class="name-fuss" id="syncStatus" style="display:none; opacity: 0.6;"></p>
         </div>
 
         <!-- TÜRCHEN-ÜBERSICHT -->
@@ -670,8 +671,10 @@
         // Reset für Tests: index.html?reset=1 löscht den gespeicherten Stand
         // ==========================================
         try {
-            if (location.search.indexOf("reset=1") >= 0) {
-                window.__resetName = speicherLesen("name", "");   // damit auch der Online-Stand gelöscht werden kann
+            // ?reset=1     setzt nur dieses Gerät zurück (der Online-Stand bleibt, mit demselben Namen kommt er wieder)
+            // ?reset=alles löscht zusätzlich den Online-Stand des hier zuletzt eingegebenen Namens (nur diese Fassung)
+            if (/[?&]reset=(1|alles)(&|$)/.test(location.search)) {
+                if (/[?&]reset=alles(&|$)/.test(location.search)) window.__resetName = speicherLesen("name", "");
                 ["geoeffnet", "lese", "gruss", "finaleAn", "besucht", "titel", "lieblinge", "lieblingeTs", "schrift", "name", "nameOhne"].forEach(speicherLoeschen);
                 history.replaceState(null, "", location.pathname + (TEST_FASSUNG ? "?test=1" : ""));
             }
@@ -795,19 +798,30 @@
         const TON = (function () {
             const DATEIEN = { knarren: "ton/knarren.mp3", zuklappen: "ton/zuklappen.mp3", wirbel: "ton/wirbel.mp3", finale: "ton/finale.mp3", umschlag: "ton/umschlag.mp3" };
             const el = {}, fade = {};
-            function hole(n) {
-                if (!(n in el)) {
-                    try { const a = new Audio(DATEIEN[n]); a.preload = "auto"; el[n] = a; } catch (e) { el[n] = null; }
-                }
+            // Ist ein Abspieler beim Laden gescheitert (z. B. kurz während eines Updates), bleibt er sonst
+            // dauerhaft stumm. Deshalb wird er dann verworfen und beim nächsten Mal neu angelegt.
+            function neu(n) {
+                try {
+                    const a = new Audio(DATEIEN[n]); a.preload = "auto";
+                    a.addEventListener("error", function () { if (el[n] === a) delete el[n]; });
+                    el[n] = a;
+                } catch (e) { el[n] = null; }
                 return el[n];
+            }
+            function hole(n) {
+                let a = el[n];
+                if (a && (a.error || (a.networkState === 3 && a.readyState === 0))) { delete el[n]; a = undefined; }
+                return a === undefined ? neu(n) : a;
             }
             function spielen(n) {
                 if (window.TON_AUS) return;
                 const a = hole(n); if (!a) return;
                 try {
                     clearInterval(fade[n]);
-                    a.pause(); a.currentTime = 0; a.volume = 1;
-                    const pr = a.play(); if (pr && pr.catch) pr.catch(function () {});
+                    try { a.pause(); a.currentTime = 0; a.volume = 1; } catch (e) {}
+                    const pr = a.play();
+                    // Abspielen gescheitert, aber nicht wegen fehlender Berührung? Dann beim nächsten Mal frisch anlegen.
+                    if (pr && pr.catch) pr.catch(function (e) { if (!e || e.name !== "NotAllowedError") { if (el[n] === a) delete el[n]; } });
                 } catch (e) {}
             }
             // leise ausblenden und anhalten (auf dem iPhone lässt sich die Lautstärke
@@ -1417,7 +1431,7 @@
             speicherSchreiben("name", v);
             speicherLoeschen("nameOhne");
             f.blur();
-            personalisieren(); nameAnzeigen();
+            personalisieren(); nameAnzeigen(); SYNC.statusZeigen();
             nameMeldung("Schön, dass du da bist, " + v + "!");
             SYNC.abgleichen().then(function (r) {
                 if (r && r.hatteStand && speicherLesen("name", "") === v) nameMeldung("Willkommen zurück, " + v + "! Dein Fortschritt ist wieder da.");
@@ -1498,12 +1512,25 @@
                 try { if (!document.getElementById("storyScreen").classList.contains("hidden")) lieblingKnopf(); } catch (e) {}
                 try { if (!document.getElementById("finaleScreen").classList.contains("hidden")) lieblingeZeigen(); } catch (e) {}
             }
-            function ablegen(k, z, versuch) {
+            const leer = z => !z.geoeffnet.length && !z.lieblinge.length && !z.lieblingeTs && !z.finaleAn;
+            function ablegen(k, z) {
                 return fetch(url + "/stand/" + k, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(z) })
                     .then(function (r) {
-                        if (r.status === 429 && !versuch) return new Promise(function (res) { setTimeout(res, 1800); }).then(function () { return ablegen(k, z, true); });
-                        return r.ok;
+                        if (!r.ok) throw new Error("HTTP " + r.status);
+                        return r.json().then(function (j) { return j && j.daten ? sauber(j.daten) : null; });
                     });
+            }
+            // nur in der TEST-Fassung: kleine Statuszeile unten auf der Startseite
+            let status = { zeit: 0, tueren: 0, lieblinge: 0, fehler: false };
+            function statusZeigen() {
+                if (!TEST_FASSUNG) return;
+                const el = document.getElementById("syncStatus"); if (!el) return;
+                const z = status.zeit ? new Date(status.zeit).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
+                el.textContent = !moeglich ? "TEST · Online-Sicherung aus (SYNC_URL leer)"
+                    : !speicherLesen("name", "") ? "TEST · Online-Sicherung: erst nach Namenseingabe"
+                    : status.fehler ? "TEST · Online-Sicherung nicht erreichbar" + (z ? " (zuletzt ok " + z + ")" : "")
+                    : z ? "TEST · Online abgeglichen " + z + " · " + status.tueren + " Türchen, " + status.lieblinge + " Lieblinge" : "TEST · Online-Sicherung: noch kein Abgleich";
+                el.style.display = "";
             }
             // holen, zusammenführen, lokal übernehmen und (wenn nötig) wieder ablegen
             function abgleichen() {
@@ -1519,9 +1546,16 @@
                         const lok = lokal(), z = zusammen(lok, server || sauber({}));
                         if (!gleich(z, lok)) anwenden(z);
                         const ergebnis = { hatteStand: !!(server && (server.geoeffnet.length || server.lieblinge.length)) };
-                        if (!server || !gleich(z, server)) return ablegen(k, z).then(function () { return ergebnis; });
-                        return ergebnis;
-                    }).catch(function () { offen = true; return null; })   // ohne Netz: später nachholen
+                        status = { zeit: Date.now(), tueren: z.geoeffnet.length, lieblinge: z.lieblinge.length, fehler: false }; statusZeigen();
+                        // nur ablegen, wenn dieses Gerät etwas Neues beizutragen hat (ein leerer Stand wird nie abgelegt)
+                        if (leer(z) || (server && gleich(z, server))) return ergebnis;
+                        return ablegen(k, z).then(function (gesamt) {
+                            // Der Worker führt selbst zusammen und schickt den Gesamtstand zurück – den übernehmen
+                            if (gesamt && !gleich(gesamt, lokal())) anwenden(zusammen(lokal(), gesamt));
+                            if (gesamt) { status = { zeit: Date.now(), tueren: gesamt.geoeffnet.length, lieblinge: gesamt.lieblinge.length, fehler: false }; statusZeigen(); }
+                            return ergebnis;
+                        });
+                    }).catch(function () { offen = true; status.fehler = true; statusZeigen(); return null; })   // ohne Netz: später nachholen
                       .then(function (e) { laeuft = false; if (nochmal) { nochmal = false; spaeter(); } return e; });
                 });
             }
@@ -1534,7 +1568,7 @@
             document.addEventListener("visibilitychange", function () {
                 if (document.hidden) {
                     if (offen) schluessel().then(function (k) {
-                        if (!k) return;
+                        if (!k || leer(lokal())) return;
                         clearTimeout(timer); offen = false;
                         try { fetch(url + "/stand/" + k, { method: "PUT", keepalive: true, headers: { "Content-Type": "application/json" }, body: JSON.stringify(lokal()) }).catch(function () {}); } catch (e) {}
                     });
@@ -1544,11 +1578,12 @@
                 if (!moeglich || !name) return Promise.resolve();
                 return schluesselAus(name).then(function (k) { return fetch(url + "/stand/" + k, { method: "DELETE" }); }).catch(function () {});
             }
-            return { moeglich: moeglich, abgleichen: abgleichen, spaeter: spaeter, loeschen: loeschen };
+            return { moeglich: moeglich, abgleichen: abgleichen, spaeter: spaeter, loeschen: loeschen, statusZeigen: statusZeigen };
         })();
         window.SYNC = SYNC;
         document.addEventListener("DOMContentLoaded", function () {
             try { nameAnzeigen(); } catch (e) {}
+            try { SYNC.statusZeigen(); } catch (e) {}
             if (window.__resetName) SYNC.loeschen(window.__resetName);
             else SYNC.abgleichen();
         });

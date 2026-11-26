@@ -14,7 +14,7 @@ Der Absender steht in `config.js` (`ABSENDER`) und erscheint nur in der Signatur
 | GitHub-Repository | `vanallen84/advents-geschichten` |
 | Alte GitHub-Adresse (leitet weiter) | https://vanallen84.github.io/advents-geschichten/ |
 
-Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v20`.
+Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v21`.
 
 ---
 
@@ -448,6 +448,7 @@ Fünf Toneffekte begleiten die Animationen:
   Darum steckt beim Zuklappen die Verzögerung (0,33 s) in der Datei selbst und nicht im Code.
   Würde man Animationen künftig automatisch (ohne Tippen) starten, bliebe der Ton stumm.
 - **Fehlt eine Datei** oder blockiert das Gerät den Ton, laufen die Animationen ganz normal weiter, nur ohne Ton.
+- **Gescheiterte Abspieler werden ersetzt** (seit v21): Scheitert das Vorladen eines Tons (z. B. kurz während eines Updates) oder das Abspielen aus einem anderen Grund als „keine Berührung“, wird der Abspieler verworfen und beim nächsten Mal neu angelegt. Vorher blieb ein solcher Ton bis zum Neustart der App stumm.
 - **Lautstärke:** Alle Dateien sind auf **ca. −18 LUFS** angeglichen, mit Limiter (Spitzen höchstens ca. −2 dBFS, dekodiert unter 1,0).
   Die Lautstärke steckt in den Dateien, weil das iPhone eine per Skript gesetzte Lautstärke (`audio.volume`) ignoriert.
   Auf dem iPhone wird beim „Ausblenden“ deshalb nach der Zeit einfach angehalten.
@@ -902,6 +903,7 @@ Grob in der Reihenfolge der Entstehung (Herbst 2026):
 22. **Lesen und Finale** (v18): Schriftgröße A−/A+, Vorlesen mit „Weiter vorlesen“, Lieblingsgeschichten (Stern auf Kachel, Zettel im Finale), Brief in Serifenschrift, Finale-Animation und Umschlag beim allerersten Aufruf auch über „Zum Finale“.
 23. **Name und Online-Sicherung** (v19): freiwillige Namenseingabe auf der Startseite, persönliche Überschrift, Begrüßung und Brief-Gruß; Abgleich von Türchen, Titeln, Lieblingen und „Finale gesehen“ über einen eigenen Cloudflare-Worker „advent-stand“.
 24. **Online-Sicherung robuster** (v20): D1 statt KV, Worker führt beim Ablegen zusammen, leere Stände werden nie abgelegt, `?reset=1` nur noch lokal (`?reset=alles` auch online), Statuszeile in TEST.
+25. **Töne robuster** (v21): gescheiterte Ton-Abspieler werden automatisch neu angelegt.
 
 ---
 
