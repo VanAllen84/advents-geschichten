@@ -1,6 +1,6 @@
 /* Offline-Speicher: Seite, Geschichten und Bilder werden beim ersten Besuch abgelegt.
    Bei jeder Änderung an der Seite VERSION hochzählen, damit die Handys die neue Fassung holen. */
-const VERSION = "advent-v14";
+const VERSION = "advent-v15";
 const KERN = ["./", "index.html", "config.js", "manifest.json", "manifest-test.json", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "icon-test-192.png", "icon-test-512.png", "apple-touch-icon-test.png"];
 for (let i = 1; i <= 24; i++) KERN.push("story-day" + i + ".js");
 const BILDER = ["bilder/landing.jpg", "bilder/finale.jpg"];
@@ -8,7 +8,7 @@ for (let i = 1; i <= 24; i++) {
   const n = String(i).padStart(2, "0");
   BILDER.push("bilder/tag-" + n + ".jpg", "bilder/pix-mid-" + n + ".png", "bilder/pix-lock-" + n + ".png");
 }
-const TOENE = ["ton/knarren.mp3", "ton/zuklappen.mp3", "ton/wirbel.mp3", "ton/finale.mp3"];
+const TOENE = ["ton/knarren.mp3", "ton/zuklappen.mp3", "ton/wirbel.mp3", "ton/finale.mp3", "ton/umschlag.mp3"];
 self.addEventListener("install", function (e) {
   e.waitUntil(caches.open(VERSION).then(function (c) {
     return Promise.all(KERN.map(function (u) { return c.add(u).catch(function () {}); }))

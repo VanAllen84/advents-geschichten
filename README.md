@@ -14,7 +14,7 @@ Der Absender steht in `config.js` (`ABSENDER`) und erscheint nur in der Signatur
 | GitHub-Repository | `vanallen84/advents-geschichten` |
 | Alte GitHub-Adresse (leitet weiter) | https://vanallen84.github.io/advents-geschichten/ |
 
-Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v14`.
+Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v15`.
 
 ---
 
@@ -95,7 +95,8 @@ Für den Inhalt der Startseite, das Finale und die Begrüßungssätze muss man i
 │   ├── knarren.mp3       Tür geht auf (Portal)
 │   ├── zuklappen.mp3     Tür schließt sich (Zurück in die Übersicht)
 │   ├── wirbel.mp3        Buchstaben-Wirbel
-│   └── finale.mp3        Finale „Die 24 Lichter“
+│   ├── finale.mp3        Finale „Die 24 Lichter“
+│   └── umschlag.mp3      Umschlag wird geöffnet (nach dem Finale)
 ├── erinnerung/
 │   └── 1700.ics … 2100.ics   Kalender-Termine, je eine Datei pro Uhrzeit
 ├── test/
@@ -305,7 +306,8 @@ Alle Seiten liegen als `<div>`-Bereiche in `index.html` und werden über die Kla
 ### 7.5 Finale
 
 - Erscheint nach Türchen 24 („Zum Finale …“) oder über den Knopf in der Übersicht.
-- Überschrift „Frohe Weihnachten“, zwei Absätze Dank und Wünsche (Eigenformulierung), Signatur „Frohe Weihnachten, <ABSENDER>“.
+- Gestaltet als **Brief auf altem Briefpapier** (`.brief` / `#finaleBrief`): vergilbter Papierton mit Flecken, dunkle Ränder, feiner Innenrahmen, Faltkante in der Mitte, leicht schräg gelegt.
+- Darin: Überschrift „Frohe Weihnachten“, zwei Absätze Dank und Wünsche (Eigenformulierung), Signatur „Frohe Weihnachten, <ABSENDER>“.
 - Bild `bilder/finale.jpg`.
 - Knopf **„✨ Die Animation noch einmal ansehen“**.
 
@@ -390,17 +392,25 @@ Ist am Gerät „Bewegung reduzieren“ eingestellt (`prefers-reduced-motion`), 
 - 24 goldene Lichter (für die 24 Türchen) fügen sich zu einem **Tannenbaum**, dann zu einem **Stern**.
 - Der Stern wird zur **Sternschnuppe**, am Ende folgt ein **Lichtblitz**, und die Finale-Seite erscheint.
 - Sie läuft nur **einmal** von selbst (Speicher-Schlüssel `finaleAn`). Danach kann man sie über „Die Animation noch einmal ansehen“ wieder abspielen.
+- **Umschlag** (`umschlagZeigen`), direkt im Anschluss an die Animation (auch wenn sie übersprungen wird):
+  - Ein Umschlag in warmem Papierton mit goldenem Rand und goldenem Stern-Siegel liegt mittig auf dunkelgrünem Grund, darunter pulsiert „Tippen zum Öffnen“ (Eigenformulierung).
+  - Die Finale-Seite liegt schon darunter bereit.
+  - Beim Tippen: `ton/umschlag.mp3`, das Siegel verschwindet, die Lasche klappt auf (0–0,65 s), der Brief gleitet heraus (ab 0,65 s), ab 1,7 s wird er größer und blendet aus, während der dunkle Grund verschwindet und den Brief der Finale-Seite freigibt (fertig nach ca. 2,6 s).
+  - Tippen während des Öffnens überspringt den Rest.
+  - Der Umschlag kommt **nur zusammen mit der Animation**: beim ersten Mal und bei „Die Animation noch einmal ansehen“. Der Knopf „Zum Finale“ in der Übersicht, „Bewegung reduzieren“ und `PORTAL_AUS` zeigen den Brief sofort offen.
+  - Die Zurück-Wischgeste entfernt den Umschlag und geht in die Übersicht.
 - **Variante A „Vier Kerzen“** (Adventskranz) ist noch im Code und wird mit `window.FINALE_VAR = "A"` aktiviert.
 
 ### 8.5 Töne
 
-Vier Toneffekte begleiten die Animationen:
+Fünf Toneffekte begleiten die Animationen:
 
 | Datei | Wann | Ende |
 |---|---|---|
 | `ton/knarren.mp3` (2,6 s) | sobald die **Portal-Animation** startet, also bei jedem Öffnen einer Tür (Kachel oder „Weiter durch das nächste Türchen“, auch bei schon geöffneten Türchen) | spielt aus; beim Überspringen oder am Ende der Animation in 0,5 s ausgeblendet |
 | `ton/zuklappen.mp3` (1,6 s) | sobald die **Tür sich schließt** (Knopf „Zurück zur Türchen-Auswahl“). Die Datei beginnt mit 0,33 s Stille | spielt aus; beim Überspringen in 0,4 s ausgeblendet |
 | `ton/wirbel.mp3` (5,2 s) | sobald der **Buchstaben-Wirbel** startet | am Ende des Wirbels oder beim Überspringen in 0,7 s ausgeblendet |
+| `ton/umschlag.mp3` (1,2 s) | beim **Öffnen des Umschlags** nach dem Finale (Tippen). Der Finale-Ton läuft dann meist noch und liegt darunter | spielt aus |
 | `ton/finale.mp3` (26,5 s) | sobald die **Finale-Animation** startet (auch bei „Die Animation noch einmal ansehen“) | läuft die Animation bis zum Ende, **klingt der Ton auf der Finale-Seite aus** (die Datei blendet selbst ab ca. 23 s aus). Beim Überspringen 1 s Ausblenden, beim Verlassen der Finale-Seite 0,8 s |
 
 - Umgesetzt im Modul `TON` in index.html (`TON.spielen(name)`, `TON.ausblenden(name, ms)`).
@@ -423,6 +433,7 @@ Vier Toneffekte begleiten die Animationen:
   | zuklappen.mp3 | −18,4 LUFS, −7,5 dBTP | −18,1 LUFS, −7,3 dBTP (+0,33 s Stille vorn) |
   | wirbel.mp3 | −18,5 LUFS, −5,5 dBTP | −18,0 LUFS, −5,1 dBTP |
   | finale.mp3 | −18,5 LUFS, −5,4 dBTP | −18,0 LUFS, −4,9 dBTP |
+  | umschlag.mp3 | −17,9 LUFS, −4,0 dBTP | −18,0 LUFS, −4,1 dBTP |
 
 - **Stummschalter am iPhone:** Je nach iOS-Version spielt Safari die Töne auch bei eingeschaltetem Stummschalter oder eben nicht. Die normale Lautstärke des Handys gilt immer.
 - **Offline:** Die Töne werden vom Service Worker gespeichert und spielen auch ohne Netz (siehe [Abschnitt 13](#13-offline-fähigkeit-und-updates-service-worker)).
@@ -590,7 +601,7 @@ Es gibt **keine Übertragung an einen Server**. Jedes Gerät und jeder Browser h
   Dann geht der Stand beim Schließen verloren, aber nichts stürzt ab.
 - **Wichtig für iPhone:** Eine auf dem Startbildschirm installierte Web-App hat **einen anderen Speicher** als Safari.
   Wer erst in Safari liest und dann die App nutzt, beginnt dort von vorn.
-- Die Töne, Zuklappen und Finale-Ton (v14) haben **keine neuen Schlüssel** gebracht; der Fortschritt der Leser bleibt unverändert.
+- Töne, Zuklappen, Finale-Ton (v14) und Umschlag (v15) haben **keine neuen Schlüssel** gebracht; der Fortschritt der Leser bleibt unverändert.
   Die Töne selbst liegen nicht im `localStorage`, sondern im Offline-Speicher des Service Workers (Abschnitt 13).
 
 ---
@@ -602,7 +613,7 @@ Es gibt **keine Übertragung an einen Server**. Jedes Gerät und jeder Browser h
 - **Beim ersten Besuch** speichert er im Hintergrund:
   - Seite, `config.js`, Manifeste, Symbole und alle 24 Geschichten,
   - danach alle Bilder (Tagesbilder plus beide Pixelstufen, Start- und Finale-Bild),
-  - danach die vier Töne aus `ton/` (Liste `TOENE` in `sw.js`).
+  - danach die fünf Töne aus `ton/` (Liste `TOENE` in `sw.js`).
 - **Seiten und Geschichten:** zuerst aus dem Netz (damit Änderungen sofort ankommen); ohne Netz aus dem Speicher.
 - **Bilder:** zuerst aus dem Speicher (schnell), sonst aus dem Netz.
 - Gespeichert werden nur erfolgreiche Antworten (`res.ok`). Fehlerseiten landen also nicht im Speicher.
@@ -616,7 +627,7 @@ Es gibt **keine Übertragung an einen Server**. Jedes Gerät und jeder Browser h
 
 ### Updates
 
-> **Bei jeder Änderung `VERSION` in `sw.js` hochzählen** (`advent-v14` → `advent-v15` …).
+> **Bei jeder Änderung `VERSION` in `sw.js` hochzählen** (`advent-v15` → `advent-v16` …).
 
 - Eine neue Version löscht beim Aktivieren den alten Speicher und lädt alles neu.
 - Ohne neue Version kommen **geänderte Bilder und Töne** auf Handys, die die Seite schon kennen, nicht an. Beide werden zuerst aus dem Speicher geholt.
@@ -760,7 +771,7 @@ Der Service Worker ist auch lokal auf `localhost` aktiv. Wer beim Entwickeln Än
 - **Speicher-Präfix hängt am Jahr:** Wird `JAHR` geändert, sind alle bisherigen Stände für die Seite „vergessen“. Die alten Daten bleiben unbenutzt im Browser liegen.
 - **Plattdeutsch und „ward“:** Eine automatische Ersetzung „ward → wurde“ hätte in plattdeutschen Sätzen Fehler erzeugt. Die betroffenen Geschichten (9, 16) wurden deshalb vollständig ins Hochdeutsche übertragen.
 - **Titel auf Kacheln:** Werden aus dem Speicher genommen. Nach dem Austausch einer Geschichte bleibt bei bisherigen Lesern bis zum erneuten Öffnen der alte Titel stehen.
-- **Ton spielt nicht:** Datei wirklich unter `ton/knarren.mp3`, `ton/zuklappen.mp3`, `ton/wirbel.mp3` bzw. `ton/finale.mp3` (Kleinschreibung beachten, GitHub unterscheidet Groß/Klein)? Handy-Lautstärke an? Am iPhone ggf. Stummschalter prüfen. Nach dem Austausch eines Tons `VERSION` hochgezählt?
+- **Ton spielt nicht:** Datei wirklich unter `ton/knarren.mp3`, `ton/zuklappen.mp3`, `ton/wirbel.mp3`, `ton/finale.mp3` bzw. `ton/umschlag.mp3` (Kleinschreibung beachten, GitHub unterscheidet Groß/Klein)? Handy-Lautstärke an? Am iPhone ggf. Stummschalter prüfen. Nach dem Austausch eines Tons `VERSION` hochgezählt?
 - **Ton wird nur verzögert gestartet:** nie einen Ton per `setTimeout` starten, das iPhone blockiert ihn dann womöglich. Verzögerungen gehören als Stille in die Datei.
 - **`titel:` in den Geschichten-Dateien** muss als `"…"`-String stehen, sonst kann `titelNachladen` ihn nicht lesen. Die Geschichte selbst funktioniert aber trotzdem.
 
@@ -794,7 +805,7 @@ Der Service Worker ist auch lokal auf `localhost` aktiv. Wer beim Entwickeln Än
 | Kacheln | `tuerStilAktualisieren`, `pixelSetzen`, `geoeffnetListe`, `merkeGeoeffnet`, `titelMap`, `merkeTitel`, `titelNachladen`, `bildUrl` |
 | Geschichten | `ladeGeschichte`, `absaetzeHtml`, `loadStoryContent`, `geschichteFehler`, `geschichteNochmal` |
 | Bilder | `bildEinblenden`, `zeigeStoryBild`, `storyBildStart`, `wmAn`, `wmAus` |
-| Animationen | `portalDurch`, `portalZurueck`, `wirbelUebergang`, `startStory`, `finaleDurch` (mit `bildA`/`bildB`) |
+| Animationen | `portalDurch`, `portalZurueck`, `wirbelUebergang`, `startStory`, `finaleDurch` (mit `bildA`/`bildB`), `umschlagZeigen` |
 | Töne | `TON.spielen`, `TON.ausblenden` (Dateinamen in `DATEIEN`) |
 | Startseite | `rulesAktualisieren`, `vorabUmschalten`, `rulesUmschalten`, `ladeErinnerung`, Countdown, App-Tipp nach Gerät |
 | Übersicht | `begruessungWaehlen`, `begruessungZeigen`, `finaleKnopfAktualisieren` |
@@ -847,6 +858,7 @@ Grob in der Reihenfolge der Entstehung (Herbst 2026):
     - Alle Töne auf −18 LUFS angeglichen (`tools/toene-angleichen.py`).
     - Service Worker speichert die Töne und beantwortet Range-Anfragen (206), damit sie auch offline spielen.
     - Übernommen und angepasst aus einer Schwesterversion des Kalenders; Push-Erinnerungen bewusst nicht.
+19. **Umschlag und Brief** (v15): Nach der Finale-Animation liegt ein Umschlag mit Stern-Siegel bereit; Tippen öffnet ihn (`ton/umschlag.mp3`), der Brief wird zur Finale-Seite. Die Finale-Seite sieht aus wie ein Brief auf altem Briefpapier.
 
 ---
 

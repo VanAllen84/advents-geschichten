@@ -327,6 +327,46 @@
 
         .finale-text p { line-height: 1.8; text-align: center; margin: 0 0 16px; }
         .finale-text .signatur { font-style: italic; margin-top: 22px; }
+        /* Finale als Brief auf altem Briefpapier */
+        .brief { position: relative; margin: 6px -2px 26px; padding: 30px 24px 22px; color: #3b2a18; border-radius: 4px;
+            background:
+                radial-gradient(ellipse at 16% 10%, rgba(160,110,40,0.16), transparent 45%),
+                radial-gradient(ellipse at 86% 90%, rgba(140,90,30,0.22), transparent 50%),
+                radial-gradient(circle at 72% 28%, rgba(255,255,255,0.28), transparent 42%),
+                linear-gradient(176deg, #f4e7c6 0%, #ecdcb2 55%, #e0ca98 100%);
+            box-shadow: 0 14px 34px rgba(0,0,0,0.5), inset 0 0 46px rgba(120,80,25,0.36), inset 0 0 6px rgba(90,60,20,0.45);
+            transform: rotate(-0.6deg); }
+        .brief::before { content: ""; position: absolute; inset: 9px; border: 1px solid rgba(140,100,40,0.35); border-radius: 2px; pointer-events: none; }
+        .brief::after { content: ""; position: absolute; left: 0; right: 0; top: 0; bottom: 0; pointer-events: none; border-radius: 4px;
+            background: linear-gradient(to bottom, transparent 49.4%, rgba(120,80,30,0.16) 50%, rgba(255,255,255,0.22) 50.5%, transparent 51.3%); }
+        .brief h2 { color: #6a4618; margin: 4px 0 18px; }
+        .brief .finale-text { margin-bottom: 0; }
+        .brief p, .brief .signatur { color: #3b2a18; }
+        /* Umschlag nach der Finale-Animation (umschlagZeigen) */
+        #umschlag { position: fixed; inset: 0; z-index: 3400; background: #07120e; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: background 0.8s ease; -webkit-tap-highlight-color: transparent; }
+        #umschlag.frei { background: rgba(7,18,14,0); pointer-events: none; }
+        #umschlag .u-huelle { position: relative; width: min(82vw, 340px); aspect-ratio: 1.6; perspective: 900px; opacity: 0; transform: scale(0.9) translateY(14px); transition: opacity 0.8s ease 0.2s, transform 0.8s cubic-bezier(0.2, 0.7, 0.3, 1) 0.2s; }
+        #umschlag.da .u-huelle { opacity: 1; transform: none; }
+        #umschlag .u-rueck, #umschlag .u-front, #umschlag .u-lasche { position: absolute; left: 0; right: 0; top: 0; border-radius: 6px; transition: opacity 0.5s ease; }
+        #umschlag .u-rueck { bottom: 0; background: linear-gradient(180deg, #bda577, #cdb88c); box-shadow: 0 16px 40px rgba(0,0,0,0.55), 0 0 0 1px #d9b45a; }
+        #umschlag .u-brief { position: absolute; left: 7%; right: 7%; top: 7%; height: 86%; z-index: 2; border-radius: 3px; padding: 9% 8% 0; box-sizing: border-box; text-align: center; color: #6a4618; font-family: Georgia, 'Times New Roman', serif; font-size: 0.95rem; letter-spacing: 0.5px;
+            background: radial-gradient(ellipse at 20% 15%, rgba(160,110,40,0.16), transparent 50%), linear-gradient(176deg, #f4e7c6, #e6d3a6);
+            box-shadow: inset 0 0 18px rgba(120,80,25,0.3); transition: transform 0.9s cubic-bezier(0.3, 0.7, 0.3, 1), opacity 0.7s ease; }
+        #umschlag .u-brief i { display: block; height: 2px; margin: 9px 6% 0; background: rgba(120,85,35,0.22); border-radius: 1px; }
+        #umschlag .u-front { bottom: 0; z-index: 3; background: linear-gradient(170deg, #ead8ad, #dcc594); clip-path: polygon(0 0, 50% 54%, 100% 0, 100% 100%, 0 100%); }
+        #umschlag .u-lasche { height: 58%; z-index: 4; transform-origin: 50% 0; background: linear-gradient(180deg, #e3cf9f, #d3bb87); clip-path: polygon(0 0, 100% 0, 50% 100%); transition: transform 0.65s cubic-bezier(0.4, 0, 0.3, 1); }
+        #umschlag .u-siegel { position: absolute; left: 50%; top: 58%; z-index: 5; width: 50px; height: 50px; margin: -25px 0 0 -25px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #7a5416;
+            background: radial-gradient(circle at 35% 30%, #ffe9a8, #e2b14c 45%, #a8771f 100%); box-shadow: 0 2px 6px rgba(0,0,0,0.45), inset 0 0 0 3px rgba(122,84,22,0.35); transition: opacity 0.35s ease, transform 0.35s ease; }
+        #umschlag .u-hinweis { margin-top: 34px; font-size: 0.85rem; letter-spacing: 1px; color: rgba(255,246,220,0.75); opacity: 0; transition: opacity 1s ease; }
+        #umschlag.da .u-hinweis { opacity: 1; animation: uPuls 2.4s ease-in-out 1.2s infinite; }
+        @keyframes uPuls { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+        #umschlag.auf .u-siegel { opacity: 0; transform: scale(0.6); }
+        #umschlag.auf .u-lasche { transform: rotateX(180deg); }
+        #umschlag.auf2 .u-lasche { z-index: 1; }
+        #umschlag.auf .u-hinweis { opacity: 0; animation: none; }
+        #umschlag.raus .u-brief { transform: translateY(-64%); }
+        #umschlag.gross .u-brief { transform: translateY(-64%) scale(1.9); opacity: 0; }
+        #umschlag.gross .u-rueck, #umschlag.gross .u-front, #umschlag.gross .u-lasche { opacity: 0; }
 
         /* Fenster für gesperrte Türchen */
         #lock-modal {
@@ -484,11 +524,13 @@
 
         <!-- FINALE (nach Türchen 24) -->
         <div id="finaleScreen" class="hidden">
-            <h2>Frohe Weihnachten</h2>
-            <div class="story-text finale-text">
-                <p>Vierundzwanzig Türchen, vierundzwanzig Geschichten. Schön, dass du dir im Advent immer wieder einen Moment dafür genommen hast.</p>
-                <p>Ich wünsche dir ein ruhiges, warmes Weihnachtsfest mit Menschen, die dir guttun, und ein bisschen Zeit nur für dich.</p>
-                <p class="signatur" id="finaleSignatur"></p>
+            <div class="brief" id="finaleBrief">
+                <h2>Frohe Weihnachten</h2>
+                <div class="story-text finale-text">
+                    <p>Vierundzwanzig Türchen, vierundzwanzig Geschichten. Schön, dass du dir im Advent immer wieder einen Moment dafür genommen hast.</p>
+                    <p>Ich wünsche dir ein ruhiges, warmes Weihnachtsfest mit Menschen, die dir guttun, und ein bisschen Zeit nur für dich.</p>
+                    <p class="signatur" id="finaleSignatur"></p>
+                </div>
             </div>
             <div class="story-bild" id="finaleBild" style="display:none;"><img id="finaleBildImg" alt="" src=""></div>
             <button class="btn-primary btn-zweit" style="margin-top: 25px;" onclick="finaleDurch(function () {}, null, true)">&#x2728; Die Animation noch einmal ansehen</button>
@@ -654,14 +696,15 @@
 
         // ==========================================
         // TÖNE: ton/knarren.mp3 (Tür geht auf), ton/zuklappen.mp3 (Tür schließt sich),
-        //       ton/wirbel.mp3 (Buchstaben-Wirbel), ton/finale.mp3 (Finale „Die 24 Lichter“)
+        //       ton/wirbel.mp3 (Buchstaben-Wirbel), ton/finale.mp3 (Finale „Die 24 Lichter“),
+        //       ton/umschlag.mp3 (Umschlag wird geöffnet)
         // Die Lautstärke steckt in den Dateien selbst (alle auf ca. −18 LUFS angeglichen),
         // weil das iPhone eine Lautstärke per Skript ignoriert.
         // Gespielt wird nur zusammen mit der jeweiligen Animation. Fehlt eine Datei
         // oder blockiert das Gerät den Ton, passiert einfach nichts.
         // ==========================================
         const TON = (function () {
-            const DATEIEN = { knarren: "ton/knarren.mp3", zuklappen: "ton/zuklappen.mp3", wirbel: "ton/wirbel.mp3", finale: "ton/finale.mp3" };
+            const DATEIEN = { knarren: "ton/knarren.mp3", zuklappen: "ton/zuklappen.mp3", wirbel: "ton/wirbel.mp3", finale: "ton/finale.mp3", umschlag: "ton/umschlag.mp3" };
             const el = {}, fade = {};
             function hole(n) {
                 if (!(n in el)) {
@@ -1201,6 +1244,41 @@
         }
 
         // --- Finale ---
+        // Nach der Finale-Animation: Ein Umschlag mit Stern-Siegel liegt bereit. Tippen öffnet ihn,
+        // der Brief gleitet heraus und wird zur Finale-Seite (die darunter schon bereitliegt).
+        // Kommt nur zusammen mit der Animation, also beim ersten Mal und bei „Die Animation noch einmal ansehen“.
+        function umschlagZeigen() {
+            const alt = document.getElementById("umschlag"); if (alt) alt.remove();
+            const ov = document.createElement("div");
+            ov.id = "umschlag";
+            ov.innerHTML = '<div class="u-huelle"><div class="u-rueck"></div>' +
+                '<div class="u-brief">Frohe Weihnachten<i></i><i></i><i></i><i></i></div>' +
+                '<div class="u-front"></div><div class="u-lasche"></div><div class="u-siegel">&#9733;</div></div>' +
+                '<div class="u-hinweis">Tippen zum Öffnen</div>';
+            document.body.appendChild(ov);
+            document.documentElement.style.overflow = "hidden";
+            requestAnimationFrame(function () { requestAnimationFrame(function () { ov.classList.add("da"); }); });
+            let phase = 0; const ts = [];
+            function ende() {
+                if (phase === 3) return; phase = 3;
+                ts.forEach(clearTimeout);
+                document.documentElement.style.overflow = "";
+                ov.classList.add("auf", "auf2", "raus", "gross", "frei");
+                setTimeout(function () { ov.remove(); }, 900);
+            }
+            ov.addEventListener("click", function () {
+                if (phase === 0) {
+                    phase = 1;
+                    TON.spielen("umschlag");
+                    ov.classList.add("auf");
+                    ts.push(setTimeout(function () { ov.classList.add("auf2"); }, 330));
+                    ts.push(setTimeout(function () { ov.classList.add("raus"); }, 650));
+                    ts.push(setTimeout(function () { phase = 2; ov.classList.add("gross", "frei"); document.documentElement.style.overflow = ""; }, 1700));
+                    ts.push(setTimeout(function () { phase = 3; ov.remove(); }, 2600));
+                } else ende();   // Tippen während des Öffnens = überspringen
+            });
+        }
+
         function zeigeFinale() {
             alleScreensAus();
             document.getElementById("finaleScreen").classList.remove("hidden");
@@ -1559,6 +1637,7 @@
 
         function zeigeTuerenUebersicht() {
             try { TON.ausblenden("finale", 800); } catch (e) {}
+            const um = document.getElementById("umschlag"); if (um) { um.remove(); document.documentElement.style.overflow = ""; }
             alleScreensAus();
             document.getElementById("calendar-overview").classList.remove("hidden");
             begruessungZeigen();
@@ -1818,7 +1897,7 @@
                 const dauer = variante === "A" ? 12800 : 15300, wechsel = dauer - 500;
                 let t0 = null, gewechselt = false, beendet = false;
                 TON.spielen("finale");
-                function wechselnJetzt() { if (!gewechselt) { gewechselt = true; try { weiter(); } catch (e) {} } }
+                function wechselnJetzt() { if (!gewechselt) { gewechselt = true; try { weiter(); } catch (e) {} try { umschlagZeigen(); } catch (e) {} } }
                 function beenden() {
                     if (beendet) return; beendet = true; wechselnJetzt();
                     ov.style.transition = "opacity 0.9s ease"; ov.style.opacity = "0"; ov.style.pointerEvents = "none";
