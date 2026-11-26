@@ -1,6 +1,6 @@
 /* Offline-Speicher: Seite, Geschichten und Bilder werden beim ersten Besuch abgelegt.
    Bei jeder Änderung an der Seite VERSION hochzählen, damit die Handys die neue Fassung holen. */
-const VERSION = "advent-v22";
+const VERSION = "advent-v23";
 const KERN = ["./", "index.html", "config.js", "manifest.json", "manifest-test.json", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "icon-test-192.png", "icon-test-512.png", "apple-touch-icon-test.png"];
 for (let i = 1; i <= 24; i++) KERN.push("story-day" + i + ".js");
 const BILDER = ["bilder/landing.jpg", "bilder/finale.jpg"];
@@ -18,7 +18,8 @@ self.addEventListener("install", function (e) {
 });
 self.addEventListener("activate", function (e) {
   e.waitUntil(caches.keys().then(function (ks) {
-    return Promise.all(ks.filter(function (k) { return k !== VERSION; }).map(function (k) { return caches.delete(k); }));
+    // alte Versionen löschen – aber nicht die Angaben für die Push-Erinnerung (Name, Fassung)
+    return Promise.all(ks.filter(function (k) { return k !== VERSION && k !== "advent-push-info"; }).map(function (k) { return caches.delete(k); }));
   }).then(function () { return self.clients.claim(); }));
 });
 self.addEventListener("fetch", function (e) {
@@ -57,4 +58,41 @@ self.addEventListener("fetch", function (e) {
     // Seite und Geschichten: zuerst Netz (damit Änderungen sofort erscheinen), ohne Netz aus dem Speicher
     e.respondWith(fetch(r).then(function (res) { if (res.ok) { const k = res.clone(); caches.open(VERSION).then(function (c) { c.put(r, k); }); } return res; }).catch(function () { return caches.match(r, { ignoreSearch: true }).then(function (m) { return m || caches.match("index.html"); }); }));
   }
+});
+
+// ---------- Push-Erinnerung ----------
+// Der Worker schickt ein leeres Signal. Den Text baut der Service Worker aus Datum, Name und Fassung
+// (von der Seite im Cache „advent-push-info“ abgelegt): „Anna, Türchen 5 wartet auf dich“.
+function berlinHeute() {
+  const f = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", month: "numeric", day: "numeric" });
+  const t = {}; f.formatToParts(new Date()).forEach(function (p) { t[p.type] = p.value; });
+  return { monat: +t.month, tag: +t.day };
+}
+function pushInfo() {
+  return caches.open("advent-push-info").then(function (c) { return c.match("info"); })
+    .then(function (r) { return r ? r.json() : {}; }).catch(function () { return {}; });
+}
+self.addEventListener("push", function (e) {
+  e.waitUntil(pushInfo().then(function (info) {
+    const h = berlinHeute(), monat = info.test ? 11 : 12, name = info.name ? String(info.name) : "";
+    const tuerchen = h.monat === monat && h.tag >= 1 && h.tag <= 24;
+    // vom 1. bis 24.: „Anna, Türchen 5 wartet auf dich“; sonst (Testnachricht): „Anna, so sieht deine Erinnerung aus“
+    const titel = tuerchen
+      ? (name ? name + ", Türchen " : "Türchen ") + h.tag + " wartet auf dich"
+      : (name ? name + ", so" : "So") + " sieht deine Erinnerung aus";
+    return self.registration.showNotification(titel, {
+      icon: info.test ? "icon-test-192.png" : "icon-192.png",
+      tag: "advent-erinnerung",
+      data: { url: info.url || "./index.html" }
+    });
+  }));
+});
+self.addEventListener("notificationclick", function (e) {
+  e.notification.close();
+  const ziel = new URL((e.notification.data && e.notification.data.url) || "./index.html", self.registration.scope).href;
+  e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (fenster) {
+    for (const f of fenster) { if (f.url.split("#")[0] === ziel && "focus" in f) return f.focus(); }
+    for (const f of fenster) { if ("focus" in f) return f.focus().then(function (x) { return x && x.navigate ? x.navigate(ziel) : x; }); }
+    return self.clients.openWindow ? self.clients.openWindow(ziel) : null;
+  }));
 });

@@ -292,6 +292,14 @@
         .tuer-card.mit-titel .tag-nummer { transform: translateY(-17px); }
 
         /* Karte „Bevor es losgeht" */
+        /* Push-Erinnerung */
+        .push-block { margin: 12px 0 6px; }
+        .push-schalter { display: flex; align-items: center; gap: 10px; font-size: 1rem; color: var(--heading-color); cursor: pointer; }
+        .push-schalter input { width: 22px; height: 22px; accent-color: var(--accent-color); }
+        .push-meldung { font-size: 0.85rem; margin: 10px 0 0; min-height: 1em; color: var(--heading-color); opacity: 0.9; }
+        .push-hinweis { font-size: 0.9rem; opacity: 0.85; }
+        .push-hinweis button { background: none; border: none; color: var(--accent-color); text-decoration: underline; font-size: inherit; cursor: pointer; padding: 2px; font-family: inherit; }
+        .push-oder { margin: 18px 0 0; font-size: 0.9rem; opacity: 0.85; }
         /* Namenskarte (freiwillig) und Meldung */
         .name-karte { margin: 4px 0 24px; border: 1px solid var(--accent-color); border-radius: 12px; padding: 16px; text-align: center; background: linear-gradient(180deg, rgba(217,180,90,0.12), rgba(217,180,90,0.04)); box-shadow: 0 0 18px rgba(217,180,90,0.18); }
         .name-frage { font-family: Georgia, serif; font-size: 1.15rem; color: var(--heading-color); margin: 0 0 12px; }
@@ -505,6 +513,20 @@
                         </div>
                         <div class="vorab-schritt" id="erinnerungTipp">
                             <h4><span class="nr" id="erNr">2</span>&#128276; Lass dich jeden Tag erinnern</h4>
+                            <div class="push-block" id="pushBlock" style="display:none;">
+                                <p style="margin: 0 0 10px;">Am einfachsten per Mitteilung: Du wirst zur gewählten Uhrzeit erinnert, aber nur an Tagen, an denen dein Türchen noch zu ist.</p>
+                                <p class="push-hinweis" id="pushOhneName" style="display:none;">Dafür brauche ich deinen Vornamen. <button onclick="nameKarteZeigen()">Namen eingeben</button></p>
+                                <div id="pushBedienung">
+                                    <label class="push-schalter"><input type="checkbox" id="pushAn" onchange="pushUmschalten()"> Erinnerung per Mitteilung</label>
+                                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px;">
+                                        <span>um</span>
+                                        <select id="pushZeit" class="erinnerung-zeit" onchange="pushZeitGeaendert()"></select>
+                                        <button class="btn-option" id="pushTestBtn" style="width: auto; padding: 10px 16px;" onclick="pushTest()">Testnachricht schicken</button>
+                                    </div>
+                                    <p class="push-meldung" id="pushMeldung"></p>
+                                </div>
+                                <p class="push-oder">Oder als Termine in deinen Kalender:</p>
+                            </div>
                             <p style="margin: 12px 0 8px;">Wähle eine Uhrzeit. Du bekommst dann für jeden Tag vom 1. bis 24. Dezember einen Termin „Türchen 1“ bis „Türchen 24“ mit Erinnerung und Link in deinen Kalender.</p>
                             <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                                 <select id="erinnerungZeit" class="erinnerung-zeit"><option value="1700">17:00 Uhr</option><option value="1730">17:30 Uhr</option><option value="1800">18:00 Uhr</option><option value="1830">18:30 Uhr</option><option value="1900">19:00 Uhr</option><option value="1930">19:30 Uhr</option><option value="2000" selected>20:00 Uhr</option><option value="2030">20:30 Uhr</option><option value="2100">21:00 Uhr</option></select>
@@ -677,7 +699,8 @@
             // ?reset=alles löscht zusätzlich den Online-Stand des hier zuletzt eingegebenen Namens (nur diese Fassung)
             if (/[?&]reset=(1|alles)(&|$)/.test(location.search)) {
                 if (/[?&]reset=alles(&|$)/.test(location.search)) window.__resetName = speicherLesen("name", "");
-                ["geoeffnet", "lese", "gruss", "finaleAn", "besucht", "titel", "lieblinge", "lieblingeTs", "schrift", "name", "nameOhne"].forEach(speicherLoeschen);
+                window.__resetPush = speicherLesen("push", null);   // Push-Erinnerung dieses Geräts wird ebenfalls abgemeldet
+                ["geoeffnet", "lese", "gruss", "finaleAn", "besucht", "titel", "lieblinge", "lieblingeTs", "schrift", "name", "nameOhne", "push"].forEach(speicherLoeschen);
                 history.replaceState(null, "", location.pathname + (TEST_FASSUNG ? "?test=1" : ""));
             }
         } catch (e) {}
@@ -1426,6 +1449,11 @@
                 fuss.appendChild(b);
             }
         }
+        window.nameKarteZeigen = function () {
+            const karte = document.getElementById("nameKarte");
+            karte.style.display = ""; const f = document.getElementById("nameFeld"); f.value = ""; f.focus();
+            karte.scrollIntoView({ block: "center", behavior: "smooth" });
+        };
         let meldungTimer = null;
         function nameMeldung(text) {
             const m = document.getElementById("nameMeldung");
@@ -1444,6 +1472,7 @@
             speicherLoeschen("nameOhne");
             f.blur();
             personalisieren(); nameAnzeigen(); SYNC.statusZeigen();
+            try { PUSH.nameGeaendert(); } catch (e) {}
             nameMeldung("Schön, dass du da bist, " + v + "!");
             SYNC.abgleichen().then(function (r) {
                 if (r && r.hatteStand && speicherLesen("name", "") === v) nameMeldung("Willkommen zurück, " + v + "! Dein Fortschritt ist wieder da.");
@@ -1590,15 +1619,135 @@
                 if (!moeglich || !name) return Promise.resolve();
                 return schluesselAus(name).then(function (k) { return fetch(url + "/stand/" + k, { method: "DELETE" }); }).catch(function () {});
             }
-            return { moeglich: moeglich, abgleichen: abgleichen, spaeter: spaeter, loeschen: loeschen, statusZeigen: statusZeigen };
+            return { moeglich: moeglich, url: url, schluessel: schluessel, abgleichen: abgleichen, spaeter: spaeter, loeschen: loeschen, statusZeigen: statusZeigen };
         })();
         window.SYNC = SYNC;
         document.addEventListener("DOMContentLoaded", function () {
             try { nameAnzeigen(); } catch (e) {}
             try { SYNC.statusZeigen(); } catch (e) {}
+            try { PUSH.start(); } catch (e) {}
             if (window.__resetName) SYNC.loeschen(window.__resetName);
             else SYNC.abgleichen();
         });
+
+        // ---------- Push-Erinnerung (braucht Namen und Online-Sicherung) ----------
+        // Der Worker schickt zur gewählten Zeit ein leeres Push-Signal (nur wenn das heutige Türchen noch zu ist);
+        // den Text „Anna, Türchen 5 wartet auf dich“ baut der Service Worker selbst. Dafür legt die Seite Name,
+        // Fassung und Startadresse im Cache „advent-push-info“ ab (den der Service Worker bei Updates behält).
+        // Gespeichert auf dem Gerät: Schlüssel „push“ = { an, zeit }.
+        const PUSH = (function () {
+            const unterstuetzt = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window && !!(window.caches);
+            const el = id => document.getElementById(id);
+            function zustand() { const z = speicherLesen("push", null); return z && typeof z === "object" ? z : { an: false, zeit: "20:00" }; }
+            function meldung(t) { el("pushMeldung").textContent = t || ""; }
+            function u8(b64) { const s = atob(b64.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((b64.length + 3) % 4)); return Uint8Array.from(s, c => c.charCodeAt(0)); }
+            function info() {
+                return caches.open("advent-push-info").then(function (c) {
+                    return c.put("info", new Response(JSON.stringify({ name: leserName(), test: TEST_FASSUNG, url: TEST_FASSUNG ? "./index.html?test=1" : "./index.html" }), { headers: { "Content-Type": "application/json" } }));
+                }).catch(function () {});
+            }
+            function abo(neuAnlegen) {
+                return navigator.serviceWorker.ready.then(function (reg) {
+                    return reg.pushManager.getSubscription().then(function (s) {
+                        if (s || !neuAnlegen) return s;
+                        return fetch(SYNC.url + "/push/schluessel").then(r => r.json()).then(function (k) {
+                            return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: u8(k.publicKey) });
+                        });
+                    });
+                });
+            }
+            function senden(methode, pfad, endpoint, zeit) {
+                return SYNC.schluessel().then(function (k) {
+                    if (!k) throw new Error("kein Name");
+                    return fetch(SYNC.url + "/push/" + pfad + "/" + k, { method: methode, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: endpoint, zeit: zeit }) });
+                }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r; });
+            }
+            function anzeigen() {
+                if (!unterstuetzt || !SYNC.moeglich) { el("pushBlock").style.display = "none"; return; }
+                el("pushBlock").style.display = "";
+                const hatName = !!speicherLesen("name", "");
+                el("pushOhneName").style.display = hatName ? "none" : "";
+                el("pushBedienung").style.display = hatName ? "" : "none";
+                const z = zustand();
+                el("pushAn").checked = !!z.an;
+                el("pushZeit").value = z.zeit || "20:00";
+                el("pushTestBtn").style.display = z.an ? "" : "none";
+            }
+            function start() {
+                const sel = el("pushZeit");
+                if (!sel.options.length) for (let h = 0; h < 24; h++) for (let m = 0; m < 60; m += 15) {
+                    const v = String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
+                    const o = document.createElement("option"); o.value = v; o.textContent = v + " Uhr"; sel.appendChild(o);
+                }
+                anzeigen();
+                if (!unterstuetzt || !SYNC.moeglich) return;
+                if (window.__resetPush) {   // ?reset: Erinnerung dieses Geräts abmelden
+                    abo(false).then(function (s) { if (!s) return; const ep = s.endpoint; return s.unsubscribe().then(function () {
+                        return fetch(SYNC.url + "/push/anmeldung/" + "0".repeat(40), { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: ep }) });
+                    }); }).catch(function () {});
+                    return;
+                }
+                const z = zustand();
+                if (z.an && speicherLesen("name", "")) {
+                    // bei jedem Start still auffrischen: Name für den Text, Anmeldung beim Worker
+                    info();
+                    abo(false).then(function (s) { if (s) return senden("PUT", "anmeldung", s.endpoint, z.zeit); }).catch(function () {});
+                }
+            }
+            window.pushUmschalten = function () {
+                const box = el("pushAn"), zeit = el("pushZeit").value || "20:00";
+                if (box.checked) {
+                    meldung("Einen Moment …");
+                    // Erlaubnis direkt im Tippen anfragen (iPhone)
+                    const erlaubnis = Notification.permission === "granted" ? Promise.resolve("granted") : Notification.requestPermission();
+                    Promise.resolve(erlaubnis).then(function (p) {
+                        if (p !== "granted") throw new Error("verweigert");
+                        return info().then(function () { return abo(true); });
+                    }).then(function (s) {
+                        return senden("PUT", "anmeldung", s.endpoint, zeit);
+                    }).then(function () {
+                        speicherSchreiben("push", { an: true, zeit: zeit });
+                        anzeigen();
+                        meldung("Eingeschaltet. Du wirst um " + zeit + " Uhr erinnert, wenn dein Türchen dann noch zu ist.");
+                    }).catch(function (e) {
+                        box.checked = false; speicherSchreiben("push", { an: false, zeit: zeit }); anzeigen();
+                        meldung(e && e.message === "verweigert"
+                            ? "Mitteilungen sind für den Kalender nicht erlaubt. Du kannst sie in den Einstellungen deines Handys einschalten."
+                            : "Das hat leider nicht geklappt. Bitte versuche es später noch einmal.");
+                    });
+                } else {
+                    speicherSchreiben("push", { an: false, zeit: zeit });
+                    anzeigen();
+                    meldung("Ausgeschaltet.");
+                    abo(false).then(function (s) { if (!s) return; const ep = s.endpoint; return senden("DELETE", "anmeldung", ep).catch(function () {}).then(function () { return s.unsubscribe(); }); }).catch(function () {});
+                }
+            };
+            window.pushZeitGeaendert = function () {
+                const z = zustand(), zeit = el("pushZeit").value;
+                speicherSchreiben("push", { an: z.an, zeit: zeit });
+                if (!z.an) return;
+                abo(false).then(function (s) { if (s) return senden("PUT", "anmeldung", s.endpoint, zeit); })
+                    .then(function () { meldung("Geändert: Erinnerung um " + zeit + " Uhr."); })
+                    .catch(function () { meldung("Das hat leider nicht geklappt. Bitte versuche es später noch einmal."); });
+            };
+            window.pushTest = function () {
+                meldung("Wird geschickt …");
+                info().then(function () { return abo(false); }).then(function (s) {
+                    if (!s) throw new Error("kein Abo");
+                    return senden("POST", "test", s.endpoint);
+                }).then(function () { meldung("Testnachricht ist unterwegs. Sie kommt in wenigen Sekunden."); })
+                  .catch(function () { meldung("Die Testnachricht ließ sich nicht schicken. Schalte die Erinnerung einmal aus und wieder ein."); });
+            };
+            function nameGeaendert() {
+                anzeigen();
+                const z = zustand();
+                if (!z.an || !unterstuetzt) return;
+                info();
+                abo(false).then(function (s) { if (s) return senden("PUT", "anmeldung", s.endpoint, z.zeit); }).catch(function () {});
+            }
+            return { start: start, nameGeaendert: nameGeaendert, unterstuetzt: unterstuetzt };
+        })();
+        window.PUSH = PUSH;
 
         // ---------- Schriftgröße der Geschichten (pro Gerät gemerkt) ----------
         const SCHRIFT_STUFEN = [0.9, 1, 1.12, 1.25, 1.4];

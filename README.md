@@ -14,7 +14,7 @@ Der Absender steht in `config.js` (`ABSENDER`) und erscheint nur in der Signatur
 | GitHub-Repository | `vanallen84/advents-geschichten` |
 | Alte GitHub-Adresse (leitet weiter) | https://vanallen84.github.io/advents-geschichten/ |
 
-Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v22`.
+Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v23`.
 
 ---
 
@@ -43,6 +43,7 @@ Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v22`.
 21. [Verlauf der Änderungen](#21-verlauf-der-änderungen)
 22. [Rechtliches zu Texten und Bildern](#22-rechtliches-zu-texten-und-bildern)
 23. [Name und Online-Sicherung](#23-name-und-online-sicherung)
+24. [Push-Erinnerung](#24-push-erinnerung)
 
 ---
 
@@ -172,7 +173,7 @@ Beide Fassungen sind **dieselben Dateien**. Unterschieden wird nur über den Adr
 - **`test/index.html`** ist nur eine Weiterleitung.
   - Ein angehängtes `?reset=1` wird mitgenommen: `/test/?reset=1` → `/index.html?test=1&reset=1`.
 - **`?reset=1`** löscht den gespeicherten Stand der jeweiligen Fassung.
-  - Gelöscht werden: geöffnete Türchen, Lesepositionen, Begrüßungs-Verlauf, „Finale gesehen“, „schon mal besucht“, gespeicherte Titel, Lieblingsgeschichten, Schriftgröße, Name.
+  - Gelöscht werden: geöffnete Türchen, Lesepositionen, Begrüßungs-Verlauf, „Finale gesehen“, „schon mal besucht“, gespeicherte Titel, Lieblingsgeschichten, Schriftgröße, Name, Push-Einstellung (die Push-Anmeldung dieses Geräts wird auch beim Worker abgemeldet).
   - Der **Online-Stand bleibt** dabei erhalten: Wer danach denselben Namen eingibt, bekommt ihn zurück („Willkommen zurück“).
 - **`?reset=alles`** (bzw. `/test/?reset=alles`) löscht zusätzlich den Online-Stand des auf diesem Gerät zuletzt eingegebenen Namens, nur für diese Fassung.
   (Bis v19 tat das schon `?reset=1` – das hat beim Testen den Stand eines anderen Geräts gelöscht, wenn im Browser noch derselbe Name gespeichert war.)
@@ -257,7 +258,9 @@ Alle Seiten liegen als `<div>`-Bereiche in `index.html` und werden über die Kla
   1. **Auf den Startbildschirm legen.**
      - Es wird nur die passende Anleitung gezeigt: iPhone (Safari) oder Android (Chrome).
      - Läuft der Kalender schon als installierte App, entfällt dieser Schritt ganz, und die Erinnerung wird zu Schritt 1.
-  2. **Erinnerung:** Uhrzeit wählen (17:00 bis 21:00 im Halbstundentakt, vorausgewählt 20:00), dann „Termine hinzufügen“ → lädt `erinnerung/HHMM.ics` (siehe [Abschnitt 11](#11-kalender-erinnerungen-ics)).
+  2. **Erinnerung:**
+     - Wo Push möglich ist (installierte App auf dem iPhone, sonst Browser mit Push-Unterstützung) und `SYNC_URL` gesetzt ist: oben der Schalter **„Erinnerung per Mitteilung“** mit Uhrzeit (frei im 15-Minuten-Takt, Standard 20:00) und „Testnachricht schicken“ (siehe [Abschnitt 24](#24-push-erinnerung)). Ohne Namen steht dort „Dafür brauche ich deinen Vornamen. Namen eingeben“.
+     - Darunter (bzw. allein, wo Push nicht geht): Uhrzeit wählen (17:00 bis 21:00 im Halbstundentakt, vorausgewählt 20:00), dann „Termine hinzufügen“ → lädt `erinnerung/HHMM.ics` (siehe [Abschnitt 11](#11-kalender-erinnerungen-ics)).
   - Beim **ersten Besuch** ist die Karte offen.
   - **Ab dem zweiten Besuch** ist sie eingeklappt (▾). Ein Tipp auf die Überschrift klappt sie auf (▴).
 - **Kasten „So funktioniert’s“** (drei Schritte):
@@ -632,6 +635,7 @@ Jedes Gerät und jeder Browser hat seinen eigenen Stand. Nur wenn ein Vorname ei
 | `lieblingeTs` | Zeitpunkt der letzten Änderung an den Lieblingen (für den Abgleich, seit v19) |
 | `name` | selbst eingegebener Vorname (nur auf dem Gerät, wird **nicht** online gespeichert; seit v19) |
 | `nameOhne` | `true`, wenn „Ohne Namen weiter“ gewählt wurde (seit v19) |
+| `push` | Push-Erinnerung: `{ an, zeit }` (seit v23). Zusätzlich liegt im Cache `advent-push-info` der Eintrag `info` mit Name, Fassung und Startadresse für den Service Worker. |
 
 - Funktioniert `localStorage` nicht (z. B. in manchen privaten Modi), arbeitet die Seite mit einem Ersatz im Arbeitsspeicher.
   Dann geht der Stand beim Schließen verloren, aber nichts stürzt ab.
@@ -654,6 +658,7 @@ Jedes Gerät und jeder Browser hat seinen eigenen Stand. Nur wenn ein Vorname ei
 - **Bilder:** zuerst aus dem Speicher (schnell), sonst aus dem Netz.
 - Gespeichert werden nur erfolgreiche Antworten (`res.ok`). Fehlerseiten landen also nicht im Speicher.
 - `.ics`-Dateien werden nie gespeichert.
+- **Push** (seit v23): `push`-Ereignis zeigt die Erinnerung an, `notificationclick` öffnet bzw. holt den Kalender nach vorn (siehe [Abschnitt 24](#24-push-erinnerung)). Beim Aufräumen alter Versionen bleibt der Cache `advent-push-info` erhalten.
 - **Töne (`ton/`):** zuerst aus dem Speicher, damit sie auch **offline** spielen.
   - Safari fragt Audio in Teilstücken an (**Range-Anfragen**, z. B. `Range: bytes=0-1`). Eine gespeicherte, vollständige Datei passt darauf nicht von selbst.
   - Der Service Worker schneidet deshalb den angefragten Bereich aus der gespeicherten Datei und antwortet mit **206 Partial Content** (`Content-Range`, `Content-Length`, `Accept-Ranges`).
@@ -846,6 +851,7 @@ Der Service Worker ist auch lokal auf `localhost` aktiv. Wer beim Entwickeln Än
 | Bilder | `bildEinblenden`, `zeigeStoryBild`, `storyBildStart`, `wmAn`, `wmAus` |
 | Animationen | `portalDurch`, `portalZurueck`, `wirbelUebergang`, `startStory`, `finaleDurch` (mit `bildA`/`bildB`), `umschlagZeigen` |
 | Töne | `TON.spielen`, `TON.ausblenden` (Dateinamen in `DATEIEN`) |
+| Push | `PUSH` (`start`, `nameGeaendert`), `pushUmschalten`, `pushZeitGeaendert`, `pushTest`; im Service Worker `push`/`notificationclick`, `berlinHeute`, `pushInfo` |
 | Name/Sicherung | `leserName`, `personalisieren`, `nameAnzeigen`, `nameSpeichern`, `nameUeberspringen`, `SYNC` (`abgleichen`, `spaeter`, `loeschen`) |
 | Lesen | `schriftAendern`, `schriftAnwenden`, `VORLESEN` (`umschalten`, `stop`), `lieblingUmschalten`, `lieblingKnopf`, `lieblingeListe`, `istLiebling`, `lieblingeZeigen` |
 | Startseite | `rulesAktualisieren`, `vorabUmschalten`, `rulesUmschalten`, `ladeErinnerung`, Countdown, App-Tipp nach Gerät |
@@ -907,6 +913,7 @@ Grob in der Reihenfolge der Entstehung (Herbst 2026):
 24. **Online-Sicherung robuster** (v20): D1 statt KV, Worker führt beim Ablegen zusammen, leere Stände werden nie abgelegt, `?reset=1` nur noch lokal (`?reset=alles` auch online), Statuszeile in TEST.
 25. **Töne robuster** (v21): gescheiterte Ton-Abspieler werden automatisch neu angelegt.
 26. **Lesezeit** (v22): ungefähre Lesezeit (230 Wörter pro Minute) auf der Einstimmungsseite.
+27. **Push-Erinnerung** (v23): „Anna, Türchen 5 wartet auf dich“ zur frei wählbaren Uhrzeit (15-Minuten-Takt), nur wenn das heutige Türchen noch zu ist; über den eigenen Worker mit Cron-Auslöser, Schlüssel erzeugt der Worker selbst.
 
 ---
 
@@ -916,6 +923,7 @@ Grob in der Reihenfolge der Entstehung (Herbst 2026):
 - **Eigenformulierungen:** Einstimmungssätze, Begrüßungssätze, Texte der Startseite, „Tippen zum Öffnen“, die Beschriftungen „Zu den Lieblingen“, „Lieblingsgeschichte“, „Deine Lieblingsgeschichten“, „Vorlesen“, „Weiter vorlesen“, „Vorlesen anhalten“. Der Brief auf der Finale-Seite stammt vom Absender selbst.
 - **Bilder:** Mit Google Gemini erzeugt, für die private Nutzung in diesem Kalender. Keine Fotos realer Personen.
 - Die Seite ist privat und nicht in Suchmaschinen gelistet.
+- **Push:** Für die Erinnerung werden zusätzlich die Push-Adresse des Geräts (vom Push-Dienst von Apple/Google/Mozilla vergeben), der Schlüssel und die Uhrzeit gespeichert. Die Mitteilung selbst ist leer; den Text erzeugt das Gerät.
 - **Daten:** Ohne Namenseingabe bleibt alles im Browser des Lesers. Mit Namen werden geöffnete Türchen, Titel, Lieblinge und „Finale gesehen“ unter einem aus dem Namen berechneten Schlüssel bei Cloudflare gespeichert (D1-Datenbank des eigenen Workers). Der Name selbst wird nicht übertragen.
 
 ---
@@ -971,3 +979,39 @@ oder die App einmal neu installiert. Wer denselben Vornamen eingibt, findet sein
   Dann in einem privaten Fenster, auf einem anderen Gerät oder in der TEST-App denselben Namen eingeben → „Willkommen zurück“.
 - In Cloudflare unter D1 → `advent-stand-db` → Console mit `SELECT * FROM stand;` sind die Einträge `…` (LIVE) bzw. `…-t` (TEST) zu sehen.
 - Entwickelt und geprüft wurde mit dem echten Worker-Code, lokal in Node mit nachgebildeter D1-Datenbank, und mehreren getrennten Browser-Kontexten als „Geräten“ – inklusive eines absichtlich veralteten Abrufs.
+
+---
+
+## 24. Push-Erinnerung
+
+Statt (oder zusätzlich zu) den `.ics`-Terminen: eine Mitteilung zur selbst gewählten Uhrzeit, aber **nur an Tagen, an denen das heutige Türchen noch zu ist**.
+
+### 24.1 Für die Leserin
+
+- In „Bevor es losgeht“ → „Lass dich jeden Tag erinnern“: Schalter **„Erinnerung per Mitteilung“**, Uhrzeit (00:00–23:45 im 15-Minuten-Takt, Standard 20:00), Knopf **„Testnachricht schicken“** (nur wenn eingeschaltet).
+- Erst beim Einschalten fragt das Gerät nach der Erlaubnis.
+- Voraussetzungen: **Name eingegeben** (sonst Hinweis „Dafür brauche ich deinen Vornamen.“), `SYNC_URL` gesetzt, Gerät kann Push. Auf dem **iPhone nur in der installierten App** (ab iOS 16.4) – in Safari ist der Bereich ausgeblendet, dort bleiben die `.ics`-Termine.
+- **Text:** vom 1. bis 24. Dezember (TEST: 1. bis 24. November) „Anna, Türchen 5 wartet auf dich“ (ohne Namen: „Türchen 5 wartet auf dich“). Außerhalb dieser Tage (also bei einer Testnachricht) „Anna, so sieht deine Erinnerung aus“. Symbol: normales bzw. TEST-Symbol.
+- Antippen der Mitteilung öffnet den Kalender (TEST-App → TEST-Fassung).
+- Meldungen im Kalender (Eigenformulierungen): „Eingeschaltet. Du wirst um 20:00 Uhr erinnert, wenn dein Türchen dann noch zu ist.“, „Geändert: Erinnerung um … Uhr.“, „Ausgeschaltet.“, „Testnachricht ist unterwegs. Sie kommt in wenigen Sekunden.“, „Mitteilungen sind für den Kalender nicht erlaubt. Du kannst sie in den Einstellungen deines Handys einschalten.“, Fehlermeldungen.
+
+### 24.2 Wie es funktioniert
+
+1. **Einschalten:** Erlaubnis anfragen (direkt im Tippen, wichtig fürs iPhone) → öffentlichen Schlüssel beim Worker holen (`GET /push/schluessel`) → beim Push-Dienst des Geräts anmelden (`pushManager.subscribe`) → Anmeldung mit Push-Adresse, Uhrzeit und Online-Schlüssel (aus dem Namen, siehe 23.2) an den Worker (`PUT /push/anmeldung/<schlüssel>`).
+2. Die Seite legt Name, Fassung (TEST/LIVE) und Startadresse im Cache `advent-push-info` ab – dort liest der Service Worker sie beim Anzeigen.
+3. **Worker, alle 15 Minuten (Cron):** für jede Anmeldung – richtiger Monat (LIVE Dezember, TEST November) und Tag 1–24? Uhrzeit erreicht? heute noch nichts geschickt? heutiges Türchen im Online-Stand noch **nicht** geöffnet? → dann ein **leeres** Push-Signal mit VAPID-Unterschrift. Ist das Türchen schon offen, wird für heute nichts mehr geschickt.
+4. **Service Worker:** bekommt das Signal, baut den Text aus heutigem Datum (deutsche Zeit), Name und Fassung und zeigt die Mitteilung.
+5. Meldet der Push-Dienst eine Anmeldung als ungültig (404/410), löscht der Worker sie.
+6. Bei jedem Start der Seite wird die Anmeldung still aufgefrischt (Name im Cache, Anmeldung beim Worker); nach einer Namensänderung ebenso.
+7. **Ausschalten:** beim Worker abmelden (`DELETE /push/anmeldung/…`) und beim Push-Dienst abmelden. `?reset=1`/`?reset=alles` tun das ebenfalls.
+
+**Warum ein leeres Signal?** Inhalte in Push-Nachrichten müssen aufwendig verschlüsselt werden. Weil das Gerät Datum, Name und Fassung ohnehin kennt, reicht ein leeres „Weck-Signal“. Das hält den Worker-Code klein.
+
+**Schlüssel (VAPID):** erzeugt der Worker beim ersten Bedarf selbst (P-256) und legt ihn in D1, Tabelle `konfig`, ab. Nichts davon steht im Code oder im Repository, und es muss nichts eingetragen werden. Wird die Tabelle gelöscht, entsteht ein neues Schlüsselpaar; dann müssen sich die Geräte neu anmelden (Erinnerung aus- und wieder einschalten).
+
+### 24.3 Einrichtung und Grenzen
+
+- Cloudflare: neuer Worker-Code + **Cron-Auslöser `*/15 * * * *`** beim Worker `advent-stand` (Anleitung: `ANLEITUNG_Cloudflare_advent-stand.md`, Abschnitt „Push-Erinnerung einschalten“). Neue Tabellen `push` (endpoint, schluessel, zeit, gesendet, t) und `konfig` legt der Worker selbst an.
+- Die Mitteilung kommt bis zu ~15 Minuten nach der gewählten Zeit.
+- Ob sie angezeigt wird, hängt auch von Fokus-/Mitteilungseinstellungen des Geräts ab.
+- Geprüft wurde: echter Worker-Code mit SQLite (wie D1) und nachgebildetem Push-Dienst (VAPID-Unterschrift geprüft, Zeit- und Tageslogik, „Türchen schon offen“, ungültige Anmeldungen); Kalender-Oberfläche mit nachgebildeter Push-Anmeldung; Anzeige der Mitteilung im Service Worker über die Chromium-Entwicklerschnittstelle; Texte für Türchentage mit gestelltem Datum. **Nicht** prüfbar war die echte Zustellung durch Apple auf dem iPhone.
