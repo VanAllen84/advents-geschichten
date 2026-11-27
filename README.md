@@ -913,7 +913,7 @@ Grob in der Reihenfolge der Entstehung (Herbst 2026):
 24. **Online-Sicherung robuster** (v20): D1 statt KV, Worker führt beim Ablegen zusammen, leere Stände werden nie abgelegt, `?reset=1` nur noch lokal (`?reset=alles` auch online), Statuszeile in TEST.
 25. **Töne robuster** (v21): gescheiterte Ton-Abspieler werden automatisch neu angelegt.
 26. **Lesezeit** (v22): ungefähre Lesezeit (230 Wörter pro Minute) auf der Einstimmungsseite.
-27. **Push-Erinnerung** (v23): „Anna, Türchen 5 wartet auf dich“ zur frei wählbaren Uhrzeit (15-Minuten-Takt), nur wenn das heutige Türchen noch zu ist; über den eigenen Worker mit Cron-Auslöser, Schlüssel erzeugt der Worker selbst.
+27. **Push-Erinnerung** (v23): „Anna, Türchen 5 wartet auf dich“ zur frei wählbaren Uhrzeit (Auswahl im 15-Minuten-Takt, Zustellung innerhalb einer Minute), nur wenn das heutige Türchen noch zu ist; über den eigenen Worker mit Cron-Auslöser, Schlüssel erzeugt der Worker selbst.
 28. **Erinnerung führt zum Türchen** (v24): Tipp auf die Mitteilung öffnet direkt die Übersicht mit der heutigen Kachel in der Mitte, kurz hervorgehoben.
 29. **Schiebeschalter** (v25): „Erinnerung per Mitteilung“ als Toggle statt Häkchen.
 
@@ -1002,7 +1002,7 @@ Statt (oder zusätzlich zu) den `.ics`-Terminen: eine Mitteilung zur selbst gew�
 
 1. **Einschalten:** Erlaubnis anfragen (direkt im Tippen, wichtig fürs iPhone) → öffentlichen Schlüssel beim Worker holen (`GET /push/schluessel`) → beim Push-Dienst des Geräts anmelden (`pushManager.subscribe`) → Anmeldung mit Push-Adresse, Uhrzeit und Online-Schlüssel (aus dem Namen, siehe 23.2) an den Worker (`PUT /push/anmeldung/<schlüssel>`).
 2. Die Seite legt Name, Fassung (TEST/LIVE) und Startadresse im Cache `advent-push-info` ab – dort liest der Service Worker sie beim Anzeigen.
-3. **Worker, alle 15 Minuten (Cron):** für jede Anmeldung – richtiger Monat (LIVE Dezember, TEST November) und Tag 1–24? Uhrzeit erreicht? heute noch nichts geschickt? heutiges Türchen im Online-Stand noch **nicht** geöffnet? → dann ein **leeres** Push-Signal mit VAPID-Unterschrift. Ist das Türchen schon offen, wird für heute nichts mehr geschickt.
+3. **Worker, jede Minute (Cron `* * * * *`):** für jede Anmeldung – richtiger Monat (LIVE Dezember, TEST November) und Tag 1–24? Uhrzeit erreicht? heute noch nichts geschickt? heutiges Türchen im Online-Stand noch **nicht** geöffnet? → dann ein **leeres** Push-Signal mit VAPID-Unterschrift. Ist das Türchen schon offen, wird für heute nichts mehr geschickt.
 4. **Service Worker:** bekommt das Signal, baut den Text aus heutigem Datum (deutsche Zeit), Name und Fassung und zeigt die Mitteilung.
 5. Meldet der Push-Dienst eine Anmeldung als ungültig (404/410), löscht der Worker sie.
 6. Bei jedem Start der Seite wird die Anmeldung still aufgefrischt (Name im Cache, Anmeldung beim Worker); nach einer Namensänderung ebenso.
@@ -1015,7 +1015,8 @@ Statt (oder zusätzlich zu) den `.ics`-Terminen: eine Mitteilung zur selbst gew�
 ### 24.3 Einrichtung und Grenzen
 
 - **Grenze im kostenlosen Tarif:** höchstens 50 Datenbank-Abfragen pro Worker-Aufruf. Ein Cron-Lauf braucht etwa 4 + 2 pro Anmeldung – reicht für gut 20 Geräte.
-- Cloudflare: neuer Worker-Code + **Cron-Auslöser `*/15 * * * *`** beim Worker `advent-stand` (Anleitung: `ANLEITUNG_Cloudflare_advent-stand.md`, Abschnitt „Push-Erinnerung einschalten“). Neue Tabellen `push` (endpoint, schluessel, zeit, gesendet, t) und `konfig` legt der Worker selbst an.
-- Die Mitteilung kommt bis zu ~15 Minuten nach der gewählten Zeit.
+- Cloudflare: neuer Worker-Code + **Cron-Auslöser `* * * * *`** (jede Minute) beim Worker `advent-stand` (Anleitung: `ANLEITUNG_Cloudflare_advent-stand.md`, Abschnitt „Push-Erinnerung einschalten“). Neue Tabellen `push` (endpoint, schluessel, zeit, gesendet, t) und `konfig` legt der Worker selbst an.
+- Die Mitteilung kommt innerhalb etwa einer Minute nach der gewählten Zeit (bei Cron `*/15 * * * *` bis zu 15 Minuten später; am Code ändert sich dafür nichts). 1.440 Läufe am Tag liegen weit unter den 100.000 erlaubten Worker-Aufrufen.
 - Ob sie angezeigt wird, hängt auch von Fokus-/Mitteilungseinstellungen des Geräts ab.
+- **Generalprobe** (27.11.2026, LIVE-Fassung, 30.11. bis 25.12. mit gestellter Uhr): 43 Prüfpunkte von Erstbesuch, Namenseingabe, Push-Anmeldung, Türchen öffnen/schließen, Lesezeit, Favoriten, Abgleich mit zweitem Gerät, Cron (19:59 nichts, 20:00 genau eine Mitteilung, Türchen schon offen → nichts, 25.12. nichts), Tipp auf Mitteilung, Weiter-Knopf, Wischgeste, Türchen 24 mit Finale, Umschlag und Brief, 25.12., Offline mit echtem Service Worker inkl. Ton – ohne Konsolenfehler.
 - Geprüft wurde: echter Worker-Code mit SQLite (wie D1) und nachgebildetem Push-Dienst (VAPID-Unterschrift geprüft, Zeit- und Tageslogik, „Türchen schon offen“, ungültige Anmeldungen); Kalender-Oberfläche mit nachgebildeter Push-Anmeldung; Anzeige der Mitteilung im Service Worker über die Chromium-Entwicklerschnittstelle; Texte für Türchentage mit gestelltem Datum. **Nicht** prüfbar war die echte Zustellung durch Apple auf dem iPhone.
