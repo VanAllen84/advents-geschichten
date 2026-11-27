@@ -14,7 +14,7 @@ Der Absender steht in `config.js` (`ABSENDER`) und erscheint nur in der Signatur
 | GitHub-Repository | `vanallen84/advents-geschichten` |
 | Alte GitHub-Adresse (leitet weiter) | https://vanallen84.github.io/advents-geschichten/ |
 
-Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v25`.
+Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v26`.
 
 ---
 
@@ -466,11 +466,12 @@ Fünf Toneffekte begleiten die Animationen:
   | knarren.mp3 | −19,6 LUFS, −1,5 dBTP | −18,1 LUFS, −1,9 dBTP |
   | zuklappen.mp3 | −18,4 LUFS, −7,5 dBTP | −18,1 LUFS, −7,3 dBTP (+0,33 s Stille vorn) |
   | wirbel.mp3 | −18,5 LUFS, −5,5 dBTP | −18,0 LUFS, −5,1 dBTP |
-  | finale.mp3 | −18,5 LUFS, −5,4 dBTP | −18,0 LUFS, −4,9 dBTP |
+  | finale.mp3 | −18,5 LUFS, −5,4 dBTP | −18,0 LUFS, −5,3 dBTP (Herzschlag entfernt, v26) |
   | umschlag.mp3 | −17,9 LUFS, −4,0 dBTP | −18,0 LUFS, −4,1 dBTP |
 
 - **Stummschalter am iPhone:** Je nach iOS-Version spielt Safari die Töne auch bei eingeschaltetem Stummschalter oder eben nicht. Die normale Lautstärke des Handys gilt immer.
 - **Offline:** Die Töne werden vom Service Worker gespeichert und spielen auch ohne Netz (siehe [Abschnitt 13](#13-offline-fähigkeit-und-updates-service-worker)).
+- **Herzschlag aus finale.mp3 entfernt** (v26): In der gelieferten Datei lagen zwischen 16,8 und 22,8 s sechs Doppelschläge („Bumm-bumm“, je ca. +21 dB über den tiefen Tönen der Musik). Entfernt durch gezielte Dämpfung nur der tiefen Frequenzen (bis 340 Hz voll, Übergang bis 500 Hz, ohne Zeitverschiebung per Fourier-Transformation) und nur in den zwölf Zeitfenstern der Schläge (je 0,2–0,35 s, weiche Übergänge von 30 ms, Dämpfung auf 5 %). Außerhalb dieser Fenster ist die Datei unverändert. Die Originaldatei mit Herzschlag liegt nicht im Repository.
 - Töne austauschen: Datei mit **gleichem Namen** in `ton/` ersetzen, vorher angleichen, und `VERSION` in `sw.js` hochzählen (sonst spielt der alte Ton aus dem Speicher).
 - Zum Abschalten aller Töne beim Testen: `window.TON_AUS = true` in der Browser-Konsole.
 
@@ -916,6 +917,7 @@ Grob in der Reihenfolge der Entstehung (Herbst 2026):
 27. **Push-Erinnerung** (v23): „Anna, Türchen 5 wartet auf dich“ zur frei wählbaren Uhrzeit (Auswahl im 15-Minuten-Takt, Zustellung innerhalb einer Minute), nur wenn das heutige Türchen noch zu ist; über den eigenen Worker mit Cron-Auslöser, Schlüssel erzeugt der Worker selbst.
 28. **Erinnerung führt zum Türchen** (v24): Tipp auf die Mitteilung öffnet direkt die Übersicht mit der heutigen Kachel in der Mitte, kurz hervorgehoben.
 29. **Schiebeschalter** (v25): „Erinnerung per Mitteilung“ als Toggle statt Häkchen.
+30. **Finale-Ton ohne Herzschlag** (v26): sechs Doppelschläge gegen Ende aus `ton/finale.mp3` herausgefiltert.
 
 ---
 
