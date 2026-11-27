@@ -14,7 +14,7 @@ Der Absender steht in `config.js` (`ABSENDER`) und erscheint nur in der Signatur
 | GitHub-Repository | `vanallen84/advents-geschichten` |
 | Alte GitHub-Adresse (leitet weiter) | https://vanallen84.github.io/advents-geschichten/ |
 
-Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v27`.
+Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v28`.
 
 ---
 
@@ -286,8 +286,8 @@ Alle Seiten liegen als `<div>`-Bereiche in `index.html` und werden über die Kla
   | Zustand | Aussehen |
   |---|---|
   | **gesperrt** (Tag noch nicht erreicht) | Bild **stark verpixelt** (`pix-lock`, 10×5), dunkel, halb durchsichtig, Schloss 🔒 oben rechts |
-  | **heute**, noch nicht geöffnet | Bild **leicht verpixelt** (`pix-mid`, 32×16), goldener Rahmen, pulsierendes Leuchten, Lichtwelle, Schriftzug „HEUTE“ |
-  | **frühere Tage, nie geöffnet** | leicht verpixelt, goldener Rahmen, Leuchten, Lichtwelle, „NOCH UNGEÖFFNET“ |
+  | **heute**, noch nicht geöffnet | Bild **leicht verpixelt** (`pix-mid`, 32×16), goldener Rahmen, pulsierendes Leuchten, Lichtwelle, Schriftzug „HEUTE“ und darunter die Lesezeit „ETWA 9 MIN.“ (seit v28) |
+  | **frühere Tage, nie geöffnet** | leicht verpixelt, goldener Rahmen, Leuchten, Lichtwelle, „NOCH UNGEÖFFNET“ und darunter die Lesezeit (seit v28) |
   | **geöffnet** | Bild **scharf**, goldener Rahmen, unten abgedunkelt, **Titel der Geschichte** kursiv (bis zu 3 Zeilen), Nummer etwas nach oben gerückt |
   | ab 25.12., geöffnet (`frei`) | wie geöffnet, aber mit grauem Rahmen |
   | ab 25.12., nie geöffnet | wie „frühere Tage, nie geöffnet“ |
@@ -307,6 +307,7 @@ Alle Seiten liegen als `<div>`-Bereiche in `index.html` und werden über die Kla
 - Zeigt „Türchen N“, den Titel, die **ungefähre Lesezeit** und einen kurzen Einstimmungssatz (`einstimmung` aus der Geschichten-Datei).
   - Lesezeit (`lesezeitText`): Wörter des Textes ÷ 230 pro Minute (zügiges Lesen, Konstante `WOERTER_PRO_MINUTE`), auf ganze Minuten gerundet, mindestens 1 Minute, z. B. „Lesezeit: etwa 5 Minuten“ (Eigenformulierung). Sie wird beim Öffnen aus dem Text berechnet und stimmt daher auch nach dem Austausch einer Geschichte.
   - Stand 2026: von etwa 1 Minute (17 „Die Sterntaler“) bis etwa 33 Minuten (13 „Unter dem Tannenbaum“).
+  - Dieselbe Lesezeit steht seit v28 auch **über jeder Geschichte** (Lese-Leiste) und auf den **noch ungeöffneten Kacheln** („HEUTE / ETWA 9 MIN.“, „NOCH UNGEÖFFNET / ETWA 33 MIN.“; über `data-dauer` und `attr()` im CSS). Für die Kacheln holt `dauerNachladen` die Wortzahl aus den Geschichten-Dateien (`lesezeitMinuten`). Auf geöffneten Kacheln steht sie bewusst nicht (dort stehen schon Nummer, Titel und Stern).
 - Der Knopf **„Geschichte beginnen“** erscheint erst, wenn die Geschichte geladen ist; dann folgt der Buchstaben-Wirbel.
 - Im Hintergrund liegt schwach und unscharf das Tagesbild als Wasserzeichen (`wmAnker`).
 
@@ -316,6 +317,7 @@ Alle Seiten liegen als `<div>`-Bereiche in `index.html` und werden über die Kla
 - Darunter das **Tagesbild**. Es blendet langsam ein (4 s), sobald man beim Lesen dort ankommt.
 - Auch hier liegt das Tagesbild schwach als Wasserzeichen im Hintergrund.
 - **Lese-Leiste** unter dem Titel:
+  - **⏱ etwa 8 Min.:** ungefähre Lesezeit (seit v28, wie auf der Einstimmungsseite berechnet), damit sie auch beim erneuten Öffnen zu sehen ist.
   - **A− / A+:** Schriftgröße in fünf Stufen (90 %, 100 %, 112 %, 125 %, 140 % von 1,05 rem), pro Gerät gemerkt (Schlüssel `schrift`). Der Absatz, der gerade oben steht, bleibt beim Umschalten an seiner Stelle.
   - **🔈 Vorlesen:** liest Titel und Text mit der Sprachausgabe des Geräts vor (`VORLESEN`).
     - Deutsche Stimme; bevorzugt eine „Premium“/„Verbessert“-Stimme, wenn auf dem Gerät installiert (iPhone: Einstellungen → Bedienungshilfen → Gesprochene Inhalte → Stimmen). Tempo 0,95.
@@ -926,6 +928,7 @@ Grob in der Reihenfolge der Entstehung (Herbst 2026):
 29. **Schiebeschalter** (v25): „Erinnerung per Mitteilung“ als Toggle statt Häkchen.
 30. **Finale-Ton ohne Herzschlag** (v26): sechs Doppelschläge gegen Ende aus `ton/finale.mp3` herausgefiltert.
 31. **Kein weißer Start-Bildschirm** (v27): iPhone-Startbilder, sofort dunkler Hintergrund, Seite nach spätestens 1,5 s aus dem Speicher.
+32. **Lesezeit überall, wo sie hilft** (v28): über jeder Geschichte und auf den noch ungeöffneten Kacheln.
 
 ---
 

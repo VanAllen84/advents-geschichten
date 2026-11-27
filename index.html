@@ -255,6 +255,8 @@
         .lese-leiste { display: flex; justify-content: center; gap: 8px; margin: -6px 0 22px; flex-wrap: wrap; }
         .lese-leiste button { background: rgba(255,255,255,0.04); border: 1px solid rgba(217,180,90,0.45); color: var(--heading-color); border-radius: 18px; padding: 6px 13px; font-size: 0.85rem; cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent; }
         .lese-leiste button:disabled { opacity: 0.35; cursor: default; }
+        .lese-dauer { display: inline-flex; align-items: center; padding: 6px 4px; font-size: 0.85rem; color: var(--accent-color); white-space: nowrap; }
+        .lese-dauer:empty { display: none; }
         .lese-leiste button.an { background: rgba(217,180,90,0.18); border-color: var(--accent-color); }
         .story-text p.vorlesen-aktiv { background: rgba(217,180,90,0.10); box-shadow: -10px 0 0 rgba(217,180,90,0.10), 10px 0 0 rgba(217,180,90,0.10); border-radius: 4px; transition: background 0.4s ease; }
         /* Lieblingsgeschichte */
@@ -287,8 +289,8 @@
         .tuer-card.heute::before, .tuer-card.ausgelassen::before { content: ""; position: absolute; top: -10%; bottom: -10%; left: 0; width: 55%; pointer-events: none; background: linear-gradient(105deg, rgba(255,236,170,0) 0%, rgba(255,236,170,0.55) 50%, rgba(255,236,170,0) 100%); transform: translateX(-130%) skewX(-12deg); animation: tuerWelle 3.4s ease-in-out infinite; animation-delay: var(--sw, 0s); }
         @keyframes tuerWelle { 0% { transform: translateX(-130%) skewX(-12deg); } 55%, 100% { transform: translateX(260%) skewX(-12deg); } }
         @media (prefers-reduced-motion: reduce) { .tuer-card.heute::before, .tuer-card.ausgelassen::before { display: none; } }
-        .tuer-card.heute::after { content: "Heute"; position: absolute; left: 0; right: 0; bottom: 6px; font-size: 0.66rem; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; color: #ffe9a8; text-shadow: 0 1px 4px #000; }
-        .tuer-card.ausgelassen::after { content: "Noch unge\0000f6ffnet"; position: absolute; left: 0; right: 0; bottom: 6px; font-size: 0.62rem; letter-spacing: 1px; text-transform: uppercase; color: #f0e2b0; text-shadow: 0 1px 4px #000; }
+        .tuer-card.heute::after { content: "Heute" attr(data-dauer); white-space: pre-line; line-height: 1.35; position: absolute; left: 0; right: 0; bottom: 6px; font-size: 0.66rem; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; color: #ffe9a8; text-shadow: 0 1px 4px #000; }
+        .tuer-card.ausgelassen::after { content: "Noch unge\0000f6ffnet" attr(data-dauer); white-space: pre-line; line-height: 1.35; position: absolute; left: 0; right: 0; bottom: 6px; font-size: 0.62rem; letter-spacing: 1px; text-transform: uppercase; color: #f0e2b0; text-shadow: 0 1px 4px #000; }
         @media (prefers-reduced-motion: reduce) { .tuer-card.ausgelassen { animation: none; box-shadow: 0 0 10px rgba(217,180,90,0.4); } }
         .landing-countdown { text-align: center; margin: -8px 0 22px; font-size: 1.05rem; color: var(--heading-color); letter-spacing: 0.5px; }
         .begruessung { text-align: center; font-style: italic; color: var(--accent-color); margin: -6px 0 18px; min-height: 1.4em; line-height: 1.45; opacity: 0; transition: opacity 1.6s ease; }
@@ -617,6 +619,7 @@
             <p class="story-kicker">Türchen <span id="storyDayNum">1</span></p>
             <h2 id="storyTitle"></h2>
             <div class="lese-leiste" id="leseLeiste">
+                <span class="lese-dauer" id="leseDauer"></span>
                 <button id="btnKleiner" onclick="schriftAendern(-1)" aria-label="Schrift kleiner">A−</button>
                 <button id="btnGroesser" onclick="schriftAendern(1)" aria-label="Schrift größer">A+</button>
                 <button id="btnVorlesen" onclick="VORLESEN.umschalten()" style="display:none;">🔈 Vorlesen</button>
@@ -1235,7 +1238,7 @@
         function tuerStilAktualisieren() {
             const karten = document.querySelectorAll("#tuerenGridContainer .tuer-card");
             const alle = ab25(), offen = geoeffnetListe(), heute = heuteTag();
-            let wz = 0; const fehlend = [];
+            let wz = 0; const fehlend = [], fehlendeDauer = [];
             karten.forEach((el, idx) => {
                 const i = idx + 1;
                 el.classList.remove("pix", "geoeffnet", "heute", "frei", "ausgelassen", "mit-titel");
@@ -1255,8 +1258,13 @@
                     if (istLiebling(i)) { const st = document.createElement("span"); st.className = "tag-stern"; st.textContent = "★"; el.appendChild(st); }
                 }
                 el.style.removeProperty("--sw");
-                if (el.classList.contains("heute") || el.classList.contains("ausgelassen")) el.style.setProperty("--sw", (wz++ * 0.35) + "s");
+                if (el.classList.contains("heute") || el.classList.contains("ausgelassen")) {
+                    el.style.setProperty("--sw", (wz++ * 0.35) + "s");
+                    // zweite Zeile im Schriftzug: ungefähre Lesezeit
+                    if (dauerMap[i]) el.setAttribute("data-dauer", "\netwa " + dauerMap[i] + " Min."); else { el.removeAttribute("data-dauer"); fehlendeDauer.push(i); }
+                } else el.removeAttribute("data-dauer");
             });
+            if (fehlendeDauer.length) dauerNachladen(fehlendeDauer);
             if (fehlend.length) titelNachladen(fehlend);
         }
         // Titel der geöffneten Geschichten (für die Kacheln der Übersicht)
@@ -1375,11 +1383,28 @@
         }
         // Ungefähre Lesezeit für zügige Leser (230 Wörter pro Minute), auf ganze Minuten gerundet
         const WOERTER_PRO_MINUTE = 230;
-        function lesezeitText(text) {
+        function lesezeitMinuten(text) {
             const w = (String(text || "").match(/\S+/g) || []).length;
-            if (!w) return "";
-            const m = Math.max(1, Math.round(w / WOERTER_PRO_MINUTE));
-            return "Lesezeit: etwa " + m + (m === 1 ? " Minute" : " Minuten");
+            return w ? Math.max(1, Math.round(w / WOERTER_PRO_MINUTE)) : 0;
+        }
+        function lesezeitText(text) {
+            const m = lesezeitMinuten(text);
+            return m ? "Lesezeit: etwa " + m + (m === 1 ? " Minute" : " Minuten") : "";
+        }
+        // Minuten je Türchen (für die Kacheln „Heute“/„Noch ungeöffnet“); wird aus den Geschichten-Dateien berechnet
+        const dauerMap = {};
+        const dauerVersucht = {};
+        function dauerNachladen(tage) {
+            const offen = tage.filter(function (d) { return !dauerVersucht[d]; });
+            if (!offen.length || !window.fetch) return;
+            let n = offen.length, neu = false;
+            offen.forEach(function (d) {
+                dauerVersucht[d] = true;
+                fetch("story-day" + d + ".js").then(function (r) { return r.ok ? r.text() : ""; }).then(function (txt) {
+                    const m = /text:\s*`([\s\S]*?)`/.exec(txt || "");
+                    if (m) { dauerMap[d] = lesezeitMinuten(m[1]); neu = true; }
+                }).catch(function () {}).then(function () { if (--n === 0 && neu) { try { tuerStilAktualisieren(); } catch (e) {} } });
+            });
         }
         function zeigeStory() {
             leseBereit = false;
@@ -2038,11 +2063,14 @@
             const quelle = document.getElementById("storyQuelle");
             quelle.style.display = "none";
             document.getElementById("btnLiebling").style.display = "none";
+            document.getElementById("leseDauer").textContent = "";
             try { schriftAnwenden(); } catch (e) {}
             try { VORLESEN.knopf(); } catch (e) {}
             ladeGeschichte(day, function (st) {
                 if (currentDay !== day) return;
                 titel.textContent = st.titel || ("Türchen " + day);
+                const mi = lesezeitMinuten(st.text); dauerMap[day] = mi;
+                document.getElementById("leseDauer").textContent = mi ? "⏱ etwa " + mi + " Min." : "";
                 box.innerHTML = absaetzeHtml(st.text);
                 const q = String(st.quelle || "").trim();
                 if (q) { quelle.textContent = "Quelle: " + q; quelle.style.display = ""; }
