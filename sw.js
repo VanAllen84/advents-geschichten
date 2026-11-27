@@ -1,6 +1,6 @@
 /* Offline-Speicher: Seite, Geschichten und Bilder werden beim ersten Besuch abgelegt.
    Bei jeder Änderung an der Seite VERSION hochzählen, damit die Handys die neue Fassung holen. */
-const VERSION = "advent-v26";
+const VERSION = "advent-v27";
 const KERN = ["./", "index.html", "config.js", "manifest.json", "manifest-test.json", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "icon-test-192.png", "icon-test-512.png", "apple-touch-icon-test.png"];
 for (let i = 1; i <= 24; i++) KERN.push("story-day" + i + ".js");
 const BILDER = ["bilder/landing.jpg", "bilder/finale.jpg"];
@@ -55,8 +55,20 @@ self.addEventListener("fetch", function (e) {
     // Bilder: zuerst aus dem Speicher
     e.respondWith(caches.match(r).then(function (m) { return m || fetch(r).then(function (res) { if (res.ok) { const k = res.clone(); caches.open(VERSION).then(function (c) { c.put(r, k); }); } return res; }); }));
   } else {
-    // Seite und Geschichten: zuerst Netz (damit Änderungen sofort erscheinen), ohne Netz aus dem Speicher
-    e.respondWith(fetch(r).then(function (res) { if (res.ok) { const k = res.clone(); caches.open(VERSION).then(function (c) { c.put(r, k); }); } return res; }).catch(function () { return caches.match(r, { ignoreSearch: true }).then(function (m) { return m || caches.match("index.html"); }); }));
+    // Seite und Geschichten: zuerst Netz (damit Änderungen sofort erscheinen).
+    // Antwortet das Netz nicht innerhalb von 1,5 s und liegt eine gespeicherte Fassung vor, kommt diese –
+    // die App startet dann sofort statt auf ein langsames Mobilnetz zu warten. Die Netzantwort wird trotzdem
+    // im Hintergrund gespeichert und ist beim nächsten Öffnen da. Ohne Netz: aus dem Speicher.
+    const netz = fetch(r).then(function (res) { if (res.ok) { const k = res.clone(); caches.open(VERSION).then(function (c) { c.put(r, k); }); } return res; });
+    const ausSpeicher = function () { return caches.match(r, { ignoreSearch: true }).then(function (m) { return m || caches.match("index.html"); }); };
+    e.respondWith(new Promise(function (fertig) {
+      let erledigt = false;
+      const nimm = function (x) { if (!erledigt && x) { erledigt = true; fertig(x); } };
+      const uhr = setTimeout(function () { ausSpeicher().then(nimm); }, 1500);
+      netz.then(function (res) { clearTimeout(uhr); nimm(res); })
+          .catch(function () { clearTimeout(uhr); ausSpeicher().then(function (m) { nimm(m || Response.error()); }); });
+    }));
+    e.waitUntil(netz.catch(function () {}));
   }
 });
 

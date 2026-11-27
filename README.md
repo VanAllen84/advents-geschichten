@@ -14,7 +14,7 @@ Der Absender steht in `config.js` (`ABSENDER`) und erscheint nur in der Signatur
 | GitHub-Repository | `vanallen84/advents-geschichten` |
 | Alte GitHub-Adresse (leitet weiter) | https://vanallen84.github.io/advents-geschichten/ |
 
-Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v26`.
+Stand dieser Beschreibung: November 2026, Service-Worker-Version `advent-v27`.
 
 ---
 
@@ -82,6 +82,7 @@ Für den Inhalt der Startseite, das Finale und die Begrüßungssätze muss man i
 ├── sw.js                 Service Worker: Offline-Speicher und Updates
 ├── manifest.json         App-Manifest für die LIVE-Fassung
 ├── manifest-test.json    App-Manifest für die TEST-Fassung
+├── start/                Startbilder fürs iPhone (start-BREITExHÖHE.png, 11 Größen)
 ├── icon-192.png          App-Symbol
 ├── icon-512.png          App-Symbol (groß)
 ├── apple-touch-icon.png  App-Symbol für iPhone/iPad
@@ -110,6 +111,7 @@ Für den Inhalt der Startseite, das Finale und die Begrüßungssätze muss man i
     ├── erinnerung.py           .ics-Dateien erzeugen
     ├── test-symbole.py         Erzeugt die TEST-Symbole mit rotem Band
     ├── toene-angleichen.py     Gleicht die Töne auf −18 LUFS an (braucht ffmpeg)
+    ├── startbilder.py          Erzeugt die iPhone-Startbilder in start/
     ├── bild-prompts.md         Die 26 Gemini-Prompts für die Bilder
     └── platzhalter.py          VERALTET: erzeugte Platzhalterbilder, nicht mehr ausführen
 ```
@@ -655,7 +657,7 @@ Jedes Gerät und jeder Browser hat seinen eigenen Stand. Nur wenn ein Vorname ei
   - Seite, `config.js`, Manifeste, Symbole und alle 24 Geschichten,
   - danach alle Bilder (Tagesbilder plus beide Pixelstufen, Start- und Finale-Bild),
   - danach die fünf Töne aus `ton/` (Liste `TOENE` in `sw.js`).
-- **Seiten und Geschichten:** zuerst aus dem Netz (damit Änderungen sofort ankommen); ohne Netz aus dem Speicher.
+- **Seiten und Geschichten:** zuerst aus dem Netz (damit Änderungen sofort ankommen). Antwortet das Netz nicht innerhalb von **1,5 s** und gibt es eine gespeicherte Fassung, kommt diese (seit v27) – die App startet dann sofort, statt auf ein langsames Mobilnetz zu warten; die Netzantwort wird trotzdem im Hintergrund gespeichert und gilt beim nächsten Öffnen. Ohne Netz aus dem Speicher.
 - **Bilder:** zuerst aus dem Speicher (schnell), sonst aus dem Netz.
 - Gespeichert werden nur erfolgreiche Antworten (`res.ok`). Fehlerseiten landen also nicht im Speicher.
 - `.ics`-Dateien werden nie gespeichert.
@@ -694,6 +696,10 @@ Jedes Gerät und jeder Browser hat seinen eigenen Stand. Nur wenn ein Vorname ei
 - **Tipp:** Wenn ein TEST-Symbol von früher noch LIVE öffnet oder noch kein „TEST“-Band hat, Symbol löschen und neu anlegen, während die TEST-Fassung geöffnet ist. Das Symbol wird nur beim Anlegen übernommen.
 - Die TEST-Symbole erzeugt `tools/test-symbole.py` aus den normalen Symbolen. Nach einer Änderung der normalen Symbole erneut ausführen.
 - Auf iPhone gelten zusätzlich `apple-touch-icon.png` und die `apple-mobile-web-app-…`-Angaben.
+- **Kein weißer Bildschirm beim Öffnen** (seit v27):
+  - **Startbilder:** Das iPhone zeigt beim Start einer Web-App vom Home-Bildschirm ein Startbild; ohne eigenes ist es weiß (die `background_color` des Manifests beachtet das iPhone nicht). Deshalb gibt es in `start/` Startbilder (dunkelgrün `#07120e` mit dem App-Symbol) für 11 iPhone-Größen von SE bis 17 Pro Max, eingebunden per `<link rel="apple-touch-startup-image" … media="(device-width: …) and (device-height: …) and (-webkit-device-pixel-ratio: …)">`. Das iPhone übernimmt sie **beim Hinzufügen zum Home-Bildschirm** – ein schon angelegtes Symbol muss dafür einmal gelöscht und neu angelegt werden. Für unbekannte, neue Größen zeigt es weiter Weiß; dann in `tools/startbilder.py` ergänzen.
+  - **Sofort dunkel:** Ganz oben im `<head>` steht ein winziger Stil-Block mit der Hintergrundfarbe (und `style` am `<html>`), damit nichts weiß aufblitzt, bevor der große Stil-Block gelesen ist.
+  - **Schneller Start bei langsamem Netz:** siehe Abschnitt 13 (1,5 s, dann aus dem Speicher).
 
 ---
 
@@ -745,6 +751,7 @@ Die Seite trägt `noindex, nofollow`. Sie soll nicht in Suchmaschinen auftauchen
 | `bilder-vorbereiten.py` | Rohbilder aus `bilder-roh/`: Papierrand weg, auf 2:1 zuschneiden, 1200×600, Qualität 82 → `bilder/` | `python3 tools/bilder-vorbereiten.py [quellordner]` |
 | `pixel.py` | `pix-mid-NN.png` (32×16) und `pix-lock-NN.png` (10×5) aus `tag-NN.jpg` | `python3 tools/pixel.py [bilderordner]` |
 | `test-symbole.py` | `icon-test-192.png`, `icon-test-512.png`, `apple-touch-icon-test.png`: normale Symbole mit rotem Band „TEST“ | `python3 tools/test-symbole.py` |
+| `startbilder.py` | iPhone-Startbilder (dunkelgrün mit App-Symbol) für 11 Bildschirmgrößen → `start/`; gibt die `<link>`-Zeilen für index.html aus | `python3 tools/startbilder.py` |
 | `toene-angleichen.py` | alle `*.mp3` aus `ton-roh/` auf −18 LUFS angleichen (Limiter, 44,1 kHz, 160 kbit/s) → `ton/`; `zuklappen.mp3` bekommt 0,33 s Stille vorn; gibt Vorher/Nachher-Werte aus | `python3 tools/toene-angleichen.py [quellordner]` |
 | `erinnerung.py` | `erinnerung/1700.ics` … `2100.ics`, liest `JAHR` und `SEITEN_URL` aus `config.js` | `python3 tools/erinnerung.py` |
 | `bild-prompts.md` | 26 Gemini-Prompts mit gemeinsamem Stil-Block | – |
@@ -918,6 +925,7 @@ Grob in der Reihenfolge der Entstehung (Herbst 2026):
 28. **Erinnerung führt zum Türchen** (v24): Tipp auf die Mitteilung öffnet direkt die Übersicht mit der heutigen Kachel in der Mitte, kurz hervorgehoben.
 29. **Schiebeschalter** (v25): „Erinnerung per Mitteilung“ als Toggle statt Häkchen.
 30. **Finale-Ton ohne Herzschlag** (v26): sechs Doppelschläge gegen Ende aus `ton/finale.mp3` herausgefiltert.
+31. **Kein weißer Start-Bildschirm** (v27): iPhone-Startbilder, sofort dunkler Hintergrund, Seite nach spätestens 1,5 s aus dem Speicher.
 
 ---
 
